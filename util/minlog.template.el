@@ -18,7 +18,9 @@
     (setq minlogpath "---MINLOGPATH---"))
 
   ;; which scheme to use ?
-  (cond ((getenv "SCHEME") (setq scheme (getenv "SCHEME")))
+  (cond ((eq system-type 'windows-nt)
+	 (setq scheme "---PETITEEXEPATH---"))
+	((getenv "SCHEME") (setq scheme (getenv "SCHEME")))
 	((eq 0 (shell-command "which scheme"))
 	 (setq scheme "scheme"))
 	((eq 0 (shell-command "which petite"))
@@ -35,10 +37,29 @@
 	 (setq scheme "guile -l"))
 	(t (error "Neither scheme nor petite nor racket nor mzscheme nor guile installed ")))
 
-  ;; setup the frame
+  ;; is there a heap file ?
+  (if (and (file-readable-p (concat minlogpath "/minlog.heap"))
+	   (or (string= scheme "petite")
+	       (string= scheme "/usr/bin/petite")))
+      (setq heapload
+	    (concat "-h " minlogpath "/minlog.heap "
+		    minlogpath "/welcome.scm"))
+    (setq heapload (concat minlogpath "/init.scm")))
+
   (setq inhibit-startup-message t)
   (delete-other-frames)
   (delete-other-windows)
+  ;; setup the frames
+  (if (eq window-system nil)
+      (setup-minlog-frame-nox filename)
+    (setup-minlog-frames filename))
+
+  ;; start scheme
+  (if (eq system-type 'windows-nt)
+      (run-scheme (concat (quote-string scheme) " " (quote-string heapload)))
+    (run-scheme (concat scheme " " heapload))))
+
+(defun setup-minlog-frames (&optional filename)
   (let* ((orig-frame (selected-frame))
 	 (left-frame (make-frame))
 	 (right-frame (make-frame))
@@ -47,27 +68,22 @@
 	 (lt (if (< (+ left-frame-lt (* wh 2)) (x-display-pixel-width))
 		 left-frame-lt 0))
 	 (ht (/ (x-display-pixel-height) (frame-char-height)))
-	 (border (frame-parameter left-frame 'border-width)))
-    ;; is there a heap file ?
-    (if (and (file-readable-p (concat minlogpath "/minlog.heap"))
-	   (or (string= scheme "petite")
-	       (string= scheme "/usr/bin/petite")))
-	(setq heapload
-	      (concat "-h " minlogpath "/minlog.heap "
-		      minlogpath "/welcome.scm"))
-      (setq heapload (concat minlogpath "/init.scm")))
-
-    (set-frame-size left-frame 80 ht)
-    (set-frame-size right-frame 80 ht)
-    (set-frame-position left-frame lt 0)
-    (set-frame-position right-frame (+ lt wh (* 2 border)) 0)
+	 (border (frame-parameter left-frame 'border-width))
+	 (tp  (cdr (assoc 'top (frame-parameters (selected-frame))))))
     (delete-frame orig-frame)
+    (set-frame-position left-frame lt tp)
+    (set-frame-position right-frame (+ lt wh (* 2 border)) tp)
+    (if filename
+	(progn (select-frame-set-input-focus left-frame)
+	       (find-file filename)))
+    (select-frame-set-input-focus right-frame)))
 
-    ;; start scheme
-    (run-scheme (concat scheme " " heapload))
+(defun setup-minlog-frame-nox (&optional filename)
+  (split-window)
+  (if filename (find-file filename))
+  (other-window 1))
 
-    ;; open file
-    (select-frame-set-input-focus right-frame)
-    (if filename (find-file filename))))
+(defun quote-string (s) (concat "\"" s "\""))
 
-    (load "---MINLOGPATH---/util/minlog-unicode.el")
+(load "---MINLOGPATH---/util/minlog-unicode.el")
+

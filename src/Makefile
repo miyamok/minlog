@@ -4,7 +4,7 @@
 all: TAGS .dep.notags
 
 
-srcs :sh = ls *.scm
+srcs = $(shell ls *.scm)
 
 .dep.notags: minitab.scm
 

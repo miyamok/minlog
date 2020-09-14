@@ -30,9 +30,9 @@ ELDIR=$(DESTDIR)/share/emacs/site-lisp/minlog
 ##  -- clean   the target used to clean up the source. Should also remove
 ##             all the .dep files.
 
-all: src init.scm minlog minlog.el doc
+all: src init.scm minlog util/minlog.el doc
 
-install: src init.scm minlog minlog.el doc
+install: src init.scm minlog util/minlog.el doc
 	$(INSTALL_DIR) $(PREFIX)$(MINLOGDIR) $(PREFIX)$(BINDIR) $(PREFIX)$(ELDIR)
 	sed "s%---MINLOGPATH---%"$(MINLOGDIR)"%g; s%---MINLOGELPATH---%"$(ELDIR)"%g" < util/minlog.template.el > $(PREFIX)$(ELDIR)/minlog.el
 	sed "s%---MINLOGPATH---%"$(ELDIR)"%g" < util/minlog.template > $(PREFIX)$(BINDIR)/minlog
@@ -43,7 +43,7 @@ install: src init.scm minlog minlog.el doc
 	(cd examples; find . -type f -exec $(INSTALL_FILE) {} $(PREFIX)$(DOCDIR)/examples/{} \;)
 	(cd doc; find . -name '*.pdf' -type f -exec $(INSTALL_FILE) {} $(PREFIX)$(DOCDIR)/{} \;)
 
-minlog.el: util/minlog.template.el util
+util/minlog.el: util/minlog.template.el util
 	sed "s%---MINLOGPATH---%`pwd`%g; s%---MINLOGELPATH---%`pwd`%g" < util/minlog.template.el > util/minlog.el
 
 minlog: util/minlog.template util
