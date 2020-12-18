@@ -1,4 +1,4 @@
-;; 2020-08-30.  proof.scm
+;; 2020-12-15.  proof.scm
 ;; 10. Proofs
 ;; ==========
 
@@ -1402,6 +1402,16 @@
 	  (apply union (map (lambda (x) (formula-to-tvars (avar-to-formula x)))
 			    avars))))
     (union var-tvars avar-tvars)))
+
+(define (context-and-name-to-avar context name)
+  (let* ((avars (context-to-avars context))
+	 (name-avar-alist (map (lambda (avar)
+				 (list (avar-to-name avar) avar))
+			       avars))
+	 (info (assoc name name-avar-alist)))
+    (if info
+	(cadr info)
+	(myerror "context-and-name-to-avar" "missing avar" name))))
 
 (define (pp-context context)
   (do ((c context (cdr c))
@@ -7802,23 +7812,16 @@
 				(idpredconst-to-name pred)
 				(myerror "idpredconst expected" pred)))
 		 (clauses (idpredconst-name-to-clauses idpc-name)))
-	    (if
-	     (and ;invariant idpc
-	      (null? (idpredconst-name-to-opt-alg-name idpc-name))
+	    (if (and (null? (idpredconst-name-to-opt-alg-name idpc-name))
 					;but not one of the special ones
 					;allowing arbitrary conclusions
-					;(to be extended to e.g. EvenMR)
-	      (not (member idpc-name '("EqD" "ExNc" "AndNc")))
+		     (not (member idpc-name '("EqD" "ExNc" "AndNc")))
 					;not a one-clause-nc idpc
-	      (not (and (= 1 (length clauses))
-			(predicate-form?
-			 (impnc-form-to-final-conclusion
-			  (allnc-form-to-final-kernel (car clauses))))))
-					;but with a c.r. conclusion
-	      (not (formula-of-nulltype? concl)))
-	     (myerror "n.c. conclusion expected" concl
-		      "in the elimination axiom for an n.c. idpc formula"
-		      idpc-fla))))
+		     (not (= 1 (length clauses))) ;but with a c.r. conclusion
+		     (not (formula-of-nulltype? concl)))
+		(myerror "n.c. conclusion expected" concl
+			 "in the elimination axiom for an n.c. idpc formula"
+			 idpc-fla))))
 	 (if CDP-COMMENT-FLAG
 	     (begin
 	       (display-comment (make-string n #\.))
