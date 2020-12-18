@@ -1,3 +1,79 @@
+Done in dev branch 2020-12-18
+
+In pconst.scm
+
+In corec-const-and-bound-to-bcorec-term at the definition of if-terms
+(car tests) replaced by test
+
+In axiom.scm
+
+aconst-to-formula in case Gfp changed to quantify the free variables
+of the final conclusion CoName xs.
+
+In proof.scm
+
+context-and-name-to-avar added.  In check-and-display-proof-aux check
+for correct Elim in case of a one-clause-nc idpc corrected.
+
+In pproof.scm
+
+coind-intern corrected: free variables taken from
+(imp-form-to-final-conclusion inst-gfp-formula) rather than
+inst-gfp-formula.  context-and-term-to-realproof extended to
+universally quantified premises with kernel Real RealEq RealNNeg
+RealLe .  def defnc added.
+fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data now has
+opt-eq-pvars-and-elab-path instead of elab-path.  fold-alltotal added.
+It expects a goal allnc z^(Total z^ -> A(z^)).  Using AllTotalElim
+internally it produces a new goal all z A(z).
+
+In ets.scm
+
+theorem-to-soundness-proof adapted to mr-vars come last.
+
+In rea.scm
+
+RealAbsZero added.  RealLePlusUMinus RealPlusHalfExpPosS (for
+estimates involving convergence) added.
+
+RealConv redefined (condition Mon M added by Wolfgang Boehnisch).
+RealConvElim1 RealConvElim2 RealConvElim3 RealConvElim4 RealConvEq
+added.  RealSeqApprox (was RealCauchyApprox, but Cauchyness is not
+needed) RealCauchyApprox added.  RealLim defined.  RealLimTotal
+RealLimReal RealLimConst RealCauchyConvMod RealComplete RealLeMonLim
+RealLimCompat added.
+
+CauchyExt MonExt RealExt RealConstrExt RealLimExt RealConstrPureExt
+RealSeqSubToEq RealSeqSubToEqRealConstrFree
+RatCauchyConvModRealConstrFree added.
+
+Variable name v of type (nat=>rea)yprod(pos=>nat) added.  RCauchy
+defined.  RCauchyElim added.  RCplPt defined.  RCplPtToR
+RCplPtToRCauchy RCplPtToMon RCplPtPairToR RCplPtPairToRCauchy
+RCplPtPairToMon RCplPlusRCpl RealLimPlusRealLim added.
+
+In sdcode.scm
+
+In L409 (at GfpCoIMR) argument (pt f^) commented out.
+
+In graycode.scm
+
+In L2258 (at GfpCoGMR) arguments (pt gu^) (pt gv^) commented out.
+In L2299 (at GfpCoHMR) arguments (pt gu^) (pt gv^) commented out.
+In L2268 (at (use GfpCoGMRAuxG) (pt gu^) inserted.
+In L2272 (at (use GfpCoGMRAuxH) (pt gv^) inserted.
+In L2309 (at (use GfpCoHMRAuxG) (pt gu^) inserted.
+In L2313 (at (use GfpCoHMRAuxH) (pt gv^) inserted.
+
+In grayavaux.scm
+
+sdcode.scm loaded.
+
+lib/mtr.scm
+
+New file.  It treats metric spaces and and their completions.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Done in dev branch 2020-09-13
 
 In atr.scm
