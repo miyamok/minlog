@@ -1,4 +1,4 @@
-;; 2020-07-08.  axiom.scm
+;; 2020-12-15.  axiom.scm
 ;; 8. Assumption variables and axioms
 ;; ==================================
 ;; To be renamed into avars scheme, with the axioms section transferred
@@ -110,6 +110,8 @@
 ;; exception are the Elim and Gfp aconsts, where the argument variables
 ;; xs^ of the (co)inductively defined predicate are formally free in the
 ;; uninstantiated formula.  However, they are considered bound as well.
+;; aconst-to-formula in case Gfp changed to quantify the free
+;; variables of the final conclusion CoName xs.
 ;; In the proof the bound type variables are implicitely instantiated
 ;; by types, and the bound predicate variables by cterms.  Since we do
 ;; not have type and predicate quantification in formulas, the aconst
@@ -181,8 +183,29 @@
 
 (define (aconst-to-formula aconst)
   (let* ((inst-formula (aconst-to-inst-formula aconst))
-	 (free (formula-to-free inst-formula)))
+	 (name (aconst-to-name aconst))
+	 (free
+	  (if (initial-substring? "Gfp" name)
+	      (let ((final-concl (imp-impnc-form-to-final-conclusion
+				  (all-allnc-form-to-final-kernel
+				   inst-formula))))
+		(if (not (final-substring? "MR" name))
+		    (formula-to-free final-concl) ;else MR at the end
+		    (let* ((args (predicate-form-to-args final-concl))
+			   (first-args (rdc args)))
+		      (map term-in-var-form-to-var first-args))))
+	      (formula-to-free inst-formula))))
     (apply mk-allnc (append free (list inst-formula)))))
+
+;; Code discarded 2020-12-18
+;; (define (aconst-to-formula aconst)
+;;   (let* ((inst-formula (aconst-to-inst-formula aconst))
+;; 	 (name (aconst-to-name aconst))
+;; 	 (free (if (initial-substring? "Gfp" name)
+;; 		   (formula-to-free
+;; 		    (imp-impnc-form-to-final-conclusion inst-formula))
+;; 		   (formula-to-free inst-formula))))
+;;     (apply mk-allnc (append free (list inst-formula)))))
 
 (define (aconst-form? x) (and (pair? x) (eq? 'aconst (car x))))
 
