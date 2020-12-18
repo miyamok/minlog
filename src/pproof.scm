@@ -1,4 +1,4 @@
-;; 2020-09-10.  pproof.scm
+;; 2020-12-16.  pproof.scm
 ;; 11. Partial proofs
 ;; ==================
 
@@ -4049,7 +4049,9 @@
 			    imp-formula imp-formulas))
 	 (inst-gfp-formula ;Aj(xs) -> K1(Js,As) ->..-> Kk(Js,As) -> J xs
 	  (aconst-to-inst-formula gfp-aconst))
-	 (free (formula-to-free inst-gfp-formula))
+	 (free (formula-to-free (imp-form-to-final-conclusion
+				 inst-gfp-formula)))
+	 ;; (free (formula-to-free inst-gfp-formula))
 	 (coidpc-vars (map term-in-var-form-to-var
 			   (predicate-form-to-args
 			    (imp-form-to-final-conclusion inst-gfp-formula))))
@@ -5760,19 +5762,38 @@
 
 (define (context-and-term-to-realproof context term)
   (let* ((avars (context-to-avars context))
-	 (relevant-avars ;idpcs I with term an argument
+	 (relevant-avars ;relevant idpcs I with term instance of an argument
 	  (list-transform-positive avars
 	    (lambda (avar)
-	      (let ((fla (avar-to-formula avar)))
-		(and (predicate-form? fla)
-		     (let ((pred (predicate-form-to-predicate fla))
-			   (args (predicate-form-to-args fla)))
-		       (and (idpredconst-form? pred)
-			    (member term args))))))))
+	      (let* ((fla (avar-to-formula avar))
+		     (vars (all-allnc-form-to-vars fla))
+		     (kernel (all-allnc-form-to-final-kernel fla)))
+		(and
+		 (predicate-form? kernel)
+		 (let ((pred (predicate-form-to-predicate kernel))
+		       (args (predicate-form-to-args kernel)))
+		   (and
+		    (idpredconst-form? pred)
+		    (let* ((name (idpredconst-to-name pred))
+			   (extended-name (string-append name "ToReal"))
+			   (matching-substs-or-f
+			    (map (lambda (arg)
+				   (let* ((arg-vars (term-to-free arg))
+					  (sig-vars (set-minus arg-vars vars)))
+				     (apply match arg term sig-vars)))
+				 args)))
+		      (and
+		       (apply or-op matching-substs-or-f)
+		       (or (member
+			    name (list "Real" "RealEq" "RealNNeg" "RealLe"))
+			   (assoc
+			    extended-name
+			    (append THEOREMS GLOBAL-ASSUMPTIONS))))))))))))
 	 (name-avar-alist
 	  (map (lambda (avar)
 		 (let* ((fla (avar-to-formula avar))
-			(pred (predicate-form-to-predicate fla))
+			(kernel (all-allnc-form-to-final-kernel fla))
+			(pred (predicate-form-to-predicate kernel))
 			(name (idpredconst-to-name pred)))
 		   (list name avar)))
 	       relevant-avars)))
@@ -5794,48 +5815,133 @@
      ((pair? name-avar-alist) ;ex idpc-avars of the from I(..,term,..)
       (cond ;proof from the first such avar
        ((assoc "Real" name-avar-alist)
-	(let ((avar (cadr (assoc "Real" name-avar-alist))))
-	  (make-proof-in-avar-form avar)))
-       ((assoc "RealEq" name-avar-alist)
-	(let* ((avar (cadr (assoc "RealEq" name-avar-alist)))
+	(let* ((info (assoc "Real" name-avar-alist))
+	       (avar (cadr info))
 	       (fla (avar-to-formula avar))
-	       (args (predicate-form-to-args fla)))
-	  (cond
-	   ((equal? term (car args))
-	    (mk-proof-in-elim-form
-	     (make-proof-in-aconst-form
-	      (theorem-name-to-aconst "RealEqElim0"))
-	     term (cadr args) (make-proof-in-avar-form avar)))
-	   ((equal? term (cadr args))
-	    (mk-proof-in-elim-form
-	     (make-proof-in-aconst-form
-	      (theorem-name-to-aconst "RealEqElim1"))
-	     (car args) term (make-proof-in-avar-form avar)))
-	   (else (myerror "context-and-term-to-realproof" "unexpected term"
-			  term "for context" context)))))
+	       (vars (all-allnc-form-to-vars fla))
+	       (kernel (all-allnc-form-to-final-kernel fla))
+	       (arg (car (predicate-form-to-args kernel)))
+	       (arg-vars (term-to-free arg))
+	       (sig-vars (set-minus arg-vars vars))
+	       (subst (apply match arg term sig-vars))
+	       (terms (map (lambda (var)
+			     (let ((info (assoc var subst)))
+			       (if info
+				   (cadr info)
+				   (make-term-in-var-form var))))
+			   vars)))
+	  (apply mk-proof-in-elim-form (make-proof-in-avar-form avar) terms)))
+       ((assoc "RealEq" name-avar-alist)
+	(let* ((info (assoc "RealEq" name-avar-alist))
+	       (avar (cadr info))
+	       (fla (avar-to-formula avar))
+	       (vars (all-allnc-form-to-vars fla))
+	       (kernel (all-allnc-form-to-final-kernel fla))
+	       (args (predicate-form-to-args kernel))
+	       (arg1 (car args))
+	       (arg2 (cadr args))
+	       (arg1-vars (term-to-free arg1))
+	       (sig1-vars (set-minus arg1-vars vars))
+	       (subst1 (apply match arg1 term sig1-vars)))
+	  (if subst1
+	      (let* ((terms (map (lambda (var)
+				   (let ((info (assoc var subst1)))
+				     (if info
+					 (cadr info)
+					 (make-term-in-var-form var))))
+				 vars))
+		     (eq-proof
+		      (apply
+		       mk-proof-in-elim-form
+		       (make-proof-in-avar-form avar) terms)))
+		(mk-proof-in-elim-form
+		 (make-proof-in-aconst-form
+		  (theorem-name-to-aconst "RealEqElim0"))
+		 term (term-substitute arg2 subst1) eq-proof))
+	      (let* ((arg2-vars (term-to-free arg2))
+		     (sig2-vars (set-minus arg2-vars vars))
+		     (subst2 (apply match arg2 term sig2-vars))
+		     (terms (map (lambda (var)
+				   (let ((info (assoc var subst2)))
+				     (if info
+					 (cadr info)
+					 (make-term-in-var-form var))))
+				 vars))
+		     (eq-proof
+		      (apply
+		       mk-proof-in-elim-form
+		       (make-proof-in-avar-form avar) terms)))
+		(mk-proof-in-elim-form
+		 (make-proof-in-aconst-form
+		  (theorem-name-to-aconst "RealEqElim1"))
+		 (term-substitute arg1 subst2) term eq-proof)))))
        ((assoc "RealNNeg" name-avar-alist)
-	(let ((avar (cadr (assoc "RealNNeg" name-avar-alist))))
+	(let* ((info (assoc "RealNNeg" name-avar-alist))
+	       (avar (cadr info))
+	       (fla (avar-to-formula avar))
+	       (vars (all-allnc-form-to-vars fla))
+	       (kernel (all-allnc-form-to-final-kernel fla))
+	       (args (predicate-form-to-args kernel))
+	       (arg (car args))
+	       (arg-vars (term-to-free arg))
+	       (sig-vars (set-minus arg-vars vars))
+	       (subst (apply match arg term sig-vars))
+	       (terms (map (lambda (var)
+			     (let ((info (assoc var subst)))
+			       (if info
+				   (cadr info)
+				   (make-term-in-var-form var))))
+			   vars))
+	       (nneg-proof (apply mk-proof-in-elim-form
+				  (make-proof-in-avar-form avar) terms)))
 	  (mk-proof-in-elim-form
 	   (make-proof-in-aconst-form
 	    (theorem-name-to-aconst "RealNNegElim0"))
-	   term (make-proof-in-avar-form avar))))
+	   (term-substitute arg subst) nneg-proof)))
        ((assoc "RealLe" name-avar-alist)
-	(let* ((avar (cadr (assoc "RealLe" name-avar-alist)))
+	(let* ((info (assoc "RealLe" name-avar-alist))
+	       (avar (cadr info))
 	       (fla (avar-to-formula avar))
-	       (args (predicate-form-to-args fla)))
-	  (cond
-	   ((equal? term (car args))
-	    (mk-proof-in-elim-form
-	     (make-proof-in-aconst-form
-	      (theorem-name-to-aconst "RealLeElim0"))
-	     term (cadr args) (make-proof-in-avar-form avar)))
-	   ((equal? term (cadr args))
-	    (mk-proof-in-elim-form
-	     (make-proof-in-aconst-form
-	      (theorem-name-to-aconst "RealLeElim1"))
-	     (car args) term (make-proof-in-avar-form avar)))
-	   (else (myerror "context-and-term-to-realproof" "unexpected term"
-			  term "for context" context)))))
+	       (vars (all-allnc-form-to-vars fla))
+	       (kernel (all-allnc-form-to-final-kernel fla))
+	       (args (predicate-form-to-args kernel))
+	       (arg1 (car args))
+	       (arg2 (cadr args))
+	       (arg1-vars (term-to-free arg1))
+	       (sig1-vars (set-minus arg1-vars vars))
+	       (subst1 (apply match arg1 term sig1-vars)))
+	  (if subst1
+	      (let* ((terms (map (lambda (var)
+				   (let ((info (assoc var subst1)))
+				     (if info
+					 (cadr info)
+					 (make-term-in-var-form var))))
+				 vars))
+		     (le-proof
+		      (apply
+		       mk-proof-in-elim-form
+		       (make-proof-in-avar-form avar) terms)))
+		(mk-proof-in-elim-form
+		 (make-proof-in-aconst-form
+		  (theorem-name-to-aconst "RealLeElim0"))
+		 term (term-substitute arg2 subst1) le-proof))
+	      (let* ((arg2-vars (term-to-free arg2))
+		     (sig2-vars (set-minus arg2-vars vars))
+		     (subst2 (apply match arg2 term sig2-vars))
+		     (terms (map (lambda (var)
+				   (let ((info (assoc var subst2)))
+				     (if info
+					 (cadr info)
+					 (make-term-in-var-form var))))
+				 vars))
+		     (le-proof
+		      (apply
+		       mk-proof-in-elim-form
+		       (make-proof-in-avar-form avar) terms)))
+		(mk-proof-in-elim-form
+		 (make-proof-in-aconst-form
+		  (theorem-name-to-aconst "RealLeElim1"))
+		 (term-substitute arg1 subst2) term le-proof)))))
        (else
 	(let ((shortened-name-avar-alist ;only those with ToReal aconst
 	       (list-transform-positive name-avar-alist
@@ -6227,60 +6333,76 @@
 
 (define (fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data
 	 used-formula sig-tvars-and-sig-vars goal-formula
-	 left-to-right . elab-path)
-  (let ((match-res
-	 (cond
-	  ((imp-form? used-formula)
-	   (let ((prem (imp-form-to-premise used-formula))
-		 (concl (imp-form-to-conclusion used-formula)))
-	     (and (atom-form? prem)
-		  (classical-formula=? falsity concl)
-		  (let ((kernel (atom-form-to-kernel prem)))
-		    (first-match sig-tvars-and-sig-vars
-				 kernel goal-formula)))))
-	  ((impnc-form? used-formula)
-	   (let ((prem (impnc-form-to-premise used-formula))
-		 (concl (impnc-form-to-conclusion used-formula)))
-	     (and (atom-form? prem)
-		  (classical-formula=? falsity concl)
-		  (let ((kernel (atom-form-to-kernel prem)))
-		    (first-match sig-tvars-and-sig-vars
-				 kernel goal-formula)))))
-	  ((atom-form? used-formula)
-	   (let* ((kernel (atom-form-to-kernel used-formula))
-		  (op (term-in-app-form-to-final-op kernel))
-		  (res (first-match sig-tvars-and-sig-vars
-				    kernel goal-formula)))
-	     (if res res
-		 (if (and (term-in-const-form? op)
-			  (member (const-to-name
-				   (term-in-const-form-to-const op))
-				  (list "=" "RatEqv")))
-		     (let* ((args (term-in-app-form-to-args kernel))
-			    (lhs (car args))
-			    (rhs (cadr args)))
-		       (if left-to-right
-			   (first-match sig-tvars-and-sig-vars
-					lhs goal-formula)
-			   (first-match sig-tvars-and-sig-vars
-					rhs goal-formula)))
-		     #f))))
-	  ((predicate-form? used-formula)
-	   (let ((predicate (predicate-form-to-predicate used-formula)))
-	     (if (idpredconst-form? predicate)
-		 (if (member (idpredconst-to-name predicate)
-			     (list "EqD" "RealEq"))
-		     (let* ((args (predicate-form-to-args used-formula))
-			    (lhs (car args))
-			    (rhs (cadr args)))
-		       (if left-to-right
-			   (first-match sig-tvars-and-sig-vars
-					lhs goal-formula)
-			   (first-match sig-tvars-and-sig-vars
-					rhs goal-formula)))
-		     #f)
-		 #f)))
-	  (else #f))))
+	 left-to-right . opt-eq-pvars-and-elab-path)
+  (let* ((eq-pvars (list-transform-positive opt-eq-pvars-and-elab-path
+		     (lambda (x) (pvar-form? x))))
+	 (elab-path (list-transform-positive opt-eq-pvars-and-elab-path
+		      (lambda (x) (not (pvar-form? x)))))
+	 (match-res
+	  (cond
+	   ((imp-form? used-formula)
+	    (let ((prem (imp-form-to-premise used-formula))
+		  (concl (imp-form-to-conclusion used-formula)))
+	      (and (atom-form? prem)
+		   (classical-formula=? falsity concl)
+		   (let ((kernel (atom-form-to-kernel prem)))
+		     (first-match sig-tvars-and-sig-vars
+				  kernel goal-formula)))))
+	   ((impnc-form? used-formula)
+	    (let ((prem (impnc-form-to-premise used-formula))
+		  (concl (impnc-form-to-conclusion used-formula)))
+	      (and (atom-form? prem)
+		   (classical-formula=? falsity concl)
+		   (let ((kernel (atom-form-to-kernel prem)))
+		     (first-match sig-tvars-and-sig-vars
+				  kernel goal-formula)))))
+	   ((atom-form? used-formula)
+	    (let* ((kernel (atom-form-to-kernel used-formula))
+		   (op (term-in-app-form-to-final-op kernel))
+		   (res (first-match sig-tvars-and-sig-vars
+				     kernel goal-formula)))
+	      (if res res
+		  (if (and (term-in-const-form? op)
+			   (member (const-to-name
+				    (term-in-const-form-to-const op))
+				   (list "=" "RatEqv")))
+		      (let* ((args (term-in-app-form-to-args kernel))
+			     (lhs (car args))
+			     (rhs (cadr args)))
+			(if left-to-right
+			    (first-match sig-tvars-and-sig-vars
+					 lhs goal-formula)
+			    (first-match sig-tvars-and-sig-vars
+					 rhs goal-formula)))
+		      #f))))
+	   ((predicate-form? used-formula)
+	    (let ((predicate (predicate-form-to-predicate used-formula)))
+	      (cond
+	       ((idpredconst-form? predicate)
+		(if (member (idpredconst-to-name predicate)
+			    (list "EqD" "RealEq"))
+		    (let* ((args (predicate-form-to-args used-formula))
+			   (lhs (car args))
+			   (rhs (cadr args)))
+		      (if left-to-right
+			  (first-match sig-tvars-and-sig-vars
+				       lhs goal-formula)
+			  (first-match sig-tvars-and-sig-vars
+				       rhs goal-formula)))
+		    #f))
+	       ((pvar-form? predicate)
+		(if (member predicate eq-pvars)
+		    (let* ((args (predicate-form-to-args used-formula))
+			   (lhs (car args))
+			   (rhs (cadr args)))
+		      (if left-to-right
+			  (first-match sig-tvars-and-sig-vars
+				       lhs goal-formula)
+			  (first-match sig-tvars-and-sig-vars
+				       rhs goal-formula)))
+		    #f))
+	       (else #f))))
+	   (else #f))))
     (if
      match-res
      (list '() '() match-res)
@@ -6294,7 +6416,7 @@
 		fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data
 		concl sig-tvars-and-sig-vars
 		goal-formula left-to-right
-		elab-path)))
+		opt-eq-pvars-and-elab-path)))
 	 (if (not prev)
 	     #f
 	     (let* ((xs (car prev))
@@ -6308,116 +6430,116 @@
 		fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data
 		concl sig-tvars-and-sig-vars
 		goal-formula left-to-right
-		elab-path)))
+		opt-eq-pvars-and-elab-path)))
 	 (if (not prev)
 	     #f
 	     (let* ((xs (car prev))
 		    (vars (cadr prev))
 		    (toinst (caddr prev)))
 	       (list (cons DEFAULT-GOAL-NAME xs) vars toinst)))))
-       ((all-form? used-formula)
-	(let* ((var (all-form-to-var used-formula))
-	       (kernel (all-form-to-kernel used-formula))
-	       (new-var (var-to-new-var var))
-	       (new-kernel
-		(formula-subst kernel var (make-term-in-var-form new-var)))
-	       (prev
-		(apply
-		 fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data
-		 new-kernel sig-tvars-and-sig-vars
-		 goal-formula left-to-right
-		 elab-path)))
-	  (if (not prev)
-	      #f
-	      (let* ((xs (car prev))
-		     (vars (cadr prev))
-		     (toinst (caddr prev))
-		     (info (assoc new-var toinst)))
-		(if
-		 info ;instance found by matching
-		 (list ;insert instance into xs
-		  (cons (cadr info) xs) vars toinst)
-		 (list ;else insert new-var into xs, and new-var to vars
-		  (cons (make-term-in-var-form new-var) xs)
-		  (cons new-var vars)
-		  toinst))))))
-       ((allnc-form? used-formula)
-	(let* ((var (allnc-form-to-var used-formula))
-	       (kernel (allnc-form-to-kernel used-formula))
-	       (new-var (var-to-new-var var))
-	       (new-kernel
-		(formula-subst kernel var (make-term-in-var-form new-var)))
-	       (prev
-		(apply
-		 fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data
-		 new-kernel sig-tvars-and-sig-vars
-		 goal-formula left-to-right
-		 elab-path)))
-	  (if (not prev)
-	      #f
-	      (let* ((xs (car prev))
-		     (vars (cadr prev))
-		     (toinst (caddr prev))
-		     (info (assoc new-var toinst)))
-		(if
-		 info ;instance found by matching
-		 (list ;insert instance into xs
-		  (cons (cadr info) xs) vars toinst)
-		 (list ;else insert new-var into xs, and new-var to vars
-		  (cons (make-term-in-var-form new-var) xs)
-		  (cons new-var vars)
-		  toinst))))))
-       ((or (and-form? used-formula)
-	    (andd-form? used-formula)
-	    (andl-form? used-formula)
-	    (andr-form? used-formula)
-	    (andnc-form? used-formula))
-	(let ((left-conjunct (bicon-form-to-left used-formula))
-	      (right-conjunct (bicon-form-to-right used-formula)))
-	  (if
-	   (pair? elab-path)
-	   (let* ((direction (car elab-path))
-		  (conjunct (cond ((eq? 'left direction) left-conjunct)
-				  ((eq? 'right direction) right-conjunct)
-				  (else (myerror "left or right expected"
-						 direction))))
-		  (prev
-		   (apply
-		    fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data
-		    conjunct sig-tvars-and-sig-vars
-		    goal-formula left-to-right
-		    (cdr elab-path))))
-	     (if (not prev)
-		 #f
-		 (let* ((xs (car prev))
-			(vars (cadr prev))
-			(toinst (caddr prev)))
-		   (list (cons direction xs) vars toinst))))
-	   (let ((prev1
-		  (fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data
-		   left-conjunct sig-tvars-and-sig-vars
-		   goal-formula left-to-right)))
-	     (if
-	      prev1
-	      (let* ((xs (car prev1))
-		     (vars (cadr prev1))
-		     (toinst (caddr prev1)))
-		(list (cons 'left xs) vars toinst))
-	      (let ((prev2
-		     (fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data
-		      right-conjunct sig-tvars-and-sig-vars
-		      goal-formula left-to-right)))
-		(if prev2
-		    (let* ((xs (car prev2))
-			   (vars (cadr prev2))
-			   (toinst (caddr prev2)))
-		      (list (cons 'right xs) vars toinst))
-		    #f)))))))
-       ((predicate-form? used-formula) #f)
-       (else (myerror
-	      "fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data"
-	      "formula expected"
-	      used-formula))))))
+      ((all-form? used-formula)
+       (let* ((var (all-form-to-var used-formula))
+	      (kernel (all-form-to-kernel used-formula))
+	      (new-var (var-to-new-var var))
+	      (new-kernel
+	       (formula-subst kernel var (make-term-in-var-form new-var)))
+	      (prev
+	       (apply
+		fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data
+		new-kernel sig-tvars-and-sig-vars
+		goal-formula left-to-right
+		opt-eq-pvars-and-elab-path)))
+	 (if (not prev)
+	     #f
+	     (let* ((xs (car prev))
+		    (vars (cadr prev))
+		    (toinst (caddr prev))
+		    (info (assoc new-var toinst)))
+	       (if
+		info ;instance found by matching
+		(list ;insert instance into xs
+		 (cons (cadr info) xs) vars toinst)
+		(list ;else insert new-var into xs, and new-var to vars
+		 (cons (make-term-in-var-form new-var) xs)
+		 (cons new-var vars)
+		 toinst))))))
+      ((allnc-form? used-formula)
+       (let* ((var (allnc-form-to-var used-formula))
+	      (kernel (allnc-form-to-kernel used-formula))
+	      (new-var (var-to-new-var var))
+	      (new-kernel
+	       (formula-subst kernel var (make-term-in-var-form new-var)))
+	      (prev
+	       (apply
+		fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data
+		new-kernel sig-tvars-and-sig-vars
+		goal-formula left-to-right
+		opt-eq-pvars-and-elab-path)))
+	 (if (not prev)
+	     #f
+	     (let* ((xs (car prev))
+		    (vars (cadr prev))
+		    (toinst (caddr prev))
+		    (info (assoc new-var toinst)))
+	       (if
+		info ;instance found by matching
+		(list ;insert instance into xs
+		 (cons (cadr info) xs) vars toinst)
+		(list ;else insert new-var into xs, and new-var to vars
+		 (cons (make-term-in-var-form new-var) xs)
+		 (cons new-var vars)
+		 toinst))))))
+      ((or (and-form? used-formula)
+	   (andd-form? used-formula)
+	   (andl-form? used-formula)
+	   (andr-form? used-formula)
+	   (andnc-form? used-formula))
+       (let ((left-conjunct (bicon-form-to-left used-formula))
+	     (right-conjunct (bicon-form-to-right used-formula)))
+	 (if
+	  (pair? elab-path)
+	  (let* ((direction (car elab-path))
+		 (conjunct (cond ((eq? 'left direction) left-conjunct)
+				 ((eq? 'right direction) right-conjunct)
+				 (else (myerror "left or right expected"
+						direction))))
+		 (prev
+		  (apply
+		   fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data
+		   conjunct sig-tvars-and-sig-vars
+		   goal-formula left-to-right
+		   (append eq-pvars (cdr elab-path)))))
+	    (if (not prev)
+		#f
+		(let* ((xs (car prev))
+		       (vars (cadr prev))
+		       (toinst (caddr prev)))
+		  (list (cons direction xs) vars toinst))))
+	  (let ((prev1
+		 (fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data
+		  left-conjunct sig-tvars-and-sig-vars
+		  goal-formula left-to-right)))
+	    (if
+	     prev1
+	     (let* ((xs (car prev1))
+		    (vars (cadr prev1))
+		    (toinst (caddr prev1)))
+	       (list (cons 'left xs) vars toinst))
+	     (let ((prev2
+		    (fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data
+		     right-conjunct sig-tvars-and-sig-vars
+		     goal-formula left-to-right)))
+	       (if prev2
+		   (let* ((xs (car prev2))
+			  (vars (cadr prev2))
+			  (toinst (caddr prev2)))
+		     (list (cons 'right xs) vars toinst))
+		   #f)))))))
+      ((predicate-form? used-formula) #f)
+      (else (myerror
+	     "fla-and-sig-tvars-and-vars-and-goal-fla-to-fst-match-data"
+	     "formula expected"
+	     used-formula))))))
 
 (define (compat-at all-formula)
   (let* ((var1 (all-form-to-var all-formula))
@@ -7293,6 +7415,120 @@
      (make-proof-in-aconst-form subst-aconst)
      (append (map make-term-in-var-form (remove newvar vars))
 	     (list term DEFAULT-GOAL-NAME DEFAULT-GOAL-NAME)))))
+
+;; To introduce an abbreviation for a complex term by a variable one
+;; can use def defnc
+
+(define (def var-string term-string)
+  (let* ((var (pv var-string))
+	 (term (pt term-string))
+	 (context (goal-to-context (current-goal)))
+	 (vars (context-to-vars context))
+	 (free (term-to-free term))
+	 (hypname (string-append var-string "Ex")))
+    (if (member var vars)
+	(myerror "def" "Already in context" var))
+    (if (member var free)
+	(myerror "def" "Variable free in term" var term))
+    (if (not (equal? (var-to-type var) (term-to-type term)))
+	(myerror "def" "Equal types expected for var and term"
+		 (var-to-type var) (term-to-type term)))
+    (assert (make-exl var (make-eqd (make-term-in-var-form var) term)))
+    (intro 0 term)
+    (use "InitEqD")
+    (assume hypname)
+    (by-assume hypname
+	       (var-to-string var)
+	       (string-append (var-to-string var) "Def"))))
+
+(define (defnc var-string term-string)
+  (let* ((var (pv var-string))
+	 (term (pt term-string))
+	 (context (goal-to-context (current-goal)))
+	 (vars (context-to-vars context))
+	 (free (term-to-free term))
+	 (hypname (string-append var-string "Exnc")))
+    (if (member var vars)
+	(myerror "defnc" "Already in context" var))
+    (if (member var free)
+	(myerror "defnc" "Variable free in term" var term))
+    (if (not (equal? (var-to-type var) (term-to-type term)))
+	(myerror "defnc" "Equal types expected for var and term"
+		 (var-to-type var) (term-to-type term)))
+    (assert (make-exnc var (make-eqd (make-term-in-var-form var) term)))
+    (intro 0 term)
+    (use "InitEqD")
+    (assume hypname)
+    (by-assume hypname
+	       (var-to-string var)
+	       (string-append (var-to-string var) "Def"))))
+
+;; fold-alltotal expects a goal allnc z^(Total z^ -> A(z^)).  Using
+;; AllTotalElim internally it produces a new goal all z A(z).
+
+(define (fold-alltotal)
+  (let* ((num-goals (pproof-state-to-num-goals))
+	 (proof (pproof-state-to-proof))
+	 (maxgoal (pproof-state-to-maxgoal))
+	 (number (num-goal-to-number (car num-goals))))
+    (set! PPROOF-STATE (fold-alltotal-intern num-goals proof maxgoal))
+    (pproof-state-history-push PPROOF-STATE)
+    (display-new-goals num-goals number)))
+
+(define (fold-alltotal-intern num-goals proof maxgoal)
+  (let* ((num-goal (car num-goals))
+	 (number (num-goal-to-number num-goal))
+	 (goal (num-goal-to-goal num-goal))
+	 (context (goal-to-context goal))
+	 (goal-fla (goal-to-formula goal))
+	 (free (formula-to-free goal-fla))
+	 (var (if (all-allnc-form? goal-fla)
+		  (all-allnc-form-to-var goal-fla)
+		  (myerror "fold-alltotal-intern" "all-allnc form expected"
+			   goal-fla)))
+	 (kernel (all-allnc-form-to-kernel goal-fla))
+	 (prem (if (imp-impnc-form? kernel)
+		   (imp-impnc-form-to-premise kernel)
+		   (myerror "fold-alltotal-intern" "all-allnc form expected"
+			    kernel)))
+	 (type (var-to-type var))
+	 (concl
+	  (let ((T-fla (term-to-totality-formula (make-term-in-var-form var))))
+	    (if (or (formula=? prem T-fla)
+		    (let ((val-type (arrow-form-to-final-val-type type)))
+		      (and (formula-of-nulltype? goal-fla)
+			   (alg-form? val-type)
+			   (assoc (alg-name-to-totalnc-idpredconst-name
+				   (alg-form-to-name val-type)) IDS)
+			   (formula=? prem (term-to-totalnc-formula
+					    (make-term-in-var-form var))))))
+		(imp-impnc-form-to-conclusion kernel)
+		(myerror "fold-alltotal-intern"
+			 "totality formula expected" prem))))
+	 (t-deg (if (< 1 (type-to-level type))
+		    (myerror "fold-alltotal-intern"
+			     "variable of type level <=1 expected"
+			     (var-to-string var))
+		    (var-to-t-deg var)))
+	 (varterm (if (t-deg-one? t-deg)
+		      (myerror "fold-alltotal-intern"
+			       "partial variable expected"
+			       (var-to-string var))
+		      (make-term-in-var-form
+		       (var-and-t-deg-to-new-var var t-deg-one))))
+	 (alltotal-elim-fla (aconst-to-formula alltotal-elim-aconst))
+	 (tvar (car (formula-to-tvars alltotal-elim-fla))) ;alpha
+	 (pvar (car (formula-to-pvars alltotal-elim-fla))) ;(Pvar alpha)
+	 (tsubst (make-subst tvar type))
+	 (psubst (make-subst pvar (make-cterm var concl)))
+	 (subst-aconst (aconst-substitute
+			alltotal-elim-aconst (append tsubst psubst))))
+    (apply
+     use-with-intern
+     num-goals proof maxgoal
+     (make-proof-in-aconst-form subst-aconst)
+     (append (map make-term-in-var-form free)
+	     (list DEFAULT-GOAL-NAME)))))
 
 ;; Now we provide some tactics to generate classical proofs.
 
