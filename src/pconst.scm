@@ -1,4 +1,4 @@
-;; 2020-07-12.  pconst.scm
+;; 2020-12-15.  pconst.scm
 ;; 4. Constants
 ;; ============
 
@@ -3351,7 +3351,7 @@
 			   (if (arrow-form?
 				(term-to-type (car abstr-constr-terms)))
 			       (make-term-in-app-form
-				(car abstr-constr-terms) (car tests))
+				(car abstr-constr-terms) test)
 			       (car abstr-constr-terms))
 			   (apply corec-test-and-abstr-constr-terms-to-if-term
 				  test abstr-constr-terms)))
