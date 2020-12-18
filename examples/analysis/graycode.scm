@@ -1,4 +1,4 @@
-;; 2020-08-14.  examplesanalysisgraycode.scm
+;; 2020-12-18.  examples/analysis/graycode.scm
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -2255,7 +2255,7 @@ exnc hsv^(
   (pv "x1") (pv "ah^")
   (pf "exnc v^(YMR^ x1 v^ andnc ah^ eqd
                                   ((CoRec gamma2=>ah gamma1=>ag)v^ gu^ gv^))"))
- (pt "x") (pt "((CoRec gamma1=>ag gamma2=>ah)u^ gu^ gv^)") (pt "gu^") (pt "gv^")
+ (pt "x") (pt "((CoRec gamma1=>ag gamma2=>ah)u^ gu^ gv^)");(pt "gu^") (pt "gv^")
  "?" "?" "?")
 ;; 3-5
 (drop "Step1" "Step2")
@@ -2265,11 +2265,11 @@ exnc hsv^(
 (use "InitEqD")
 ;; 4
 (drop "Step2")
-(use "GfpCoGHMRAuxG")
+(use "GfpCoGHMRAuxG" (pt "gu^"))
 (use "Step1")
 ;; 5
 (drop "Step1")
-(use "GfpCoGHMRAuxH")
+(use "GfpCoGHMRAuxH"  (pt "gv^"))
 (use "Step2")
 ;; Proof finished.
 ;; (cp)
@@ -2296,7 +2296,7 @@ exnc hsv^(
   (pv "x1") (pv "ag^")
   (pf "exnc u^(XMR^ x1 u^ andnc ag^ eqd
                                   ((CoRec gamma1=>ag gamma2=>ah)u^ gu^ gv^))"))
- (pt "x") (pt "((CoRec gamma2=>ah gamma1=>ag)v^ gu^ gv^)") (pt "gu^") (pt "gv^")
+ (pt "x") (pt "((CoRec gamma2=>ah gamma1=>ag)v^ gu^ gv^)");(pt "gu^") (pt "gv^")
  "?" "?" "?")
 ;; 3-5
 (drop "Step1" "Step2")
@@ -2306,11 +2306,11 @@ exnc hsv^(
 (use "InitEqD")
 ;; 4
 (drop "Step2")
-(use "GfpCoGHMRAuxG")
+(use "GfpCoGHMRAuxG" (pt "gu^"))
 (use "Step1")
 ;; 5
 (drop "Step1")
-(use "GfpCoGHMRAuxH")
+(use "GfpCoGHMRAuxH" (pt "gv^"))
 (use "Step2")
 ;; Proof finished.
 ;; (cp)
