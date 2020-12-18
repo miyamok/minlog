@@ -1,4 +1,4 @@
-;; 2020-09-10.  ets.scm
+;; 2020-12-15.  ets.scm
 ;; 16. Extracted terms
 ;; ===================
 
@@ -4691,7 +4691,7 @@
 ;; examples/analysis/sdcode.scm)
 
 ;; It can happen that the conclusions of imp-formulas use different
-;; arg-vars (example: the GfpCoGMR-aconst for CoGClauseInv in graycon=de).
+;; arg-vars (example: the GfpCoGMR-aconst for CoGClauseInv in graycode).
 ;; They must be made equal first.
 
 (define (imp-formulas-to-mr-gfp-proof imp-formula . imp-formulas)
@@ -6989,7 +6989,7 @@
 					   (make-term-in-var-form mr-var)
 					   cterm-fla)))
 			     (apply make-cterm
-				    mr-var (append cterm-vars (list mr-fla))))
+				    (append cterm-vars (list mr-var mr-fla))))
 			   (pvar-to-cterm cr-pvar))))
 		      crit-cr-pvars))
 		(mr-psubst (make-substitution-wrt
@@ -7000,7 +7000,7 @@
 		(crit-tvars (map PVAR-TO-TVAR crit-cr-pvars))
 		(crit-et-types
 		 (map (lambda (mr-cterm)
-			(var-to-type (car (cterm-to-vars mr-cterm))))
+			(var-to-type (rac (cterm-to-vars mr-cterm))))
 		      mr-cterms))
 		(mr-tsubst (make-substitution crit-tvars crit-et-types))
 		(subst-mr-aconst
