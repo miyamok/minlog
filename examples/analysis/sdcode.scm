@@ -1,4 +1,4 @@
-;; 2020-08-09.  examples/analysis/sdcode.scm
+;; 2020-12-16.  examples/analysis/sdcode.scm
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -406,7 +406,7 @@
  (make-cterm
   (pv "x1") (pv "u^")
   (pf "exnc w^1(XMR^ x1 w^1 andnc u^ eqd((CoRec gamma=>ai)w^1 f^))"))
- (pt "x") (pt "((CoRec gamma=>ai)w^ f^)") (pt "f^")
+ (pt "x") (pt "((CoRec gamma=>ai)w^ f^)") ;(pt "f^")
  "?" "?")
 ;; 3,4
 (drop "Step")
