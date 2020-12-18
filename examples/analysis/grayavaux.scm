@@ -1,4 +1,4 @@
-;; 2020-07-22.  examples/analysis/grayavaux.scm.
+;; 2020-12-16.  examples/analysis/grayavaux.scm.
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -15,6 +15,7 @@
 
 ;; (load "~/git/minlog/examples/analysis/JK.scm")
 ;; (load "~/git/minlog/examples/analysis/digits.scm")
+;; (load "~/git/minlog/examples/analysis/sdcode.scm")
 ;; (load "~/git/minlog/examples/analysis/graycode.scm")
 
 (display "loading grayavaux.scm ...") (newline)
