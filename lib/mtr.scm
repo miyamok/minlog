@@ -1,4 +1,4 @@
-;; 2020-12-18.  mtr.scm.  Metric spaces and and their completions.
+;; 2020-12-19.  mtr.scm.  Metric spaces and and their completions.
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -2119,6 +2119,7 @@
 (use "NatLeTrans" (pt "rht((MCplLim alpha)ws M)p"))
 (ng #t)
 (simp "LDef")
+(use "Truth")
 (use "mBd")
 ;; ?^5:Mon(rht((MCplLim alpha)ws M))
 (intro 0)
