@@ -1,3 +1,10 @@
+Done in dev branch 2020-12-19
+
+In lib/mtr.scm
+
+In L2122 (use Truth) inserted.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Done in dev branch 2020-12-18
 
 In pconst.scm
