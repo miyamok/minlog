@@ -1,4 +1,4 @@
-;; 2020-12-16.  examples/analysis/grayavaux.scm.
+;; 2021-03-04.  examples/analysis/grayavaux.scm.
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -9,7 +9,6 @@
 ;; (libload "pos.scm")
 ;; (libload "int.scm")
 ;; (libload "rat.scm")
-;; (remove-var-name "x" "y" "z")
 ;; (libload "rea.scm")
 ;; ;; (set! COMMENT-FLAG #t)
 
@@ -570,11 +569,12 @@
 (simp "SdtwoInjIdInst")
 (use "Truth")
 ;; Proof finished.
+;; (cdp)
 (save "CoGAvcSatCoIClAuxK")
 
 (define eterm (proof-to-extracted-term))
 (define neterm (rename-variables (nt eterm)))
-(pp neterm)
+;; (pp neterm)
 
 ;; [boole,boole0,t]
 ;;  IntToSd(K(BooleToInt boole+BooleToInt boole0+SdtwoToInt t*2))
@@ -629,6 +629,7 @@
 (ng)
 (use "InitSdtwoLT")
 ;; Proof finished.
+;; (cdp)
 (save "SdtwoPsdToSdtwoJ")
 
 ;; SdtwoToSdtwoJ
@@ -651,6 +652,7 @@
 (ng)
 (use "InitSdtwoMT")
 ;; Proof finished.
+;; (cdp)
 (save "SdtwoToSdtwoJ")
 
 ;; SdtwoPsdToSdK
@@ -703,6 +705,7 @@
 (ng)
 (use "InitSdSdL")
 ;; Proof finished.
+;; (cdp)
 (save "SdtwoPsdToSdK")
 
 ;; SdtwoToSdK
@@ -725,6 +728,7 @@
 (ng)
 (use "InitSdSdL")
 ;; Proof finished.
+;; (cdp)
 (save "SdtwoToSdK")
 
 ;; CoIAvcSatCoIClAux 
@@ -752,7 +756,7 @@
 (use "Ry")
 (use "RealRat")
 (use "RealRat")
-;; 9
+;; 7
 (use "RealTimesReal")
 (use "RealRat")
 (use "RealPlusReal")
@@ -764,7 +768,7 @@
 (use "Ry")
 (use "RealRat")
 (use "RealRat")
-;; 10
+;; 8
 (assume "n" "Useless")
 (ng)
 ;;   n
@@ -1084,7 +1088,6 @@
 ;; -----------------------------------------------------------------------------
 ;; ?^168:(1#4)*((1#2)*(x1+0)+(1#2)*(y1* ~e+e)+i)===
 ;;       (1#2)*((1#4)*(x1+y1* ~e+J(e+i*2))+K(e+i*2))
-
 (use-with "CoIAvcSatCoIClAux" (pt "x1") (pt "y1* ~e") (pt "0")
 	  (pt "e") (pt "i") "?" "?")
 (use "CoHToReal")
@@ -1171,7 +1174,7 @@
 (animate "CoGAvcSatCoIClAuxJ")
 (animate "CoGAvcSatCoIClAuxK")
 (define neterm (rename-variables (nt eterm)))
-(ppc neterm)
+;; (ppc neterm)
 
 ;; [t,ag,ag0][case (DesYprod ag)
 ;;    (InL bg -> [case (DesYprod ag0)
@@ -1210,24 +1213,24 @@
 (simpreal "RealAbsTimes")
 (use "RealLeTrans" (pt "abs(RealConstr([n](1#4))([p]Zero))*
                         (RealConstr([n](1#1))([p]Zero)+1+2)"))
-(use "RealLeMonTimes")
-(use "RealNNegAbs")
-(use "RealRat")
+(use "RealLeMonTimesR")
+(use "RatLeToRealLe")
+(use "Truth")
 (use "RealLeTrans" (pt "abs(x+y)+abs(RealConstr([n]i)([p]Zero))"))
 (use "RealLeAbsPlus")
 (autoreal)
-(use "RealLeMonPlus")
+(use "RealLeMonPlusTwo")
 (use "RealLeTrans" (pt "abs x+abs y"))
 (use "RealLeAbsPlus")
 (autoreal)
-(use "RealLeMonPlus")
+(use "RealLeMonPlusTwo")
 (use "xBd")
 (use "yBd")
 (use "RatLeToRealLe")
 (use "iBd")
 (ng)
-(use "RealLeRefl")
-(use "RealRat")
+(use "RatLeToRealLe")
+(use "Truth")
 (autoreal)
 ;; Proof finished.
 ;; (cdp)
@@ -1323,7 +1326,7 @@
 (use "Truth")
 ;; ?^81:z1===z1
 (use "RealEqRefl")
-(use "RealEqElim0" (pt "(1#4)*(x+y+i)"))
+(use "RealEqToReal0" (pt "(1#4)*(x+y+i)"))
 (use "ixyProp")
 ;; 49
 (drop "Disj")
@@ -1344,9 +1347,9 @@
 (simpreal "RealAbsTimes")
 (use "RealLeTrans" (pt "RealConstr([n](1#1))([p]Zero)*1"))
 (use "RealLeMonTimesTwo")
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
 (use "RealAvcBd")
 (autoreal)
@@ -1361,9 +1364,8 @@
 (simp "PsdToAbsOne")
 (use "Truth")
 (use "Psdd1")
-(use "RealLeRefl")
-(use "RealRat")
-(use "RealRat")
+(use "RatLeToRealLe")
+(use "Truth")
 (autoreal)
 ;; 110
 (split)
@@ -1454,7 +1456,7 @@
 (use "Truth")
 ;; ?^181:z1===z1
 (use "RealEqRefl")
-(use "RealEqElim0" (pt "(1#4)*(x+y+i)"))
+(use "RealEqToReal0" (pt "(1#4)*(x+y+i)"))
 (use "ixyProp")
 
 ;; ?_16:exr j,d,x0,y0(
@@ -1550,7 +1552,7 @@
 (use "Truth")
 ;; ?^306:z1===z1
 (use "RealEqRefl")
-(use "RealEqElim0" (pt "(1#4)*(x+y+i)"))
+(use "RealEqToReal0" (pt "(1#4)*(x+y+i)"))
 (use "ixyProp")
 ;; 274
 (drop "Disj")
@@ -1571,9 +1573,9 @@
 (simpreal "RealAbsTimes")
 (use "RealLeTrans" (pt "RealConstr([n](1#1))([p]Zero)*1"))
 (use "RealLeMonTimesTwo")
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
 (use "RealAvcBd")
 (autoreal)
@@ -1588,9 +1590,8 @@
 (simp "PsdToAbsOne")
 (use "Truth")
 (use "Psdd1")
-(use "RealLeRefl")
-(use "RealRat")
-(use "RealRat")
+(use "RatLeToRealLe")
+(use "Truth")
 (autoreal)
 ;; 335
 (split)
@@ -1638,7 +1639,7 @@
 (use "RealEqSIntro")
 (assume "n")
 (ng #t)
-;; ?d^_415:(1#2)*((1#4)*(as n+bs n+i1)+d1)==
+;; ?^415:(1#2)*((1#4)*(as n+bs n+i1)+d1)==
 ;;       (1#2)*((1#4)*(as n*d1+bs n*d1+i1*d1)+1)*d1
 (simp "<-" "RatTimesAssoc")
 (simp "RatEqv6RewRule")
@@ -1667,7 +1668,7 @@
 (use "Truth")
 ;; ?^403:z1===z1
 (use "RealEqRefl")
-(use "RealEqElim0" (pt "(1#4)*(x+y+i)"))
+(use "RealEqToReal0" (pt "(1#4)*(x+y+i)"))
 (use "ixyProp")
 
 ;; ?_241:exr j,d,x0,y0(
