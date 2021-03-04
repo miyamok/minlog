@@ -1,4 +1,4 @@
-;; 2017-12-12.  examples/analysis/div.scm
+;; 2021-02-25.  examples/analysis/div.scm
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -23,14 +23,15 @@
 (simpreal "RealTimesAssoc")
 (ng #t)
 (use "RealLeTrans" (pt "2*((1#2)*y)"))
-(use "RealLeMonTimes")
-(use "RealNNegPos")
+(use "RealLeMonTimesR")
+(use "RatLeToRealLe")
+(use "Truth")
 ;; ?_18:abs(x+ ~((1#2)*y))<<=(1#2)*y
 (use "RealLeAbs")
 ;; 19,20
 ;; ?_19:x+ ~((1#2)*y)<<=(1#2)*y
 (use "RealLeTrans" (pt "y+ ~((1#2)*y)"))
-(use "RealLeMonPlus")
+(use "RealLeMonPlusTwo")
 (use "x<<=y")
 (use "RealLeRefl")
 (autoreal)
@@ -54,7 +55,7 @@
 (simpreal "RealOneTimes")
 (use "RealLeRefl")
 (autoreal)
-;; ?_20:~(x+ ~((1#2)*y))<<=(1#2)*y
+;; ?^21:~(x+ ~((1#2)*y))<<=(1#2)*y
 (simpreal "RealUMinusPlus")
 (simpreal "RealUMinusUMinus")
 (use "RealLePlusRInv")
@@ -65,10 +66,10 @@
 (use "RealLeRefl")
 (autoreal)
 (use "RealLeMonPlus")
-(use "0<<=x")
-(use "RealLeRefl")
 (autoreal)
-;; ?_16:2*((1#2)*y)<<=y
+(use "0<<=x")
+(autoreal)
+;; ?^16:2*((1#2)*y)<<=y
 (simpreal "RealTimesAssoc")
 (ng #t)
 (simpreal "RealOneTimes")
@@ -86,35 +87,34 @@
 (simpreal "RealTimesAssoc")
 (ng #t)
 (use "RealLeTrans" (pt "2*((1#2)*y)"))
-(use "RealLeMonTimes")
-(use "RatNNegToRealNNeg")
+(use "RealLeMonTimesR")
+(use "RatLeToRealLe")
 (use "Truth")
-;; ?_18:abs(x+(1#2)*y)<<=(1#2)*y
+;; ?^18:abs(x+(1#2)*y)<<=(1#2)*y
 (use "RealLeAbs")
 ;; 20,21
-;; ?_20:x+(1#2)*y<<=(1#2)*y
+;; ?^20:x+(1#2)*y<<=(1#2)*y
 (use "RealLeTrans" (pt "0+(1#2)*y"))
 (use "RealLeMonPlus")
-(use "x<<=0")
-(use "RealLeRefl")
 (autoreal)
+(use "x<<=0")
 (simpreal "RealPlusComm")
 (simpreal "RealPlusZero")
 (use "RealLeRefl")
 (autoreal)
-;; ?_21:~(x+(1#2)*y)<<=(1#2)*y
+;; ?^21:~(x+(1#2)*y)<<=(1#2)*y
 (simpreal "RealPlusComm")
 (simpreal "RealUMinusPlus")
 (use "RealLePlusRInv")
 (autoreal)
 (simpreal "<-" "RealTimesPlusDistr")
 (use "RealLeTrans" (pt "abs ~x"))
-(use "RealLeAbsId")
+(use "RealLeIdAbs")
 (autoreal)
 (simpreal "RealAbsUMinus")
 (use "RealLeTrans" (pt "y"))
 (use "abs x<<=y")
-;; ?_53:y<<=(1#2)*(y+y)
+;; ?^51:y<<=(1#2)*(y+y)
 (assert "y+y===2*y")
  (simpreal (pf "2*y===(RealPlus 1 1)*y"))
  (simpreal "RealTimesPlusDistrLeft")
@@ -151,12 +151,6 @@
  (use "yLBd")
  (use "Truth")
 (assume "RealLeToPosInst")
-(assert "Real(RealUDiv y 3)")
- (use "RealUDivReal")
- (autoreal) 
- (use "RealPosAbs")
- (use "RealLeToPosInst")
-(assume "R1/y")
 (simpreal "RealTimesAssoc")
 (ng #t)
 (simpreal "RealTimesPlusDistr")
@@ -169,7 +163,7 @@
 (simpreal "<-" "RealTimesIdUMinus")
 (simpreal (pf "(1#2)* ~y*RealUDiv y 3===RealUMinus(1#2)*y*RealUDiv y 3"))
 (simpreal "<-" "RealTimesAssoc")
-(simpreal "RealTimesUDiv")
+(simpreal "RealTimesUDivR")
 (ng #t)
 (simpreal "RealOneTimes")
 (use "RealEqTrans" (pt "x*RealUDiv y 3+RealPlus(IntN 1#2)(1#2)"))
@@ -182,7 +176,7 @@
 (autoreal)
 (use "RealLeToPosInst")
 (autoreal)
-;; ?_47:(1#2)* ~y*RealUDiv y 3=== ~(1#2)*y*RealUDiv y 3
+;; ?^41:(1#2)* ~y*RealUDiv y 3=== ~(1#2)*y*RealUDiv y 3
 (use "RealTimesCompat")
 (simpreal "RealTimesUMinusId")
 (simpreal "RealTimesIdUMinus")
@@ -191,6 +185,7 @@
 (use "RealEqRefl")
 (autoreal)
 ;; Proof finished.
+;; (cdp)
 (save "DivAuxEqR")
 
 ;; DivAuxEqL
@@ -204,12 +199,6 @@
  (use "yLBd")
  (use "Truth")
 (assume "RealLeToPosInst")
-(assert "Real(RealUDiv y 3)")
- (use "RealUDivReal")
- (autoreal) 
- (use "RealPosAbs")
- (use "RealLeToPosInst")
-(assume "R1/y")
 (simpreal "RealTimesAssoc")
 (ng #t)
 (simpreal "RealTimesPlusDistr")
@@ -220,7 +209,7 @@
 (simpreal "RealOneTimes")
 (simpreal "RealTimesPlusDistrLeft")
 (simpreal "<-" "RealTimesAssoc")
-(simpreal "RealTimesUDiv")
+(simpreal "RealTimesUDivR")
 (ng #t)
 (simpreal "<-" "RealPlusAssoc")
 (ng #t)
@@ -230,5 +219,6 @@
 (use "RealLeToPosInst")
 (autoreal)
 ;; Proof finished.
+;; (cdp)
 (save "DivAuxEqL")
 
