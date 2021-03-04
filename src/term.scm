@@ -1,4 +1,4 @@
-;; 2020-09-10.  term.scm
+;; 2021-02-24.  term.scm
 ;; 6. Terms
 ;; ========
 
@@ -394,8 +394,20 @@
 	 (type2 (term-to-type term2))
 	 (tsubst (make-substitution (list (py "alpha1") (py "alpha2"))
 				    (list type1 type2)))
-	 (constr (constr-name-to-constr "PairConstr" tsubst)))
+	 (constr (const-substitute
+		  (term-in-const-form-to-const
+		   (pt "(PairConstr alpha1 alpha2)"))
+		  tsubst #t)))
     (mk-term-in-app-form (make-term-in-const-form constr) term1 term2)))
+
+;; Code discarded 2021-02-13
+;; (define (make-term-in-pair-form-wrt-yprod term1 term2)
+;;   (let* ((type1 (term-to-type term1))
+;; 	 (type2 (term-to-type term2))
+;; 	 (tsubst (make-substitution (list (py "alpha1") (py "alpha2"))
+;; 				    (list type1 type2)))
+;; 	 (constr (constr-name-to-constr "PairConstr" tsubst)))
+;;     (mk-term-in-app-form (make-term-in-const-form constr) term1 term2)))
 
 (define (make-term-in-lcomp-form-wrt-yprod term)
   (let* ((type (term-to-type term))
@@ -6663,6 +6675,50 @@ intDestr n | n > 0  = Left n
 	 (subst (make-substitution
 		 total-vars (map make-term-in-var-form partial-vars))))
     (term-substitute term subst)))
+
+;; term-and-var-and-subterm-to-first-decomp-or-f added.  It returns
+;; the first term t(var) such that term is t(subterm), and #f if this
+;; is impossible.
+
+(define (term-and-var-and-subterm-to-first-decomp-or-f term var subterm)
+  (if (not (equal? (term-to-type subterm) (var-to-type var)))
+      (myerror "term-and-var-and-subterm-to-first-decomp-or-f"
+	       "subterm" subterm "of type" (term-to-type subterm)
+	       "should have the same type as variable" var "of type"
+	       (var-to-type var)))
+  (cond
+   ((term=? term subterm) (make-term-in-var-form var))
+   ((term-in-const-form? term) #f)
+   ((term-in-var-form? term) #f)
+   ((term-in-abst-form? term)
+    (let ((var1 (term-in-abst-form-to-var term))
+	  (kernel (term-in-abst-form-to-kernel term)))
+      (if (member var (term-to-free subterm)) #f
+	  (let ((prev (term-and-var-and-subterm-to-first-decomp-or-f
+		       kernel var subterm)))
+	    (if (not prev) #f
+		(make-term-in-abst-form var1 prev))))))
+   ((term-in-app-form? term)
+    (let* ((op (term-in-app-form-to-op term))
+	   (arg (term-in-app-form-to-arg term))
+	   (prev-op (term-and-var-and-subterm-to-first-decomp-or-f
+		     op var subterm)))
+      (if prev-op
+	  (make-term-in-app-form prev-op arg)
+	  (let ((prev-arg (term-and-var-and-subterm-to-first-decomp-or-f
+			   arg var subterm)))
+	    (if (not prev-arg) #f
+		(make-term-in-app-form op prev-arg))))))
+   (else (myerror "term-and-var-and-subterm-to-first-decomp-or-f"
+		  "term expected" term))))
+
+;; Test
+;; (define term (pt "x**n*y"))
+;; (define var (pv "z"))
+;; (define subterm (pt "x**n"))
+
+;; (pp (term-and-var-and-subterm-to-first-decomp-or-f term var subterm))
+;; z*y
 
 ;; 6-8. First order unification
 ;; ============================
