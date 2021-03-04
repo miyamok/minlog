@@ -1,4 +1,4 @@
-;; 2020-07-10.  formula.scm
+;; 2021-02-24.  formula.scm
 ;; 7. Formulas and comprehension terms
 ;; ===================================
 
@@ -4072,6 +4072,28 @@
     (apply make-aconst (append (list name kind uninst-fla undec-tpsubst)
 			       (aconst-to-computed-repro-data
 				aconst-without-repro-data)))))
+
+(define (eq-formula-to-lhs-and-rhs eq-fla)
+  (cond
+   ((and (atom-form? eq-fla)
+	 (let* ((kernel (atom-form-to-kernel eq-fla))
+		(op (term-in-app-form-to-final-op kernel)))
+	   (and (term-in-const-form? op)
+		(member (const-to-name (term-in-const-form-to-const op))
+			(list "=" "RatEqv")))))
+    (term-in-app-form-to-args (atom-form-to-kernel eq-fla)))
+   ((and (predicate-form? eq-fla)
+	 (let ((pred (predicate-form-to-predicate eq-fla)))
+	   (and (idpredconst-form? pred)
+		(member (idpredconst-to-name pred) (list "EqD" "RealEq")))))
+    (predicate-form-to-args eq-fla))
+   (else (myerror "eq-formula-to-lhs-and-rhs" "eq-formula expected" eq-fla))))
+
+;; Test
+;; (pp (cadr (eq-formula-to-lhs-and-rhs (pf "n=m"))))
+;; (pp (cadr (eq-formula-to-lhs-and-rhs (pf "a=b"))))
+;; (pp (cadr (eq-formula-to-lhs-and-rhs (pf "a eqd b"))))
+;; (pp (cadr (eq-formula-to-lhs-and-rhs (pf "x===y"))))
 
 ;; 7-2. Normalization
 ;; ==================
