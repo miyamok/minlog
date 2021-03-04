@@ -1,3 +1,181 @@
+Done in dev branch 2021-03-04
+
+In term.scm
+
+In make-term-in-pair-form-wrt-yprod const-substitute with tsubst used
+to build constr.  term-and-var-and-subterm-to-first-decomp-or-f added.
+It returns the first term t(var) such that term is t(subterm), and #f
+if this is impossible.
+
+In formula.scm
+
+eq-formula-to-lhs-and-rhs added.
+
+In pproof.scm
+
+RealEqElim0 RealEqElim1 replaced by RealEqToReal0 RealEqToReal1.
+RealMaxCompat RealMinCompat are treated similar to RealPlusCompat.
+RealExpCompat is formulated with the same exponents, which is part of
+the given term.  RealUDivCompat needs witnesses for the positivity of
+the reals or their absolute values.  This must be inferable by
+RealPosToPosAbs from the context.  realeq-term-compat extended to
+RealUDivCompat RealExpCompat RealMaxCompat RealMinCompat RealSum.
+realeq-formula-compat extended to RealConv.
+context-and-term-to-realproof extended to RealUDiv RealExp RealMax
+RealMin RealSum RealConv.  Auxiliary
+context-and-term-and-bd-to-abspos-proof added.
+term-and-alleq-fla-to-first-sumeq-fla-or-f added.  Let alleq-fla be
+all n lhs(n)===rhs(n).  It searches for the first occurrence of
+RealSum t1 t2([n]t(lhs(n))) in term and returns the sumeq-formula
+RealSum t1 t2([n]t(lhs(n)))===RealSum t1 t2([n]t(rhs(n))).  In case no
+such occurrence is found #f is returned.
+simprsum added.  It calls simpreal-with with a sumeq-formula RealSum
+t1 t2([n]t(lhs(n)))===RealSum t1 t2([n]t(rhs(n))) obtained by
+term-and-alleq-fla-to-first-sumeq-fla-or-f
+
+In ets.scm
+
+AtomEquivToEq added.
+
+In nat.scm
+
+NatMinusZero added.  Rewrite rule n<=n--m+m -> True added.
+In SuccNatMinus hypothesis m<n weakened to m<=n
+
+In pos.scm
+
+PosMinusOnePred added.  Rewrite rule 1<2**p -> True added.
+PosToNatMinus and PosPlusMinus adapted to the strengthened
+SuccNatMinus   PosLtMonPosExpTwo and PosLtMonPosExpTwoPos added.
+
+In int.scm
+
+IntPosTimes IntSNat added.  Rewrite rule 0<=k*k -> True added.
+IntExpTimes IntExpTimesPos added.  Theorems IntLePlusL IntLePlusLInv
+IntLePlusR IntLePlusRInv IntLeAbsMinus1 IntAbsPlusUMinus
+IntLeAbsMinus2 added.
+
+In rat.scm
+
+RatPosTimes added.  Rewrite rule a<=a+p -> True replaced by a<=a+(p#q)
+-> True.  Rewrite rule a<a+p -> True replaced by a<a+(p#q) -> True.
+Rewrite rule 0<=a*a -> True added.  RatLeMonExpBase RatLeExpBernoulli
+RatLeExpBernoulliPos RatEqvExpIntNegUDivExp RatExpCompatPos RatExpPosS
+RatExpSucc RatUDivExp RatUDivExpPos RatExpCompat RatExpNatTimes
+RatNotZeroToZeroLtAbs RatZeroLtAbsToNotZero RatUMinusLeToZeroLePlus
+RatZeroLePlusToUMinusLe RatZeroLePlusEqUMinusLe RatLePlusL
+RatLePlusLInv RatLeAbsMinus1 RatLeAbsMinus2 added.  RatLeUDiv
+RatLeUDivInv renamed into RatLeUDivUDiv RatLeUDivUDivInv
+
+In rea.scm
+
+Reasons for rewriting rea.scm:
+-- RealLe redefined without RealNNeg .
+-- RealEq x===y redefined as x<<=y<<=x
+
+RealConv defined.  Theorems RealLeMinusAbs RealLeAbsMinusAbs
+RealPosIntro RealPosElim RealPosToLe EfRealEq RealLeZeroSquare
+RealLeAbsMinus1 (add this for rat, int too -- done) RealLeAbsMinus2
+RealLeBound (Archimedian property) RealPosToZeroLe RealPosPosS
+RealPosSemiCompat NatToRealPlus RealConvLe RealConvEq RealNNegToZeroLe
+RealZeroLeToNNeg RealLeToNNeg RealNNegToLe RealPosAbsToPos
+RealNotPosToLe RealNotLtToLe RealLeToNotLt added.
+
+Strengthening RealUDivRealPosFree of RealUDivReal added.  Similarly
+RealAbsUDivPosFree RealTimesUDivPosFree
+
+RatPlusRealPlus RatUMinusRealUMinus RatAbsRealAbs moved to a new
+section Inclusion properties after 6.  Closure properties.  Proof
+of RatPlusRealPlus RatUMinusRealUMinus RatAbsRealAbs simplified
+using RealSeqEqToEq .  RatTimesRealTimes RatUDivRealUDiv
+RatExpRealExpNat RatExpRealExpPos RatMaxRealMax RatMinRealMin added.
+RealExpZeroLe added.
+
+RealUDivUDivReal RealUDivUDiv RealLeUDivUDiv RealLeUDivUDivInv
+RealTimesUDivR added.
+
+RealExp redefined for nat exponents.  RealExpTotal RealExpReal
+RealExpCompat RealExpPlus RealLeMonExp RealLeMonExpBase RealLeMonExpDecr
+RealLeExpBernoulli added.
+
+RealMax defined by a computation rule.  RealMaxTotal RealMaxRealAux
+RealMaxReal RealMaxUB1 RealMaxUB2 RealMaxLUB RealMaxEq1 RealMaxEq2
+RealLeMonMax RealMaxComm RealMaxAssoc RealMaxCompat RealAbsMax added.
+
+RealMin defined by a computation rule.  RealMinTotal RealMinRealAux
+RealMinReal RealMinLB1 RealMinLB2 RealMinGLB RealMinEq1 RealMinEq2
+RealLeMonMin RealMinComm RealMinAssoc RealMinCompat
+
+In rseq.scm
+
+New file, to be extended.  Contents:
+Completeness
+Convergence
+Sum
+Geometric sequence, sum and series
+Binomial coefficients and theorem
+
+In cont.scm
+
+Rewritten from libcont20.scm up to ContLim ContRat.
+
+In examples/analysis/sdcode.scm
+
+RealEqElim0 RealEqElim1 replaced by RealEqToReal0 RealEqToReal1.
+Proof of SdBoundReal simplified (RealNneg removed).  Proof of CoIToBd
+adapted (RealLeMonPlus -> RealLeMonPlusTwo, RealLeAbsId -> RealLeIdAbs,
+RealLeMonTimes -> RealLeMonTimesR).
+
+In examples/analysis/sdavaux.scm
+
+Proof of SdtwoBoundReal simplified.
+
+In examples/analysis/div.scm
+
+Updated.  RealNNeg x as premise replaced by 0<<=x.  RealTimesUDiv
+replaced by RealTimesUDivR
+
+In examples/analysis/sddiv.scm
+
+Updated.  RealNNeg x as premise replaced by 0<<=x.
+
+In examples/analysis/sdmult.scm
+
+Updated.  RealNNeg x as premise replaced by 0<<=x.
+
+In examples/analysis/graycode.scm
+
+Updated.  RealNNeg x as premise replaced by 0<<=x.
+
+In examples/analysis/grayavaux.scm
+
+Updated.  RealNNeg x as premise replaced by 0<<=x.
+
+In examples/analysis/graydiv.scm
+
+Updated.  RealNNeg x as premise replaced by 0<<=x.
+
+In examples/analysis/graymult.scm
+
+Updated.  RealNNeg x as premise replaced by 0<<=x.
+
+In examples/analysis/sdlim.scm
+
+Updated.  RealNNeg x as premise replaced by 0<<=x.
+
+In examples/analysis/ivt.scm
+
+Soundness proofs added.
+
+In examples/analysis/sqrt2.scm
+
+Updated.
+
+In examples/analysis/ishihara.scm
+
+Updated.  RealNNeg x as premise replaced by 0<<=x.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Done in dev branch 2020-12-19
 
 In lib/mtr.scm
