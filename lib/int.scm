@@ -1,4 +1,4 @@
-;; 2020-08-28.  int.scm
+;; 2021-02-24.  int.scm
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -5287,6 +5287,82 @@
 ;; Proof finished.
 (add-rewrite-rule "k+j<k+i" "j<i")
 
+;; Inserted 2021-02-24
+
+;; IntLePlusL
+(set-goal "all k,j,i(j<= ~k+i -> k+j<=i)")
+(assume "k" "j" "i" "j<= ~k+i")
+(simp "<-" "IntLe18RewRule" (pt "~k"))
+(use "j<= ~k+i")
+;; Proof finished.
+;; (cdp)
+(save "IntLePlusL")
+
+;; IntLePlusLInv
+(set-goal "all k,j,i(k+j<=i -> j<= ~k+i)")
+(assume "k" "j" "i" "k+j<=i")
+(simp "<-" "IntLe18RewRule" (pt "k"))
+(use "k+j<=i")
+;; Proof finished.
+;; (cdp)
+(save "IntLePlusLInv")
+
+;; IntLePlusR
+(set-goal "all k,j,i(~j+k<=i -> k<=j+i)")
+(assume "k" "j" "i" "~j+k<=i")
+(simp "<-" "IntLe18RewRule" (pt "~j"))
+(use "~j+k<=i")
+;; Proof finished.
+;; (cdp)
+(save "IntLePlusR")
+
+;; IntLePlusRInv
+(set-goal "all k,j,i(k<=j+i -> ~j+k<=i)")
+(assume "k" "j" "i" "k<=j+i")
+(simp "<-" "IntLe18RewRule" (pt "j"))
+(use "k<=j+i")
+;; Proof finished.
+;; (cdp)
+(save "IntLePlusRInv")
+
+;; IntLeAbsMinus1
+(set-goal "all k,j,i(abs(k+ ~j)<=i -> k<=j+i)")
+(assume "k" "j" "i" "LeHyp")
+(use "IntLePlusR")
+(simp "IntPlusComm")
+(use "IntLeTrans" (pt "abs(k+ ~j)"))
+(use "Truth")
+(use "LeHyp")
+;; Proof finished.
+;; (cdp)
+(save "IntLeAbsMinus1")
+
+;; IntAbsPlusUMinus
+(set-goal "all k,j abs(k+ ~j)=abs(j+ ~k)")
+(assume "k" "j")
+(simp "<-" "IntAbs0RewRule")
+(ng #t)
+(simp "IntPlusComm")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "IntAbsPlusUMinus")
+
+;; IntLeAbsMinus2
+(set-goal "all k,j,i(abs(k+ ~j)<=i -> j<=k+i)")
+(assume "k" "j" "i" "LeHyp")
+(use "IntLePlusR")
+(use "IntLeTrans" (pt "abs(~k+j)"))
+(use "Truth")
+(simp "IntPlusComm")
+(simp "IntAbsPlusUMinus")
+(use "LeHyp")
+;; Proof finished.
+;; (cdp)
+(save "IntLeAbsMinus2")
+
+;; End of insertion 2021-02-24
+
 ;; NatLeToIntLe
 (set-goal "all n,m(n<=m -> IntLe n m)")
 (assume "n")
@@ -5922,6 +5998,16 @@
 ;; Proof finished.
 (add-rewrite-rule "IntS n<=0" "False")
 
+;; IntSNat
+(set-goal "all n IntS(NatToInt n)=Succ n")
+(cases)
+(use "Truth")
+(strip)
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "IntSNat")
+
 ;; NatToIntLe
 (set-goal "all n,m (NatToInt n<=NatToInt m)=(n<=m)")
 (ind)
@@ -5935,4 +6021,88 @@
 ;; Proof finished.
 ;; (cdp)
 (save "NatToIntLe")
+
+;; IntPosTimes
+(set-goal "all k,j(0<k*j -> 0<=k -> 0<j)")
+(cases)
+(assume "p")
+(cases)
+(strip)
+(use "Truth")
+(assume "Absurd" "Useless")
+(use "Absurd")
+(assume "q" "Absurd" "Useless")
+(use "Absurd")
+;; 3
+(assume "j" "Absurd" "Useless")
+(use "EfAtom")
+(use "Absurd")
+;; 4
+(assume "p")
+(cases)
+(strip)
+(use "Truth")
+(assume "Absurd" "Useless")
+(use "Absurd")
+(assume "q" "Useless" "Absurd")
+(use "Absurd")
+;; Proof finished.
+;; (cdp)
+(save "IntPosTimes")
+
+(set-goal "all k 0<=k*k")
+(cases)
+;; 2-4
+(assume "p")
+(use "Truth")
+;; 3
+(use "Truth")
+;; 4
+(assume "p")
+(use "Truth")
+;; Proof finished.
+(add-rewrite-rule "0<=k*k" "True")
+
+;; IntExpTimes
+(set-goal "all k,j,n (k*j)**n=k**n*j**n")
+(assume "k" "j")
+(ind)
+(use "Truth")
+(assume "n" "IH")
+(ng #t)
+(simp "IH")
+(simp "<-" "IntTimesAssoc")
+(simp "<-" "IntTimesAssoc")
+(simp "<-" "IntTimesAssoc")
+(simp "<-" "IntTimesAssoc")
+(simp "<-" (pf "k*(j**n*j)=(j**n*(k*j))"))
+(use "Truth")
+(simp "IntTimesComm")
+(simp (pf "k*j=j*k"))
+(use "Truth")
+(use "IntTimesComm")
+;; Proof finished.
+;; (cdp)
+(save "IntExpTimes")
+
+;; IntExpTimesPos
+(set-goal "all k,p,n (k*p)**n=k**n*p**n")
+(assume "k" "p")
+(ind)
+(use "Truth")
+(assume "n" "IH")
+(ng #t)
+(simp "IH")
+(simp "<-" "IntTimesAssoc")
+(simp "<-" "IntTimesAssoc")
+(simp "<-" "IntTimesAssoc")
+(simp "<-" (pf "k*(p**n*p)=(p**n*(k*p))"))
+(use "Truth")
+(simp "IntTimesComm")
+(simp (pf "k*p=p*k"))
+(use "Truth")
+(use "IntTimesComm")
+;; Proof finished.
+;; (cdp)
+(save "IntExpTimesPos")
 
