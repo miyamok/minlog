@@ -1,4 +1,4 @@
-;; 2020-12-15.  ets.scm
+;; 2021-02-24.  ets.scm
 ;; 16. Extracted terms
 ;; ===================
 
@@ -2360,6 +2360,20 @@
 (use "P1a")
 ;; Proof finished.
 (save "StabAllImp")
+
+;; AtomEquivToEq
+(set-goal
+ "all boole1,boole2((boole1 -> boole2) -> (boole2 -> boole1) -> boole1=boole2)")
+(cases)
+(cases)
+(prop)
+(prop)
+(cases)
+(prop)
+(prop)
+;; Proof finished.
+;; (cdp)
+(save "AtomEquivToEq")
 
 ;; EqDSym
 (set-goal "all alpha^1,alpha^2(alpha^1 eqd alpha^2 -> alpha^2 eqd alpha^1)")
