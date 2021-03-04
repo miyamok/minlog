@@ -1,4 +1,4 @@
-;; 2019-08-28.  pos.scm
+;; 2021-03-01.  pos.scm
 
 ;; (load "~/git/minlog/init.scm")
 ;; (set! COMMENT-FLAG #f)
@@ -3742,9 +3742,9 @@
 (ng)
 (use "Truth")
 (use "q<p")
-(simp "NatDoubleLt")
-(simp "PosToNatLt")
-(use "q<p")
+(simp "NatDoubleLe")
+(simp "PosToNatLe")
+(use "q<=p")
 ;; 43
 (assume "q=p")
 (simp "q=p")
@@ -3760,6 +3760,92 @@
 ;; Proof finished.
 ;; (cdp)
 (save "PosToNatMinus")
+
+;; Code discarded 2021-02-15
+;; ;; PosToNatMinus
+;; (set-goal "all p,q(q<p -> PosToNat(p--q)=PosToNat p--PosToNat q)")
+;; (ind)
+;; ;; 2-4
+;; (assume "q" "Absurd")
+;; (use "EfAtom")
+;; (use "Absurd")
+;; ;; 3
+;; (assume "p" "IH1")
+;; (ind)
+;; ;; 8-10
+;; (ng)
+;; ;; ?^11:T -> PosToNat(PosPred(SZero p))=Pred(NatDouble(PosToNat p))
+;; (simp "NatDoubleSZero")
+;; (simp "PredPosPred")
+;; (assume "Useless")
+;; (use "Truth")
+;; (ng)
+;; (use "Truth")
+;; ;; 9
+;; (assume "q" "IH2" "q<p")
+;; (ng)
+;; (simp "IH1")
+;; (simp "NatDoubleMinus")
+;; (use "Truth")
+;; (use "q<p")
+;; ;; 10
+;; (ng)
+;; (assume "q" "IH2")
+;; (assume "q<p")
+;; (simp "<-" "NatDoubleMinus")
+;; (simp "<-" "PredPosPred")
+;; (simp "<-" "NatDoubleSZero")
+;; (simp "IH1")
+;; (use "Truth")
+;; (use "q<p")
+;; (ng)
+;; (use "Truth")
+;; ;; 4
+;; (assume "p" "IH1")
+;; (ind)
+;; ;; 33-35
+;; (ng)
+;; (strip)
+;; (use "Truth")
+;; ;; 34
+;; (assume "q" "IH2")
+;; (ng)
+;; (assume "q<=p")
+;; (use "PosLeCases" (pt "q") (pt "p"))
+;; (use "q<=p")
+;; (assume "q<p")
+;; (assert "p=q -> q<q")
+;;  (assume "p=q")
+;;  (simphyp-with-to "q<p" "p=q" "Absurd")
+;;  (use "Absurd")
+;; (assume "p=q -> F")
+;; (simp "p=q -> F")
+;; (ng #t)
+;; (simp "<-" "SuccNatMinus")
+;; (simp "<-" "NatDoubleMinus")
+;; (ng)
+;; (simp "IH1")
+;; (ng)
+;; (use "Truth")
+;; (use "q<p")
+;; (simp "NatDoubleLt")
+;; (simp "PosToNatLt")
+;; (use "q<p")
+;; ;; 43
+;; (assume "q=p")
+;; (simp "q=p")
+;; (ng)
+;; (use "Truth")
+;; ;; 35
+;; (assume "q" "IH2" "q<p")
+;; (ng #t)
+;; (simp "IH1")
+;; (simp "NatDoubleMinus")
+;; (use "Truth")
+;; (use "q<p")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save "PosToNatMinus")
 
 ;; NatToPosMinus
 (set-goal "all n,m(Zero<m -> m<n -> NatToPos(n--m)=NatToPos n--NatToPos m)")
@@ -3883,6 +3969,33 @@
 ;; Proof finished.
 ;; (cdp)
 (save "PosPlusMinus")
+
+;; Code discarded 2021-02-15
+;; ;; PosPlusMinus
+;; (set-goal "all p,q,r(r<q -> p+(q--r)=p+q--r)")
+;; (assume "p" "q" "r" "r<q")
+;; (assert
+;;  "NatToPos(PosToNat(p+(q--r)))=NatToPos(PosToNat(p+q--r))")
+;;  (simp "PosToNatPlus")
+;;  (simp "PosToNatMinus")
+;;  (simp "PosToNatMinus")
+;;  (simp "PosToNatPlus")
+;;  (simp "NatPlusMinus")
+;;  (use "Truth")
+;;  (use "NatLtToLe")
+;;  (simp "PosToNatLt")
+;;  (use "r<q")
+;;  (use "PosLtTrans" (pt "q"))
+;;  (use "r<q")
+;;  (use "Truth")
+;;  (use "r<q")
+;;  (simp "NatToPosToNatId")
+;;  (simp "NatToPosToNatId")
+;; (assume "Assertion")
+;; (use "Assertion")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save "PosPlusMinus")
 
 ;; PosMinusPlus
 (set-goal "all p,q,r(r<p -> p--r+q=p+q--r)")
@@ -5063,6 +5176,15 @@
 ;; (cdp)
 (add-rewrite-rule "p<2**p" "True")
 
+(set-goal "all p 1<2**p")
+(assume "p")
+(use "PosLeLtTrans" (pt "p"))
+(use "Truth")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(add-rewrite-rule "1<2**p" "True")
+
 ;; NatLtZeroPosToNat
 (set-goal "all p Zero<p")
 (ind)
@@ -5240,4 +5362,56 @@
 ;; Proof finished.
 ;; (cdp)
 (save "SZeroPosTimes")
+
+;; PosMinusOnePred
+(set-goal "all p(1<p -> p--1=PosPred p)")
+(cases)
+;; 2-4
+(assume "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 3
+(assume "p" "Useless")
+(use "Truth")
+;; 4
+(assume "p" "Useless")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "PosMinusOnePred")
+
+;; PosLtMonPosExpTwo
+(set-goal "all n,m(n<m -> 2**n<2**m)")
+(ind)
+;; 3,4
+(cases)
+(assume "Absurd")
+(use "EfAtom")
+(use "Absurd")
+(assume "n" "Useless")
+(use "Truth")
+;; 4
+(assume "n" "IH")
+(cases)
+(assume "Absurd")
+(use "EfAtom")
+(use "Absurd")
+(assume "m")
+(ng)
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(save "PosLtMonPosExpTwo")
+
+;; PosLtMonPosExpTwoPos
+(set-goal "all p,q(p<q -> 2**p<2**q)")
+(assume "p" "q" "p<q")
+(assert "NatLt p q")
+(simp "PosToNatLt")
+(use "p<q")
+(use "PosLtMonPosExpTwo")
+;; Proof finished.
+;; (cdp)
+(save "PosLtMonPosExpTwoPos")
+
 
