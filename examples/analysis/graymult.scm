@@ -1,4 +1,4 @@
-;; 2020-07-22.  examples/analysis/graymult.scm.
+;; 2021-03-04.  examples/analysis/graymult.scm.
 
 (load "~/git/minlog/init.scm")
 
@@ -9,7 +9,6 @@
 (libload "pos.scm")
 (libload "int.scm")
 (libload "rat.scm")
-(remove-var-name "x" "y" "z")
 (libload "rea.scm")
 ;; (set! COMMENT-FLAG #t)
 
@@ -4078,7 +4077,7 @@
 ;; We distinguish cases on CoG z
 (inst-with-to "CoGClosure" (pt "z") "CoGz" "zCases")
 (elim "zCases")
-;; 61,62
+;; 57,58
 (drop "zCases")
 
 ;; Subcase Ux, LRz
@@ -4188,9 +4187,9 @@
 (simpreal "RealAbsTimes")
 (use "RealLeTrans" (pt "RealTimes(1#4)4"))
 (use "RealLeMonTimesTwo")
-(use "RatNNegToRealNNeg")
-(use "Truth")
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
+(autoreal)
+(use "RealLeZeroAbs")
 (autoreal)
 (use "RatLeToRealLe")
 (use "Truth")
@@ -4201,17 +4200,16 @@
 (use "RealLeAbsPlus")
 (autoreal)
 (use "RealLeMonPlus")
+(autoreal)
 (use "RealLeAbsPlus")
 (autoreal)
-(use "RatLeToRealLe")
-(use "Truth")
-(use "RealLeMonPlus")
-(use "RealLeMonPlus")
+(use "RealLeMonPlusTwo")
+(use "RealLeMonPlusTwo")
 (simpreal "RealAbsTimes")
 (use "RealLeMonTimesTwo")
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
 (use "xBd")
 (use "yBd")
@@ -4353,9 +4351,9 @@
 (simpreal "RealAbsTimes")
 (use "RealLeTrans" (pt "RealTimes 1 1"))
 (use "RealLeMonTimesTwo")
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
 (use "CoGToBd")
 (use "CoGx1")
@@ -4373,9 +4371,9 @@
 (simpreal "RealAbsTimes")
 (use "RealLeTrans" (pt "RealTimes 1 1"))
 (use "RealLeMonTimesTwo")
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
 (use "CoGToBd")
 (use "CoGz1")
@@ -4484,7 +4482,7 @@
 (use "Truth")
 ;; ?^200:z2===z2
 (use "RealEqRefl")
-(use "RealEqElim0" (pt "(1#4)*(x*y+z+i)"))
+(use "RealEqToReal0" (pt "(1#4)*(x*y+z+i)"))
 (use "ixyzProp")
 
 ;; ?_22:exr j,d,x0,y0,z0(
@@ -4596,7 +4594,7 @@
 (use "Truth")
 ;; ?^340:z2===z2
 (use "RealEqRefl")
-(use "RealEqElim0" (pt "(1#4)*(x*y+z+i)"))
+(use "RealEqToReal0" (pt "(1#4)*(x*y+z+i)"))
 (use "ixyzProp")
 ;; 303
 (drop "Disj")
@@ -4619,9 +4617,9 @@
 (simpreal "RealAbsTimes")
 (use "RealLeTrans" (pt "RealTimes 1 1"))
 (use "RealLeMonTimesTwo")
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
 (use "CoGToBd")
 (use "CoGx1")
@@ -4639,9 +4637,9 @@
 (simpreal "RealAbsTimes")
 (use "RealLeTrans" (pt "RealTimes 1 1"))
 (use "RealLeMonTimesTwo")
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
 (use "CoGToBd")
 (use "CoGz1")
@@ -4739,7 +4737,7 @@
 (use "Truth")
 ;; ?^448:z2===z2
 (use "RealEqRefl")
-(use "RealEqElim0" (pt "(1#4)*(x*y+z+i)"))
+(use "RealEqToReal0" (pt "(1#4)*(x*y+z+i)"))
 (use "ixyzProp")
 
 ;; ?_267:exr d,j,x0,z0(
