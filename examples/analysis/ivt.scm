@@ -1,7 +1,4 @@
-;; 2020-08-13.  ivt.scm
-
-;; The part on the intermediate value theorem of the previous file
-;; cont.scm updated according to libcont20.scm and moved here.
+;; 2021-03-04.  ivt.scm
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -11,7 +8,6 @@
 (libload "pos.scm")
 (libload "int.scm")
 (libload "rat.scm")
-(remove-var-name "x" "y" "z")
 (libload "rea.scm")
 (libload "cont.scm")
 ;; (set! COMMENT-FLAG #t)
@@ -62,6 +58,24 @@
 ;; Proof finished.
 ;; (cdp)
 (save "ApproxSplitBoole")
+
+(add-sound "ApproxSplitBoole")
+
+;; ok, ApproxSplitBooleSound has been added as a new theorem:
+
+;; allnc x,x0,x1,p(
+;;  Real x -> 
+;;  Real x0 -> 
+;;  Real x1 -> 
+;;  RealLt x x0 p -> 
+;;  (ExLTMR (cterm (boole) (boole -> x1<<=x0) andnc ((boole -> F) -> x<<=x1)))
+;;  (cApproxSplitBoole x x0 x1 p))
+
+;; with computation rule
+
+;; cApproxSplitBoole eqd cApproxSplitPos
+
+;; We do not deanimate ApproxSplitBoole since the extracted term is short.
 
 ;; We first prove an auxiliary lemma IVTAux, for the construction step.
 
@@ -753,145 +767,61 @@
 ;; (cdp)
 (save "IVTAux")
 
-(define IVTAux-neterm
-  (rename-variables (nt (proof-to-extracted-term
-			 (theorem-name-to-proof "IVTAux")))))
-
-;; (pp IVTAux-neterm)
+(define eterm (proof-to-extracted-term))
+(define IVTAux-neterm (rename-variables (nt eterm)))
+;; (ppc IVTAux-neterm)
 
 ;; [f,p,p0,cd]
 ;;  [let cd0
 ;;    ((1#3)*(lft cd+lft cd+rht cd)pair(1#3)*(lft cd+rht cd+rht cd))
-;;    [if (cApproxSplitBoole
-;;         (RealConstr(f approx(lft cd0 max f doml min f domr))
-;;          ([p1]ContuMod f(PosS p1)))
-;;         (RealConstr(f approx(rht cd0 max f doml min f domr))
-;;          ([p1]ContuMod f(PosS p1)))
+;;    [case (cApproxSplitPos
+;;           (RealConstr(f approx(lft cd0 max f doml min f domr))
+;;            ([p1]f uMod(PosS p1)))
+;;           (RealConstr(f approx(rht cd0 max f doml min f domr))
+;;            ([p1]f uMod(PosS p1)))
+;;           0
+;;           (2+p0+p))
+;;     (True -> lft cd pair rht cd0)
+;;     (False -> lft cd0 pair rht cd)]]
+
+(animate "Id") ;needed for add-sound since let is present
+(add-sound "IVTAux")
+
+;; ok, IVTAuxSound has been added as a new theorem:
+
+;; allnc f,q(
+;;  Cont f -> 
+;;  f f doml<<=0 -> 
+;;  0<<=f f domr -> 
+;;  all c,d,p(f doml<=c -> d<=f domr -> c+(1#2**p)<=d ->
+;;            RealLt(f c)(f d)(p+q)) -> 
+;;  allnc p,cd(
+;;   Corr f(lft cd)(rht cd)p -> 
+;;   (ExLTMR (cterm (cd0) 
+;;             Corr f(lft cd0)(rht cd0)(PosS p) andnc 
+;;             lft cd<=lft cd0 andnc 
+;;             rht cd0<=rht cd andnc rht cd0-lft cd0==(2#3)*(rht cd-lft cd)))
+;;   (cIVTAux f q p cd)))
+
+;; with computation rule
+
+;; cIVTAux eqd
+;; ([f,p,p0,cd]
+;;   [if (cApproxSplitPos
+;;         (RealConstr
+;;          (f approx((1#3)*(lft cd+lft cd+rht cd)max f doml min f domr))
+;;          ([p1]f uMod(PosS p1)))
+;;         (RealConstr
+;;          (f approx((1#3)*(lft cd+rht cd+rht cd)max f doml min f domr))
+;;          ([p1]f uMod(PosS p1)))
 ;;         0
 ;;         (2+p0+p))
-;;     (lft cd pair rht cd0)
-;;     (lft cd0 pair rht cd)]]
+;;     (lft cd pair(1#3)*(lft cd+rht cd+rht cd))
+;;     ((1#3)*(lft cd+lft cd+rht cd)pair rht cd)])
 
-;; 2019-07-22.  Done up to this point.  To do: animate ApproxSplit, then
-;; prove ApproxSplitSound, and then danimate ApproxSplit.  Do the same
-;; for ApproxSplitBoole and IVTAux.
+(deanimate "IVTAux")
+(deanimate "Id")
 
-(animate "ApproxSplit")
-
-;; CApproxSplitDef
-(set-goal "allnc x,x0,x1,p(cApproxSplit x x0 x1 p eqd
- [if x
-   ([as,M]
-    [if x0
-      ([as0,M0]
-       [if x1
-         ([as1,M1]
-          as1(M1(PosS(PosS p))max M0(PosS(PosS p))max M(PosS(PosS p)))<=
-          (as(M0(PosS(PosS p))max M(PosS(PosS p)))+
-           as0(M0(PosS(PosS p))max M(PosS(PosS p))))*
-          (1#2))])])])")
-(strip)
-(use "InitEqD")
-;; Proof finished.
-;; (cdp)
-(save "CApproxSplitDef")
-
-(deanimate "ApproxSplit")
-
-(animate "ApproxSplit")
-(animate "ApproxSplitBoole")
-
-;; ApproxSplitBooleSound
-(set-goal (real-and-formula-to-mr-formula
-	   (pt "cApproxSplitBoole")
-	   (proof-to-formula (theorem-name-to-proof "ApproxSplitBoole"))))
-(assume "x" "x0" "x1" "p" "Rx" "Rx0" "Rx1" "x<x0")
-(use (proof-to-soundness-proof
-      (theorem-name-to-proof "ApproxSplitBoole")))
-(auto)
-;; Proof finished.
-	   
-;; (pp "ApproxSplitBoole")
-
-;; ApproxSplitBooleSoundCor
-(set-goal "allnc x,x0,x1,p(Real x -> Real x0 -> Real x1 -> RealLt x x0 p -> 
- exnc boole(boole eqd cApproxSplitBoole x x0 x1 p andnc
-            (boole -> x1<<=x0) andnc ((boole -> F) -> x<<=x1)))")
-(assume "x" "x0" "x1" "p" "Rx" "Rx0" "Rx1" "x<x0")
-(intro 0 (pt "cApproxSplitBoole x x0 x1 p"))
-(split)
-(use "InitEqD")
-(use-with
- "ExLTMRElim" (py "boole")
- (make-cterm (pv "boole")
-	     (pf "(boole -> x1<<=x0) andnc ((boole -> F) -> x<<=x1)"))
- (pt "cApproxSplitBoole x x0 x1 p")
- "?")
-(use (proof-to-soundness-proof
-      (theorem-name-to-proof "ApproxSplitBoole")))
-(auto)
-;; Proof finished.
-;; (cdp)
-(save "ApproxSplitBooleSoundCor")
-
-;; (pp (rename-variables (nt (pt "cApproxSplit x x0 x1 p"))))
-
-;; CApproxSplitBooleDef
-(set-goal "allnc x,x0,x1,p(cApproxSplitBoole x x0 x1 p eqd
- [if x
-  ([as,M]
-   [if x0
-     ([as0,M0]
-      [if x1
-        ([as1,M1]
-         as1(M1(PosS(PosS p))max M0(PosS(PosS p))max M(PosS(PosS p)))<=
-         (as(M0(PosS(PosS p))max M(PosS(PosS p)))+
-          as0(M0(PosS(PosS p))max M(PosS(PosS p))))*
-         (1#2))])])])")
-(strip)
-(use "InitEqD")
-;; Proof finished.
-;; (cdp)
-(save "CApproxSplitBooleDef")
-
-(deanimate "ApproxSplit")
-(deanimate "ApproxSplitBoole")
-
-;; (pp "IVTAux")
-
-(animate "ApproxSplit")
-(animate "ApproxSplitBoole")
-(animate "Id")
-(animate "IVTAux")
-
-;; CIVTAuxDef
-(set-goal "allnc f,q,p0,cd(cIVTAux f q p0 cd eqd
- [if (0<=
-      (f approx((1#3)*(lft cd+lft cd+rht cd)max f doml min f domr)
-       (f uMod(PosS(PosS(PosS(2+p0+q)))))+
-       f approx((1#3)*(lft cd+rht cd+rht cd)max f doml min f domr)
-       (f uMod(PosS(PosS(PosS(2+p0+q))))))*
-      (1#2))
-  (lft cd pair(1#3)*(lft cd+rht cd+rht cd))
-  ((1#3)*(lft cd+lft cd+rht cd)pair rht cd)])")
-(strip)
-(use "InitEqD")
-;; Proof finished.
-;; (cdp)
-(save "CIVTAuxDef")
-
-;; (pp (rename-variables (nt (pt "cIVTAux f q p0 cd"))))
-
-;; IVTAuxSound
-(set-goal (real-and-formula-to-mr-formula
-	   (pt "cIVTAux")
-	   (proof-to-formula (theorem-name-to-proof "IVTAux"))))
-;; (assume "x" "x0" "x1" "p" "Rx" "Rx0" "Rx1" "x<x0")
-(use (proof-to-soundness-proof (theorem-name-to-proof "IVTAux")))
-;; Proof finished.
-;; (cdp)
-(save "IVTAuxSound")
-	   
 ;; IVTAuxSoundCor
 (set-goal "allnc f,q(
  Cont f -> 
@@ -917,16 +847,11 @@
             rht cd0<=rht cd andnc rht cd0-lft cd0==(2#3)*(rht cd-lft cd)"))
  (pt "cIVTAux f q p cd")
  "?")
-(use (proof-to-soundness-proof (theorem-name-to-proof "IVTAux")))
+(use "IVTAuxSound")
 (auto)
 ;; Proof finished.
 ;; (cdp)
 (save "IVTAuxSoundCor")
-
-(deanimate "ApproxSplit")
-(deanimate "ApproxSplitBoole")
-(deanimate "Id")
-(deanimate "IVTAux")
 
 (add-var-name "xx" "yy" (py "alpha"))
 (add-var-name "xxs" (py "nat=>alpha"))
@@ -1006,55 +931,28 @@
 ;; (cdp)
 (save "DC")
 
-(define DC-neterm (rename-variables (nt (proof-to-extracted-term))))
+(define eterm (proof-to-extracted-term))
+(define DC-neterm (rename-variables (nt eterm)))
 (pp DC-neterm)
 ;; [xx,g,n](Rec nat=>alpha)n xx g
 
-(animate "DC")
+(add-sound "DC")
 
-;; CDCDef
-(set-goal "all xx,g,n (cDC alpha)xx g n eqd (Rec nat=>alpha)n xx g")
-(strip)
-(use "InitEqD")
-;; Proof finished.
-;; (cdp)
-(save "CDCDef")
+;; ok, DCSound has been added as a new theorem:
 
-;; DCSound
-(set-goal (real-and-formula-to-mr-formula
-	   (pt "(cDC alpha)")
-	   (proof-to-formula (theorem-name-to-proof "DC"))))
-(use (proof-to-soundness-proof (theorem-name-to-proof "DC")))
-;; Proof finished.
-;; (cdp)
-(save "DCSound")
+;; allnc xx,g(
+;;  RR^ Zero xx -> 
+;;  all n,xx0(RR^ n xx0 -> RR^(Succ n)(g n xx0) andnc SS^ n xx0(g n xx0)) -> 
+;;  (ExLTMR (cterm (xxs) 
+;;            xxs Zero eqd xx andnc 
+;;            all n RR^ n(xxs n) andnc all n SS^ n(xxs n)(xxs(Succ n))))
+;;  ((cDC alpha)xx g))
 
-;; DCSoundCor
-(set-goal "allnc xx,g(
- RR^ Zero xx -> 
- all n,xx0(RR^ n xx0 -> RR^(Succ n)(g n xx0) andnc SS^ n xx0(g n xx0)) -> 
- exnc xxs(xxs eqd (cDC alpha)xx g andnc
-          xxs Zero eqd xx andnc 
-          all n RR^ n(xxs n) andnc all n SS^ n(xxs n)(xxs(Succ n))))")
-(assume "xx" "g" "Init" "Step")
-(intro 0 (pt "(cDC alpha)xx g"))
-(split)
-(use "InitEqD")
-(use-with
- "ExLTMRElim" (py "nat=>alpha")
- (make-cterm (pv "xxs")
-	     (pf "xxs Zero eqd xx andnc 
-                  all n RR^ n(xxs n) andnc all n SS^ n(xxs n)(xxs(Succ n))"))
- (pt "(cDC alpha)xx g")
- "?")
-(use (proof-to-soundness-proof (theorem-name-to-proof "DC")))
-(auto)
-(use "Step")
-;; Proof finished.
-;; (cdp)
-(save "DCSoundCor")
+;; with computation rule
 
-(deanimate "DC")
+;; (cDC alpha)eqd([xx,g,n](Rec nat=>alpha)n xx g)
+
+;; We do not deanimate DC since the extracted term is short.
 
 (add-var-name "cds" (py "nat=>rat yprod rat"))
 
@@ -1117,32 +1015,32 @@
 ;; Proof finished.
 ;; (cdp)
 (save "IVTcds")
- 
-(define IVTcds-neterm
-  (rename-variables (nt (proof-to-extracted-term
-			 (theorem-name-to-proof "IVTcds")))))
 
-;; (pp IVTcds-neterm);; [f,p,p0]
-;;  (cDC rat yprod rat)(f doml pair f domr)
-;;  ([n]
+(define eterm (proof-to-extracted-term)) 
+(define IVTcds-neterm (rename-variables (nt eterm)))
+(pp IVTcds-neterm)
+
+;; [f,p,p0,n]
+;;  (Rec nat=>rat yprod rat)n(f doml pair f domr)
+;;  ([n0]
 ;;    cIVTAux f p
-;;    [if (NatEven(p0+n))
+;;    [if (NatEven(p0+n0))
 ;;      (SZero
-;;      ((GRecGuard nat pos)([n0]n0)(NatHalf(p0+n))
-;;       ([n0,(nat=>pos)]
-;;         [if (NatEven n0)
-;;           (SZero((nat=>pos)(NatHalf n0)))
-;;           [if (n0=Succ Zero) 1 (SOne((nat=>pos)(NatHalf n0)))]])
-;;       (NatHalf(p0+n)<p0+n)))
-;;      [if (p0+n=Succ Zero)
+;;      ((GRecGuard nat pos)([n1]n1)(NatHalf(p0+n0))
+;;       ([n1,(nat=>pos)]
+;;         [if (NatEven n1)
+;;           (SZero((nat=>pos)(NatHalf n1)))
+;;           [if (n1=Succ Zero) 1 (SOne((nat=>pos)(NatHalf n1)))]])
+;;       (NatHalf(p0+n0)<p0+n0)))
+;;      [if (p0+n0=Succ Zero)
 ;;       1
 ;;       (SOne
-;;       ((GRecGuard nat pos)([n0]n0)(NatHalf(p0+n))
-;;        ([n0,(nat=>pos)]
-;;          [if (NatEven n0)
-;;            (SZero((nat=>pos)(NatHalf n0)))
-;;            [if (n0=Succ Zero) 1 (SOne((nat=>pos)(NatHalf n0)))]])
-;;        (NatHalf(p0+n)<p0+n)))]])
+;;       ((GRecGuard nat pos)([n1]n1)(NatHalf(p0+n0))
+;;        ([n1,(nat=>pos)]
+;;          [if (NatEven n1)
+;;            (SZero((nat=>pos)(NatHalf n1)))
+;;            [if (n1=Succ Zero) 1 (SOne((nat=>pos)(NatHalf n1)))]])
+;;        (NatHalf(p0+n0)<p0+n0)))]])
 
 ;; Might be shortened with cPosSNatToPos, for
 ;; PosSNatToPos
@@ -1151,96 +1049,52 @@
 
 ;; (pp "IVTcds")
 
-(animate "IVTcds");; CIVTcdsDef
-(set-goal "all f,q,p(cIVTcds f q p eqd (cDC rat yprod rat)(f doml pair f domr)
-([n]
-  cIVTAux f q
-  [if (NatEven(p+n))
-    (SZero
-    ((GRecGuard nat pos)([n0]n0)(NatHalf(p+n))
-     ([n0,(nat=>pos)]
-       [if (NatEven n0)
-         (SZero((nat=>pos)(NatHalf n0)))
-         [if (n0=Succ Zero) 1 (SOne((nat=>pos)(NatHalf n0)))]])
-     (NatHalf(p+n)<p+n)))
-    [if (p+n=Succ Zero)
-     1
-     (SOne
-     ((GRecGuard nat pos)([n0]n0)(NatHalf(p+n))
-      ([n0,(nat=>pos)]
-        [if (NatEven n0)
-          (SZero((nat=>pos)(NatHalf n0)))
-          [if (n0=Succ Zero) 1 (SOne((nat=>pos)(NatHalf n0)))]])
-      (NatHalf(p+n)<p+n)))]]))")
-(strip)
-(use "InitEqD")
-;; Proof finished.
-;; (cdp)
-(save "CIVTcdsDef")
+(add-sound "IVTcds")
 
-(deanimate "IVTcds")
+;; ok, IVTcdsSound has been added as a new theorem:
 
-(animate "ApproxSplit")
-(animate "ApproxSplitBoole")
-(animate "Id")
-(animate "IVTAux")
-(animate "DC")
-(animate "IVTcds")
+;; allnc f,q,p(
+;;  Cont f -> 
+;;  f f doml<<=0 -> 
+;;  0<<=f f domr -> 
+;;  f doml+(1#2**p)<=f domr -> 
+;;  all c,d,p0(
+;;   f doml<=c -> d<=f domr -> c+(1#2**p0)<=d -> RealLt(f c)(f d)(p0+q)) -> 
+;;  (ExLTMR (cterm (cds) 
+;;            cds Zero eqd(f doml pair f domr) andnc 
+;;            all n Corr f(lft(cds n))(rht(cds n))(NatToPos(p+n)) andnc 
+;;            all n(
+;;             lft(cds n)<=lft(cds(Succ n)) andnc 
+;;             rht(cds(Succ n))<=rht(cds n) andnc 
+;;             rht(cds(Succ n))-lft(cds(Succ n))==
+;;              (2#3)*(rht(cds n)-lft(cds n)))))
+;;  (cIVTcds f q p))
 
-;; IVTcdsSound
-(set-goal (real-and-formula-to-mr-formula
-	   (pt "cIVTcds")
-	   (proof-to-formula (theorem-name-to-proof "IVTcds"))))
-;; (assume "x" "x0" "x1" "p" "Rx" "Rx0" "Rx1" "x<x0")
-(use (proof-to-soundness-proof (theorem-name-to-proof "IVTcds")))
-;; Proof finished.
-;; (cdp)
-(save "IVTcdsSound")
+;; with computation rule
 
-;; (pp "IVTcdsSound")
+;; cIVTcds eqd
+;; ([f,p,p0,n]
+;;   (Rec nat=>rat yprod rat)n(f doml pair f domr)
+;;   ([n0]
+;;     cIVTAux f p
+;;     [if (NatEven(p0+n0))
+;;       (SZero
+;;       ((GRecGuard nat pos)([n1]n1)(NatHalf(p0+n0))
+;;        ([n1,(nat=>pos)]
+;;          [if (NatEven n1)
+;;            (SZero((nat=>pos)(NatHalf n1)))
+;;            [if (n1=Succ Zero) 1 (SOne((nat=>pos)(NatHalf n1)))]])
+;;        (NatHalf(p0+n0)<p0+n0)))
+;;       [if (p0+n0=Succ Zero)
+;;        1
+;;        (SOne
+;;        ((GRecGuard nat pos)([n1]n1)(NatHalf(p0+n0))
+;;         ([n1,(nat=>pos)]
+;;           [if (NatEven n1)
+;;             (SZero((nat=>pos)(NatHalf n1)))
+;;             [if (n1=Succ Zero) 1 (SOne((nat=>pos)(NatHalf n1)))]])
+;;         (NatHalf(p0+n0)<p0+n0)))]]))
 
-;; IVTcdsSoundCor
-(set-goal "allnc f,q,p(
- Cont f -> 
- f f doml<<=0 -> 
- 0<<=f f domr -> 
- f doml+(1#2**p)<=f domr -> 
- all c,d,p0(
-  f doml<=c -> d<=f domr -> c+(1#2**p0)<=d -> RealLt(f c)(f d)(p0+q)) -> 
- exnc cds(cds eqd (cIVTcds f q p) andnc
-  cds Zero eqd(f doml pair f domr) andnc 
-  all n Corr f(lft(cds n))(rht(cds n))(NatToPos(p+n)) andnc 
-  all n(
-   lft(cds n)<=lft(cds(Succ n)) andnc 
-   rht(cds(Succ n))<=rht(cds n) andnc 
-   rht(cds(Succ n))-lft(cds(Succ n))==(2#3)*(rht(cds n)-lft(cds n)))))")
-(assume "f" "q" "p" "Cf" "fa<=0" "0<=fb" "pProp" "HypSlope")
-(intro 0 (pt "cIVTcds f q p"))
-(split)
-(use "InitEqD")
-(use-with
- "ExLTMRElim" (py "nat=>rat yprod rat")
- (make-cterm
-  (pv "cds")
-  (pf "cds Zero eqd(f doml pair f domr) andnc 
-           all n Corr f(lft(cds n))(rht(cds n))(NatToPos(p+n)) andnc 
-           all n(
-            lft(cds n)<=lft(cds(Succ n)) andnc 
-            rht(cds(Succ n))<=rht(cds n) andnc 
-            rht(cds(Succ n))-lft(cds(Succ n))==(2#3)*(rht(cds n)-lft(cds n)))"))
- (pt "cIVTcds f q p")
- "?")
-(use (proof-to-soundness-proof (theorem-name-to-proof "IVTcds")))
-(auto)
-;; Proof finished.
-;; (cdp)
-(save "IVTcdsSoundCor")
-
-(deanimate "ApproxSplit")
-(deanimate "ApproxSplitBoole")
-(deanimate "Id")
-(deanimate "IVTAux")
-(deanimate "DC")
 (deanimate "IVTcds")
 
 ;; We now prove that [p]lft(cds n+p) increases.
@@ -1368,9 +1222,23 @@
 ;; (cdp)
 (save "TwoThirdExpNatZeroSeq")
 
-(define neterm (rename-variables (nt (proof-to-extracted-term))))
+(define eterm (proof-to-extracted-term))
+(define neterm (rename-variables (nt eterm)))
 ;; (pp neterm)
 ;; [p](Rec pos=>nat)p(Succ(Succ Zero))([p0,n]n+n)([p0,n]Succ(Succ(n+n)))
+
+(add-sound "TwoThirdExpNatZeroSeq")
+
+;; ok, TwoThirdExpNatZeroSeqSound has been added as a new theorem:
+
+;; allnc p (ExLTMR (cterm (n) (2#3)**n<=(1#2**p)))(cTwoThirdExpNatZeroSeq p)
+
+;; with computation rule
+
+;; cTwoThirdExpNatZeroSeq eqd
+;; ([p](Rec pos=>nat)p(Succ(Succ Zero))([p0,n]n+n)([p0,n]Succ(Succ(n+n))))
+
+(deanimate "TwoThirdExpNatZeroSeq")
 
 ;; Alternative with explicit content
 
@@ -1395,8 +1263,9 @@
 (use "Truth")
 ;; Proof finished.
 
+;; TwoThirdExpBdTotal
 (set-totality-goal "TwoThirdExpBd")
-(use "AllTotalElim")
+(fold-alltotal)
 (ind)
 ;; Base
 (ng)
@@ -1787,7 +1656,7 @@
 (assume "mEx")
 (by-assume "mEx" "m" "mDef")
 (inst-with-to "LeZeroHyp" (pt "m") "LeZeroHypInst")
-(inst-with-to "RealLeCharOneRealConstrFree"
+(inst-with-to "RealLeChar1RealConstrFree"
 	      (pt "f(x seq m)")
 	      (pt "RealConstr([n](0#1))([p]Zero)")
 	      "Inst")
@@ -1911,7 +1780,7 @@
 (assume "mEx")
 (by-assume "mEx" "m" "mDef")
 (inst-with-to "ZeroLeHyp" (pt "m") "ZeroLeHypInst")
-(inst-with-to "RealLeCharOneRealConstrFree"
+(inst-with-to "RealLeChar1RealConstrFree"
 	      (pt "RealConstr([n](0#1))([p]Zero)")
 	      (pt "f(x seq m)")
 	      "Inst")
@@ -2313,7 +2182,7 @@
 (use "a <_p b")
 ;; ?^64:RealConstr([n]rht(cds n))([p0]TwoThirdExpBd(p0+p))===
 ;;      RealConstr([n]lft(cds n))([p0]TwoThirdExpBd(p0+p))
-(use "RealEqChar2RealConstrFree")
+(use "RealEqChar2")
 (use "IVTRealRight" (pt "f doml") (pt "f domr"))
 
 ;; ?^74:0<=f domr-f doml
@@ -2504,11 +2373,31 @@
 ;; (cdp)
 (save "IVTFinal")
 
-(define IVTFinal-eterm
-  (proof-to-extracted-term (theorem-name-to-proof "IVTFinal")))
+(define IVTFinal-eterm (proof-to-extracted-term))
 (define IVTFinal-neterm (rename-variables (nt IVTFinal-eterm)))
 ;; (pp IVTFinal-neterm)
 ;; [f,p,p0]RealConstr([n]lft(cIVTcds f p p0 n))([p1]TwoThirdExpBd(p1+p0))
+
+(add-sound "IVTFinal")
+
+;; ok, IVTFinalSound has been added as a new theorem:
+
+;; allnc f,q,p(
+;;  Cont f -> 
+;;  f f doml<<=0 -> 
+;;  0<<=f f domr -> 
+;;  f doml+(1#2**p)<=f domr -> 
+;;  f domr-f doml<=2**p -> 
+;;  all c,d,p0(
+;;   f doml<=c -> d<=f domr -> c+(1#2**p0)<=d -> RealLt(f c)(f d)(p0+q)) -> 
+;;  (ExLTMR (cterm (x) Real x andnc f x===0))(cIVTFinal f q p))
+
+;; with computation rule
+
+;; cIVTFinal eqd
+;; ([f,p,p0]RealConstr([n]lft(cIVTcds f p p0 n))([p1]TwoThirdExpBd(p1+p0)))
+
+(deanimate "IVTFinal")
 
 ;; For to extract an approximation of sqrt 2 we prove IVTApprox
 ;; This needs RealApprox (in real.scm)
@@ -2548,9 +2437,35 @@
 ;; (cdp)
 (save "IVTApprox")
 
-(define IVTApprox-eterm
-  (proof-to-extracted-term (theorem-name-to-proof "IVTApprox")))
+(define IVTApprox-eterm (proof-to-extracted-term))
 (define IVTApprox-neterm (rename-variables (nt IVTApprox-eterm)))
 ;; (pp IVTApprox-neterm)
 ;; [f,p,p0]cRealApprox(cIVTFinal f p p0)
 
+(add-sound "IVTApprox")
+
+;; ok, IVTApproxSound has been added as a new theorem:
+
+;; allnc f,q,p(
+;;  Cont f -> 
+;;  f f doml<<=0 -> 
+;;  0<<=f f domr -> 
+;;  f doml+(1#2**p)<=f domr -> 
+;;  f domr-f doml<=2**p -> 
+;;  all c,d,p0(
+;;   f doml<=c -> d<=f domr -> c+(1#2**p0)<=d -> RealLt(f c)(f d)(p0+q)) -> 
+;;  (ExRTMR rea
+;;    pos=>rat
+;;    (cterm (x,(pos=>rat)^) 
+;;    (AndRMR (cterm () Real x)
+;;      (cterm ((pos=>rat)^0) 
+;;      (AndRMR (cterm () f x===0)
+;;        (cterm ((pos=>rat)^1) 
+;;        allnc r (ExLTMR (cterm (c) abs(c+ ~x)<<=(1#2**r)))((pos=>rat)^1 r)))
+;;      (pos=>rat)^0))
+;;    (pos=>rat)^))
+;;  (cIVTApprox f q p))
+
+;; with computation rule
+
+;; cIVTApprox eqd([f,p,p0]cRealApprox(cIVTFinal f p p0))
