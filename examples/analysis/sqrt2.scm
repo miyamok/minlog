@@ -1,6 +1,6 @@
-;; 2020-07-20.  examplesanalysissqrt2.scm
+;; 2021-03-02.  examplesanalysissqrt2.scm
 
-(load "~/git/minlog/init.scm")
+;; (load "~/git/minlog/init.scm")
 
 (set! COMMENT-FLAG #f)
 (libload "nat.scm")
@@ -11,7 +11,8 @@
 (remove-var-name "x" "y" "z")
 (libload "rea.scm")
 (libload "cont.scm")
-(load "~/temp/examplesanalysisivt.scm")
+
+(load "~/git/minlog/examples/analysis/ivt.scm")
 ;; (set! COMMENT-FLAG #t)
 
 (if (not (member "lib/cont.scm" LOADED-FILES))
@@ -25,6 +26,7 @@
 ;; then compute a rational approximation of a given accuracy.
 
 (add-program-constant "SqMTwo" (py "cont"))
+
 (add-computation-rules
  "SqMTwo" "ContConstr 1 2([a,n](a*a+ RatUMinus 2))
                       ([p]Zero)
@@ -36,17 +38,17 @@
 (intro 0)
 (use "RatTotalVar")
 (use "RatTotalVar")
-(use "AllTotalElim")
+(fold-alltotal)
 (assume "a")
-(use "AllTotalElim")
+(fold-alltotal)
 (assume "n")
 (use "RatTotalVar")
 ;; 5
-(use "AllTotalElim")
+(fold-alltotal)
 (assume "p")
 (use "NatTotalVar")
 ;; 6
-(use "AllTotalElim")
+(fold-alltotal)
 (assume "p")
 (use "PosTotalVar")
 ;; 7
@@ -240,15 +242,11 @@
 (define IVTInst-eterm
   (proof-to-extracted-term (theorem-name-to-proof "IVTInst")))
 
-(animate "IVTInst")
-(animate "IVTApprox")
-(animate "RealApprox")
 (animate "IVTFinal")
 (animate "IVTcds")
-(animate "DC")
 (animate "IVTAux")
-(animate "ApproxSplit")
-(animate "ApproxSplitBoole")
+(animate "ApproxSplitPos")
+(animate "RealApprox")
 
 (define IVTInst-neterm (rename-variables (nt IVTInst-eterm)))
 (pp IVTInst-neterm)
@@ -275,7 +273,7 @@
 ;; 4.1.  Normalization
 ;; ===================
 
-;; We animate Id, to enable numeric calculations
+;; We deanimate Id, to enable numeric calculations
 
 (animate "Id")
 ;; ok, computation rule (cId beta) -> [beta_0]beta_0 added
@@ -474,7 +472,7 @@
 (add-external-code "RatLe" ratle-code)
 
 (time (pp (nt (make-term-in-app-form IVTInst-eterm (pt "16")))))
-;; No speed up
+;; Minor speed up
 
 ;; 4.2.  Scheme evaluation
 ;; =======================
@@ -520,7 +518,7 @@
 (time ((ev (term-to-expr (nt IVTInst-neterm))) 32))
 
 ;; 43703660048002085261730517567667/30903154382632612361920641803529
-;; 7ms
+;; 6ms
 
 (exact->inexact
  (/ 43703660048002085261730517567667 30903154382632612361920641803529))
@@ -531,7 +529,7 @@
 
 (time ((ev (term-to-expr (nt IVTInst-neterm))) 64))
 ;; 150064550394480063920178032994112167045534641638298508651753395/106111661199647248543687855752712667991103904330482569981872649
-;; 13ms
+;; 12ms
 
 (exact->inexact
  (/ 150064550394480063920178032994112167045534641638298508651753395
