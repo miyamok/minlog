@@ -1,4 +1,4 @@
-;; 2020-07-14.  examples/analysis/sdmult.scm
+;; 2021-03-04.  examples/analysis/sdmult.scm
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -8,7 +8,6 @@
 (libload "pos.scm")
 (libload "int.scm")
 (libload "rat.scm")
-(remove-var-name "x" "y" "z")
 (libload "rea.scm")
 ;; (set! COMMENT-FLAG #t)
 
@@ -44,10 +43,8 @@
  (split)
  (simpreal "x1=0")
  (ng #t)
- (use "RealLeIntro")
- (use "RealRat")
- (use "RealRat")
- (use "RealNNegPos")
+ (use "RatLeToRealLe")
+ (use "Truth")
  (split)
  (intro 1)
  (intro 0 (pt "x1"))
@@ -66,11 +63,11 @@
 ;;   x3=0:x3===0
 ;;   x2=x3:x2===x3
 ;; -----------------------------------------------------------------------------
-;; ?_44:0===(1#2)*(x1+0)
+;; ?^42:0===(1#2)*(x1+0)
 (simpreal "x1=0")
 (ng #t)
-(use "RealEqRefl")
-(use "RealRat")
+(use "RatEqvToRealEq")
+(use "Truth")
 (use "RealEqRefl")
 (autoreal)
 ;; Assertion proved.
@@ -78,10 +75,10 @@
 (use "Assertion")
 (intro 0 (pt "RealConstr([n](0#1))([p]Zero)"))
 (split)
-(use "RealEqRefl")
-(use "RealRat")
-(use "RealEqRefl")
-(use "RealRat")
+(use "RatEqvToRealEq")
+(use "Truth")
+(use "RatEqvToRealEq")
+(use "Truth")
 ;; Proof finished.
 ;; (cdp)
 (save "CoIZero")
@@ -174,16 +171,16 @@
 (use "RealEqSIntro")
 (assume "n")
 (ng #t)
-;; ?_13:(1#4)*((1#2)*(as n+d)*bs n+(1#2)*(cs n+d0)+i)==
+;; ?^13:(1#4)*((1#2)*(as n+d)*bs n+(1#2)*(cs n+d0)+i)==
 ;;      (1#2)*((1#4)*as n*bs n+(1#4)*(cs n+d*bs n+i)+(d0+i#4))
 (use "RatEqvTrans" 
      (pt "(1#4)*((1#2)*((as n+d)*bs n)+(1#2)*(cs n+d0)+(1#2)*RatPlus i i)"))
-(ng)
+(ng #t)
 (simp (pf "2=IntPlus 1 1"))
 (simp "IntTimes6RewRule") ;k*(j+i)=k*j+k*i
 (use "Truth")
 (use "Truth")
-;; ?_15:(1#4)*((1#2)*((as n+d)*bs n)+(1#2)*(cs n+d0)+(1#2)*RatPlus i i)==
+;; ?^15:(1#4)*((1#2)*((as n+d)*bs n)+(1#2)*(cs n+d0)+(1#2)*RatPlus i i)==
 ;;      (1#2)*((1#4)*as n*bs n+(1#4)*(cs n+d*bs n+i)+(d0+i#4))
 ;; Similarly replace (d0+i#4) by (1#4)*RatPlus d0 i.  Then cancel the factors
 ;; Finally use commutativity.
@@ -1028,30 +1025,31 @@
 (split)
 (use "djx2z2Prop")
 (split)
-;; ?_47:Real((1#4)*(x2*y1+z2+j))
+;; ?^47:Real((1#4)*(x2*y1+z2+j))
 (autoreal)
 (split)
-;; ?_49:abs((1#4)*(x2*y1+z2+j))<<=1
+;; ?^49:abs((1#4)*(x2*y1+z2+j))<<=1
 (inst-with-to "CoIToBd" (pt "x2") "CoIx2" "x2Bd")
 (inst-with-to "CoIToBd" (pt "y1") "CoIy1" "y1Bd")
 (inst-with-to "CoIToBd" (pt "z2") "CoIz2" "z2Bd")
 (simpreal "RealAbsTimes")
 (use "RealLeTrans" (pt "RealAbs(1#4)*(((RealTimes 1 1)+1)+2)"))
-(use "RealLeMonTimes")
-(use "RealNNegPos")
+(use "RealLeMonTimesR")
+(use "RatLeToRealLe")
+(use "Truth")
 (use "RealLeTrans" (pt "abs(x2*y1+z2)+RealAbs j"))
 (use "RealLeAbsPlus")
 (autoreal)
-(use "RealLeMonPlus")
+(use "RealLeMonPlusTwo")
 (use "RealLeTrans" (pt "abs(x2*y1)+abs z2"))
 (use "RealLeAbsPlus")
 (autoreal)
-(use "RealLeMonPlus")
+(use "RealLeMonPlusTwo")
 (simpreal "RealAbsTimes")
 (use "RealLeMonTimesTwo")
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
-(use "RealNNegAbs")
+(use "RealLeZeroAbs")
 (autoreal)
 (use "x2Bd")
 (use "y1Bd")
@@ -1060,8 +1058,8 @@
 (use "SdtwoBoundReal")
 (use "djx2z2Prop")
 (ng #t)
-(use "RealLeRefl")
-(use "RealRat")
+(use "RatLeToRealLe")
+(use "Truth")
 (autoreal)
 (split)
 (intro 1)
@@ -1085,7 +1083,7 @@
 (use "ix1y1z1Prop")
 (use "djx2z2Prop")
 (use "RealEqRefl")
-(use "RealEqElim0" (pt "(1#4)*(x1*y1+z1+i)"))
+(use "RealEqToReal0" (pt "(1#4)*(x1*y1+z1+i)"))
 (use "ix1y1z1Prop")
 ;; Now we prove the formula cut in above
 (use "CoIMultcSatCoICl")
