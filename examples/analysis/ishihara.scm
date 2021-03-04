@@ -1,4 +1,4 @@
-;; 2020-09-06.  ishihara.scm.
+;; 2021-03-04.  ishihara.scm.
 
 ;; Former global assumptions (on real numbers) proved.  Estimates by
 ;; (1#2**p) rather than (1/2**k).  Instead of program constants
@@ -19,7 +19,7 @@
 ;; to be proved.
 
 ;; 2013-09-22.  examplesanalysisishihara.scm.  Based on
-;; seminars/semss13/ishihara.scm and temp/banach.scm.  Abstrac
+;; seminars/semss13/ishihara.scm and temp/banach.scm.  Abstract
 ;; treatment with constants for a partial equivalence relation
 ;; BanachEqv (written ~) to define the Banach space in type xi and
 ;; constants BanachZero, BanachPlus, BanachMinus, BanachTimes
@@ -66,6 +66,7 @@
 (use "PosCase")
 (use "P1")
 ;; Proof finished.
+;; (cdp)
 (save "StabCases")
 
 ;; ExcaElim
@@ -81,6 +82,7 @@
 (use "SidePrem" (pt "alpha"))
 (use "Pa")
 ;; Proof finished.
+;; (cdp)
 (save "ExcaElim")
 
 ;; StabAllImpThreeTwo
@@ -106,6 +108,7 @@
 (use "P1a")
 (use "P2a")
 ;; Proof finished.
+;; (cdp)
 (save "StabAllImpThreeTwo")
 
 ;; StabRealNNeg
@@ -113,7 +116,7 @@
 (cases)
 (assume "as" "M" "Rx" "NegNegHyp")
 (assert "all p 0<=as(M p)+(1#2**p) -> RealNNeg(RealConstr as M)")
- (assume "Hyp")
+(assume "Hyp")
 (intro 0)
 (use "Rx")
 (assume "p")
@@ -131,6 +134,7 @@
 	  "?")
 (assume "p")
 (use "StabAtom")
+;; Assertion proved.
 (assume "StabHyp")
 (use "StabHyp")
 (assume "NotAllHyp")
@@ -149,36 +153,26 @@
 ;; (cdp)
 (save "StabRealNNeg")
 
-;; From StabRealNNeg prove StabRealLe .
+;; From StabRealNNeg we can prove StabRealLe .
 
 ;; StabRealLe
 (set-goal "all x,y(Real x -> Real y -> ((x<<=y -> F) -> F) -> x<<=y)")
-(assume "x" "y" "Rx" "Ry" "StabHyp")
-(assert "RealNNeg(y+ ~x) -> x<<=y")
-(assume "RealNNegHyp")
-(intro 0)
-(use "Rx")
-(use "Ry")
-(use "RealNNegHyp")
-(assume "Assertion1")
-(use "Assertion1")
-(drop "Assertion1")
+(assume "x" "y" "Rx" "Ry" "NotNotLeHyp")
+(use "RealNNegToLe")
+(autoreal)
 (use "StabRealNNeg")
 (autoreal)
-(assume "NotRealNNHyp")
-(use "StabHyp")
-(assume "x<<=y")
-(use "NotRealNNHyp")
-(assert "x<<=y -> RealNNeg(y+ ~x)")
-(elim)
-(assume "x1" "y1" "Rx1" "Ry1" "Hyp")
-(use "Hyp")
-(assume "Assertion2")
-(use "Assertion2")
-(use "x<<=y")
+(assume "NotNNegHyp")
+(use "NotNotLeHyp")
+(assume "x<=y")
+(use "NotNNegHyp")
+(use "RealLeToNNeg")
+(use "x<=y")
 ;; Proof finished.
 ;; (cdp)
 (save "StabRealLe")
+
+;; 2021-03-03.  Done up to this point.
 
 ;; ApproxSplitBoole is used in ivt.scm as well.
 ;; Move ApproxSplitBoole to rea.scm
@@ -230,6 +224,7 @@
 (ng #t)
 (use "(1#2**b)<=b-a")
 ;; Proof finished.
+;; (cdp)
 (save "ApproxSplitBooleRat")
 
 ;; RealLePosRatBound
@@ -241,12 +236,7 @@
 (assume "p" "q" "Rx" "Useless")
 (drop "Useless")
 ;; ?_8:exl n x<<=n*(p#q)
-;; Introduce m as an abbreviation for RealBd(x seq)(x mod)
-(assert "exl m m=RealBd(x seq)(x mod)")
-(intro 0 (pt "RealBd(x seq)(x mod)"))
-(use "Truth")
-(assume "mEx")
-(by-assume "mEx" "m" "mDef")
+(def "m" "cRBd(x seq)(x mod)")
 ;; Now use RealLeBound
 (assert "x<<=2**m")
 (simp "mDef")
@@ -291,23 +281,13 @@
 ;;  [case a
 ;;    (k#p -> 
 ;;    [case k
-;;      (p0 -> 
-;;      PosToNat
-;;      (2**
-;;       cRatLeBound
-;;       (SZero
-;;        (2**
-;;         ListNatMax
-;;         (cRatLeAbsBound(x seq Zero)::
-;;          ([n]cRatLeAbsBound(x seq(Succ n)))fbar x mod 1)*
-;;         p))
-;;       p0))
+;;      (p0 -> PosToNat(2**cRatLeBound(2**cRBd x seq x mod*p)p0))
 ;;      (0 -> Zero)
 ;;      (IntN p0 -> Zero)])]
 
 ;; NatRatRealLeMonTimes
-(set-goal "all n,m,a,x(RealNNeg x -> n<=m -> a<<=x -> n*a<<=m*x)")
-(assume "n" "m" "a" "x" "xNNeg" "n<=m" "a<<=x")
+(set-goal "all n,m,a,x(0<<=x -> n<=m -> a<<=x -> n*a<<=m*x)")
+(assume "n" "m" "a" "x" "0<=x" "n<=m" "a<<=x")
 (use "RealLeTrans" (pt "RealTimes n a"))
 ;; 3,4
 (ng #t)
@@ -316,16 +296,15 @@
 ;; ?^4:RealTimes n a<<=m*x
 (use "RealLeTrans" (pt "n*x"))
 ;; 7,8
-(use "RealLeMonTimes")
-(use "RatNNegToRealNNeg")
+(use "RealLeMonTimesR")
+(use "RatLeToRealLe")
 (use "Truth")
 (use "a<<=x")
 ;; 8
-(use "RealLeMonTimesL")
-(use "xNNeg")
+(use "RealLeMonTimes")
+(use "0<=x")
 (use "RealSeqLeToLe" (pt "Zero"))
-(use "RealRat")
-(use "RealRat")
+(autoreal)
 (assume "n1" "Useless")
 (ng #t)
 (use "NatLeToIntLe")
@@ -657,17 +636,14 @@
 
 ;; HitTotal
 (set-totality-goal "Hit")
-(assume "m^" "Tm" "n^" "Tn")
+(fold-alltotal)
+(assume "n")
+(fold-alltotal)
+(assume "m")
 (ng #t)
-(use "BooleIfTotal")
-(use "NatLtTotal")
-(use "Tm")
-(use "Tn")
-(use "TotalNatSucc")
-(use "TotalNatSucc")
-(use "Tm")
-(use "TotalNatZero")
+(use "NatTotalVar")
 ;; Proof finished.
+;; (cdp)
 (save-totality)
 
 (add-program-constant "HitHere" (py "(nat=>boole)=>nat=>nat=>nat"))
@@ -677,29 +653,13 @@
 
 ;; HitHereTotal
 (set-totality-goal "HitHere")
-(assume "g^" "Tg")
-(use "AllTotalElim")
-(assume "m")
-(use "AllTotalElim")
+(fold-alltotal)
+(assume "g")
+(fold-alltotal)
 (assume "n")
-(use "HitTotal")
-(use "BooleIfTotal")
-(use "NatLeTotal")
-(use "NatTotalVar")
-(use "NatTotalVar")
-(use "NatPlusTotal")
-(use "NatLeastTotal")
-(use "NatMinusTotal")
-(use "NatTotalVar")
-(use "NatTotalVar")
-(use "AllTotalElim")
-(assume "n1")
-(use "Tg")
-(use "NatPlusTotal")
-(use "NatTotalVar")
-(use "NatTotalVar")
-(use "NatTotalVar")
-(use "TotalNatZero")
+(fold-alltotal)
+(assume "m")
+(ng #t)
 (use "NatTotalVar")
 ;; Proof finished.
 (save-totality)
@@ -713,22 +673,15 @@
 
 ;; HitPastTotal
 (set-totality-goal "HitPast")
-(assume "g^" "Tg" "K^" "TK")
-(use "AllTotalElim")
-(assume "n0")
-(use "AllTotalElim")
+(fold-alltotal)
+(assume "g")
+(fold-alltotal)
+(assume "K")
+(fold-alltotal)
 (assume "n")
-(use "BooleIfTotal")
-(use "NatLtTotal")
-(use "NatLeastTotal")
-(use "NatTotalVar")
-(use "Tg")
-(use "NatTotalVar")
-(use "NatTotalVar")
-(use "HitHereTotal")
-(use "Tg")
-(use "NatTotalVar")
-(use "TK")
+(fold-alltotal)
+(assume "m")
+(ng #t)
 (use "NatTotalVar")
 ;; Proof finished.
 (save-totality)
@@ -739,14 +692,13 @@
 
 ;; HTotal
 (set-totality-goal "H")
-(assume "g^" "Tg" "K^" "TK")
-(use "AllTotalElim")
+(fold-alltotal)
+(assume "g")
+(fold-alltotal)
+(assume "K")
+(fold-alltotal)
 (assume "n")
-(use "HitPastTotal")
-(use "Tg")
-(use "TK")
-(use "TK")
-(use "NatTotalVar")
+(ng #t)
 (use "NatTotalVar")
 ;; Proof finished.
 (save-totality)
@@ -1301,17 +1253,15 @@
 
 ;; SeqTotal
 (set-totality-goal "Seq")
-(assume "xSTimes^" "TxSTimes" "h^" "Th")
-(assert "allnc xs^(
-      allnc n^0(TotalNat n^0 -> Total(xs^ n^0)) ->
-      allnc n^0(TotalNat n^0 -> allnc m^(TotalNat m^ ->
-      Total((Seq alpha)xSTimes^ h^ m^ xs^ n^0))))")
+(assume "xSTimes^" "TxSTimes")
+(fold-alltotal)
+(assume "h")
+(assert "allnc xs^(all n Total(xs^ n) ->
+ all n,m Total((Seq alpha)xSTimes^ h m xs^ n))")
 (assume "xs^" "Txs")
-(use "AllTotalElim")
 (ind)
-;; 7,8
+;; 8,9
 ;; Base
-(use "AllTotalElim")
 (cases)
 (ng #t)
 (use "InhabBanach")
@@ -1321,51 +1271,41 @@
 (ng #t)
 (use "TxSTimes")
 (use "TotalReaRealConstr")
-(strip)
-(ng #t)
-(use "TotalRatRatConstr")
-(use "TotalIntIntZero")
-(use "TotalPosOne")
-(strip)
-(ng #t)
-(use "TotalNatZero")
-(use "Txs")
+(fold-alltotal)
+(assume "n0")
+(use "RatTotalVar")
+(fold-alltotal)
+(assume "p")
 (use "NatTotalVar")
-;; 8
+(use "Txs")
+;; 9
 ;; Step
 (assume "n" "IHn")
-(use "AllTotalElim")
 (cases)
+(ng #t)
 (use "InhabBanach")
 (cases)
 (ng #t)
 (use "IHn")
-(use "Th")
-(use "NatTotalVar")
 (assume "m")
 (ng #t)
 (use "TxSTimes")
-(use "TotalReaRealConstr")
-(strip)
-(ng #t)
-(use "TotalRatRatConstr")
-(use "IntSTotal")
-(use "NatToIntTotal")
-(use "NatTotalVar")
-(use "TotalPosOne")
-(strip)
-(ng #t)
-(use "TotalNatZero")
+(use "ReaTotalVar")
 (use "Txs")
-(use "NatTotalVar")
+;; 5
 ;; Assertion proved
 (assume "SeqTotalAux")
-(assume "m^" "Tm" "xs^" "Txs" "n^" "Tn")
+(fold-alltotal)
+(assume "n")
+(fold-alltotal)
+(assume "xs")
+(fold-alltotal)
+(assume "m")
 (use "SeqTotalAux")
-(use "Txs")
-(use "Tn")
-(use "Tm")
+(assume "n1")
+(use "TotalVar")
 ;; Proof finished.
+;; (cdp)
 (save-totality)
 
 ;; For later use we  show that all Seq values are in xB^
@@ -1406,6 +1346,7 @@
 (use "RealRat")
 (use "xsB")
 ;; Proof finished.
+;; (cdp)
 (save "SeqB")
 
 (add-program-constant
@@ -1439,6 +1380,7 @@
 ;; 8
 (use "NatTotalVar")
 ;; Proof finished.
+;; (cdp)
 (save-totality)
 
 ;; VB
@@ -1466,6 +1408,7 @@
 (strip)
 (use "InitEqD")
 ;; Proof finished.
+;; (cdp)
 (save "VDef")
 
 ;; SeqDef2
@@ -1475,6 +1418,7 @@
 (strip)
 (use "InitEqD")
 ;; Proof finished.
+;; (cdp)
 (save "SeqDef2")
 
 ;; VIfH0
@@ -1485,6 +1429,7 @@
 (simp "hn=0")
 (use "InitEqD")
 ;; Proof finished.
+;; (cdp)
 (save "VIfH0")
 
 ;; VIfH2
@@ -1496,6 +1441,7 @@
 (simp "SeqDef2")
 (use "InitEqD")
 ;; Proof finished.
+;; (cdp)
 (save "VIfH2")
 
 ;; VIfH1
@@ -1511,6 +1457,7 @@
 (simp "VDef")
 (use "InitEqD")
 ;; Proof finished.
+;; (cdp)
 (save "VIfH1")
 
 ;; VIfH2Up
@@ -1537,6 +1484,7 @@
 (assume "Hyp")
 (use "Hyp")
 ;; Proof finished.
+;; (cdp)
 (save "VIfH2Up")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1645,15 +1593,6 @@
 ;; (cdp)
 (save "VCauchyAuxPos")
 
-;; The present BanachNormZero is too special
-;; Need
-
-;; (ppn (pf "all x(xB^ x -> xNorm(xPlus x(xUMinus x))===0)"))
-
-;; instead of
-
-;; xNorm(xPlus(Inhab alpha)(xUMinus(Inhab alpha)))===0 ->
-
 ;; VCauchy
 (set-goal "all xSTimes,xNorm,xPlus,xUMinus,M,xs,K,xs1,N,g(
  xB^(Inhab alpha) ->
@@ -1664,7 +1603,7 @@
  all rea,x(Real rea -> xB^ x -> xB^(xSTimes rea x)) ->
  all x(xB^ x -> xNorm(xPlus(Inhab alpha)x)===xNorm x) ->
  all x(xB^ x -> xNorm(xUMinus x)===xNorm x) ->
- all rea,x(RealNNeg rea -> xB^ x -> xNorm(xSTimes rea x)===rea*xNorm x) ->
+ all rea,x(0<<=rea -> xB^ x -> xNorm(xSTimes rea x)===rea*xNorm x) ->
  all p,n(M p<=n -> xNorm(xs n)<<=(1#2**p)) ->
  M 1=Zero -> all p,q(p<=q -> M p<=M q) ->
  all n K n=M(NatToPos(Succ n)) ->
@@ -1754,7 +1693,7 @@
 (by-assume "nProp" "m" "nmProp")
 (assume "p" "n1" "n2" "Np<=n1" "n1<n2")
 (use "NatLeLtCases" (pt "n") (pt "n1"))
-;; 70,71
+;; 71,72
 (assume "n<=n1")
 (assert "xs1 n1 eqd xSTimes n(xs m)")
 (simp "xs1Def")
@@ -1850,7 +1789,6 @@
 (simp "n2=n+(n2--n)")
 (simp "VIfH2Up" (pt "m"))
 ;; ?^156:xNorm(xSTimes n(xs m))<<=(1#2**p)
-;; ?^147:norm(n@*us m)<<=(1#2**p)
 (assert "xNorm(xs m)<<=(1#2**(NatToPos(Succ n)))")
 (use "MMod")
 ;; Need positive exponent to make MMod usable
@@ -1883,16 +1821,16 @@
 (simpreal "BanachNormTimes")
 ;; ?^178:n*xNorm(xs m)<<=(1#2**p)
 (use "RealLeTrans" (pt "RealTimes n(1#2**n*2)"))
-(use "RealLeMonTimes")
-;; ?^183:RealNNeg n
-(use "RatNNegToRealNNeg")
+(use "RealLeMonTimesR")
+;; ?^183:0<<=n
+(use "RatLeToRealLe")
 (use "Truth")
 ;; ?^184:xNorm(xs m)<<=(1#2**n*2)
 (use "xNorm(xs m)<<=(1#2**n*2)")
 ;; ?^182:RealTimes n(1#2**n*2)<<=(1#2**p)
 (use "(n#2**n*2)<<=(1#2**p)")
 (use "xsBanach")
-(use "RatNNegToRealNNeg")
+(use "RatLeToRealLe")
 (use "Truth")
 ;; ?^176:(n#2**n*2)<<=(1#2**p)
 ;; The formula cut in above.  We need a relation between n and p
@@ -2172,8 +2110,7 @@
  all x(xB^ x -> xB^(xUMinus x)) ->
  all x(xB^ x -> xNorm(xPlus(Inhab alpha)x)===xNorm x) ->
  all x(xB^ x -> xNorm(xUMinus x)===xNorm x) ->
- all rea,x(RealNNeg rea -> 
-                   xB^ x -> xNorm(xSTimes rea x)===rea*xNorm x) ->
+ all rea,x(0<<=rea -> xB^ x -> xNorm(xSTimes rea x)===rea*xNorm x) ->
  all p,m(M p<=m -> xNorm(xs m)<<=(1#2**p)) ->
  M 1=Zero ->
  all p,q(p<=q -> M p<=M q) ->
@@ -2252,7 +2189,7 @@
  all rea,x(Real rea -> xB^ x -> xB^(xSTimes rea x)) ->
  all x(xB^ x -> xNorm(xPlus(Inhab alpha)x)===xNorm x) ->
  all x(xB^ x -> xNorm(xUMinus x)===xNorm x) ->
- all rea,x(RealNNeg rea -> xB^ x -> xNorm(xSTimes rea x)===rea*xNorm x) ->
+ all rea,x(0<<=rea -> xB^ x -> xNorm(xSTimes rea x)===rea*xNorm x) ->
  all xs,M((all p,n,m(M p<=n -> n<m ->
                      xNorm(xPlus(xs n)(xUMinus(xs m)))<<=(1#2**p)) ->
    xB^(xLim xs M))) ->
@@ -2263,8 +2200,8 @@
  all x1,x2(xB^ x1 -> xB^ x2 -> xEq^ x1 x2 -> yEq^(f x1)(f x2)) ->
  all y(yN^ y -> Real(yNorm y)) ->
  all y1,y2(yN^ y1 -> yN^ y2 -> yEq^ y1 y2 -> yNorm y1===yNorm y2) ->
- all y(yN^ y -> RealNNeg(yNorm y)) ->
- all rea,y(RealNNeg rea -> yN^ y -> yNorm(ySTimes rea y)===rea*yNorm y) ->
+ all y(yN^ y -> 0<<=yNorm y) ->
+ all rea,y(0<<=rea -> yN^ y -> yNorm(ySTimes rea y)===rea*yNorm y) ->
  all rea,x f(xSTimes rea x)eqd ySTimes rea(f x) ->
  all p,m(M p<=m -> xNorm(xs m)<<=(1#2**p)) ->
  M 1=Zero ->
@@ -2278,7 +2215,7 @@
 	"BanachNormPlusInhab" "BanachNormUMinus" "BanachNormTimes"
 	"BLim" "BCompl" "fBanachNorm" "fCompat"
 	"RealyNorm" "yNormCompat"
-	"RealNNegyNorm" "yNormTimes"
+	"0<<=yNorm" "yNormTimes"
 	"fLin*" "Conv" "M0" "MStrMon" "0<a" "a<b" "(1#2**p)<=b-a")
 (assert "exl g all m((g m -> yNorm(f(xs m))<<=b) andnc
                      ((g m -> F) -> a<<=yNorm(f(xs m))))")
@@ -2502,17 +2439,20 @@
 ;; Assertion proved.
 ;; ?^222:a<<=yNorm(f(xs m)) -> F
 (assume "a<<=yNorm(f(xs m))")
-(assert "n*a<<=n*yNorm(f(xs m))")
-(use "NatRatRealLeMonTimes")
-(use "RealNNegyNorm")
-(use "fBanachNorm")
-;; ?^277:xB^(xs m)
-(use "xsB")
+(assert "RealTimes n a<<=n*yNorm(f(xs m))")
+(use "RealLeMonTimesTwo")
+(use "RatLeToRealLe")
+(use "Truth")
+(use "RatLeToRealLe")
+(use "RatLtToLe")
+(use "0<a")
+(use "RatLeToRealLe")
 (use "Truth")
 (use "a<<=yNorm(f(xs m))")
 ;; Assertion proved.
-(assume "n*a<<=n*yNorm(f(xs m))")
-(assert "n*a<<=yNorm(ySTimes n(f(xs m)))")
+;; ?^226:RealTimes n a<<=n*yNorm(f(xs m)) -> F
+(assume "RealTimes n a<<=n*yNorm(f(xs m))")
+(assert "RealTimes n a<<=yNorm(ySTimes n(f(xs m)))")
 (use "RealLeCompat"
      (pt "RealConstr([n1]RatConstr(NatToInt n)One*a)([p]Zero)")
      (pt "n*yNorm(f(xs m))"))
@@ -2527,11 +2467,11 @@
 (use "xsB")
 (use "fBanachNorm")
 (use "xsB")
-(use "RatNNegToRealNNeg")
+(use "RatLeToRealLe")
 (use "Truth")
-(use "n*a<<=n*yNorm(f(xs m))")
+(use "RealTimes n a<<=n*yNorm(f(xs m))")
 ;; Assertion proved.
-(assume "n*a<<=yNorm(ySTimes n(f(xs m)))")
+(assume "RealTimes n a<<=yNorm(ySTimes n(f(xs m)))")
 ;; Was
 ;; (assert "n*a<<=yNorm(f x)")
 ;; (use "BanachEqvCompat")
@@ -2545,7 +2485,7 @@
 (use "BanachxSTimes")
 (use "RealRat")
 (use "xsB")
-;; ?^254:xB^ x
+;; ?^257:xB^ x
 (simp "xDef")
 (use "IshiharaTrickAux" (pt "xSTimes") (pt "xNorm") (pt "xPlus") (pt "xUMinus")
      (pt "ySTimes") (pt "yNorm") (pt "xs") (pt "g") (pt "K") (pt "M"))
@@ -2567,9 +2507,9 @@
 (use "BanachxPlus")
 (use "BLim")
 ;; IshiharaTrickAux successfully used
-;; ?^255:xEq^(xSTimes n(xs m))x
+;; ?^258:xEq^(xSTimes n(xs m))x
 (use "xEq^(xSTimes n(xs m))x")
-;; ?^251:yEq^(f(xSTimes n(xs m)))(f x) -> F
+;; ?^254:yEq^(f(xSTimes n(xs m)))(f x) -> F
 (assume "yEq^(f(xSTimes n(xs m)))(f x)")
 (assert "yNorm(f(xSTimes n(xs m)))===yNorm(f x)")
 (use "yNormCompat")
@@ -2582,33 +2522,33 @@
 (use "BLim")
 (use "VCauchy" (pt "xSTimes") (pt "M") (pt "xs") (pt "K") (pt "g"))
 (auto)
-;; ?^291:all n xB^(xs1 n)
+;; ?^294:all n xB^(xs1 n)
 (assume "n2")
 (simp "xs1Def")
 (use "VB")
 (use "InhB")
 (use "xsB")
 (use "BanachxSTimes")
-;; ?^292:all x(xB^ x -> xB^(xUMinus x))
+;; ?^295:all x(xB^ x -> xB^(xUMinus x))
 (auto)
-;; ?^303:all n,m Real(xNorm(xPlus(xs1 n)(xUMinus(xs1 m))))
+;; ?^306:all n,m Real(xNorm(xPlus(xs1 n)(xUMinus(xs1 m))))
 (assume "n2" "m2")
 (use "RealxNorm")
 (use "BanachxPlus")
-;; ?^311:xB^(xs1 n2)
+;; ?^314:xB^(xs1 n2)
 (simp "xs1Def")
 (use "VB")
 (use "InhB")
 (use "xsB")
 (use "BanachxSTimes")
 (use "BanachxUMinus")
-;; ?^317:xB^(xs1 m2)
+;; ?^320:xB^(xs1 m2)
 (simp "xs1Def")
 (use "VB")
 (use "InhB")
 (use "xsB")
 (use "BanachxSTimes")
-;; ?^281:yEq^(f(xSTimes n(xs m)))(f x)
+;; ?^284:yEq^(f(xSTimes n(xs m)))(f x)
 (use "yEq^(f(xSTimes n(xs m)))(f x)")
 ;; Assertion proved.
 (assume "yNorm(f(xSTimes n(xs m)))===yNorm(f x)")
@@ -2619,14 +2559,11 @@
 (use "RealRat")
 (use "yNorm(f(xSTimes n(xs m)))===yNorm(f x)")
 (simp "fLin*")
-(use "n*a<<=yNorm(ySTimes n(f(xs m)))")
+(use "RealTimes n a<<=yNorm(ySTimes n(f(xs m)))")
 ;; "Assertion proved.
 (assume "n*a<<=yNorm(f x)")
 ;; With n0Prop: yNorm(f x)<<=n0*a we get n*a<=n0*a contradicting n0<n
 (assert "n*a<=n0*a")
-;; (add-global-assumption
-;;  "RealLeTransRat"
-;;  "all a,x,b(a<<=x -> x<<=b -> a<=b)")
 (use "RealLeTransRat" (pt "yNorm(f x)"))
 (use "n*a<<=yNorm(f x)")
 (use "n0Prop")
@@ -2730,501 +2667,8 @@
 (simp "g1 m -> F")
 (use "Truth")
 ;; Proof finished.
-;; (cdp)
-
-;; ;; IshiharaTrick
-;; (set-goal "all xSTimes,xNorm,xPlus,xUMinus,xLim,ySTimes,yNorm,f,xs,M,a,b,p(
-;;  xB^(Inhab alpha) ->
-;;  all x(xB^ x -> Real(xNorm x)) ->
-;;  all x0,x1(xB^ x0 -> xB^ x1 -> 0<<=xNorm(xPlus x0(xUMinus x1))) -> 
-;;  all x1,x2(xB^ x1 -> xB^ x2 ->
-;;   xNorm(xPlus x1(xUMinus x2))===0 -> xEq^ x1 x2) ->
-;;  all x(xB^ x -> xNorm(xPlus x(xUMinus x))===0) ->
-;;  all n xB^(xs n) ->
-;;  all x(xB^ x -> xB^(xUMinus x)) ->
-;;  all x1,x2(xB^ x1 -> xB^ x2 -> xB^(xPlus x1 x2)) ->
-;;  all rea,x(Real rea -> xB^ x -> xB^(xSTimes rea x)) ->
-;;  all x(xB^ x -> xNorm(xPlus(Inhab alpha)x)===xNorm x) ->
-;;  all x(xB^ x -> xNorm(xUMinus x)===xNorm x) ->
-;;  all rea,x(RealNNeg rea -> xB^ x -> xNorm(xSTimes rea x)===rea*xNorm x) ->
-;;  all xs,M((all p,n,m(M p<=n -> n<m ->
-;;                      xNorm(xPlus(xs n)(xUMinus(xs m)))<<=(1#2**p)) ->
-;;    xB^(xLim xs M))) ->
-;;  all xs,M((all p,n,m(M p<=n -> n<m ->
-;;                    xNorm(xPlus(xs n)(xUMinus(xs m)))<<=(1#2**p)) ->
-;;    all p,n(M p<=n -> xNorm(xPlus(xs n)(xUMinus(xLim xs M)))<<=(1#2**p)))) ->
-;;  all x(xB^ x -> yN^(f x)) ->
-;;  all x1,x2(xB^ x1 -> xB^ x2 -> xEq^ x1 x2 -> yEq^(f x1)(f x2)) ->
-;;  all y(yN^ y -> Real(yNorm y)) ->
-;;  all y1,y2(yN^ y1 -> yN^ y2 -> yEq^ y1 y2 -> yNorm y1===yNorm y2) ->
-;;  all y(yN^ y -> RealNNeg(yNorm y)) ->
-;;  all rea,y(RealNNeg rea -> yN^ y -> yNorm(ySTimes rea y)===rea*yNorm y) ->
-;;  all rea,x f(xSTimes rea x)eqd ySTimes rea(f x) ->
-;;  all p,m(M p<=m -> xNorm(xs m)<<=(1#2**p)) ->
-;;  M 1=Zero ->
-;;  all p,q(p<q -> M p<M q) ->
-;;  0<a -> a<b -> (1#2**p)<=b-a ->
-;;  exnc m a<<=yNorm(f(xs m)) oru all m yNorm(f(xs m))<<=b)")
-;; (assume "xSTimes" "xNorm" "xPlus" "xUMinus" "xLim" "ySTimes" "yNorm"
-;; 	"f" "xs" "M" "a" "b" "p"
-;; 	"InhB" "RealxNorm" "BanachNormNNeg" "BanachInitEqv"
-;; 	"BanachNormZero" "xsB" "BanachxUMinus" "BanachxPlus" "BanachxSTimes"
-;; 	"BanachNormPlusInhab" "BanachNormUMinus" "BanachNormTimes"
-;; 	"BLim" "BCompl" "fBanachNorm" "fCompat"
-;; 	"RealyNorm" "yNormCompat"
-;; 	"RealNNegyNorm" "yNormTimes"
-;; 	"fLin*" "Conv" "M0" "MStrMon" "0<a" "a<b" "(1#2**p)<=b-a")
-;; (assert "exl g all m((g m -> yNorm(f(xs m))<<=b) andnc
-;;                      ((g m -> F) -> a<<=yNorm(f(xs m))))")
-;; (use "AC")
-;; (assume "m")
-;; (use "ApproxSplitBooleRat" (pt "p"))
-;; (use "RealyNorm")
-;; (use "fBanachNorm")
-;; (use "xsB")
-;; (use "(1#2**p)<=b-a")
-;; ;; Assertion proved.
-;; (assume "g1Ex")
-;; (by-assume "g1Ex" "g1" "g1Prop")
-;; (cut "exl g all m((g m -> a<<=yNorm(f(xs m))) andnc
-;;                  ((g m -> F) -> yNorm(f(xs m))<<=b))")
-;; (use "Id")
-;; (assume "gEx")
-;; (by-assume "gEx" "g" "gProp")
-;; ;; (drop "g1Prop")
-;; (assert "exl K all n K n=M(NatToPos(Succ n))")
-;; (intro 0 (pt "[n]M(NatToPos(Succ n))"))
-;; (assume "n")
-;; (use "Truth")
-;; ;; Assertion proved.
-;; (assume "KEx")
-;; (by-assume "KEx" "K" "KDef")
-;; (assert "exl xs1 all n xs1 n eqd(V alpha)xSTimes g K xs n")
-;; (intro 0 (pt "[n](V alpha)xSTimes g K xs n"))
-;; (assume "n")
-;; (use "InitEqD")
-;; ;; Assertion proved.
-;; (assume "xs1Ex")
-;; (by-assume "xs1Ex" "xs1" "xs1Def")
-;; (assert "exl N all p N p=PosToNat(SZero p)")
-;; (intro 0 (pt "[p]PosToNat(SZero p)"))
-;; (assume "p1")
-;; (use "Truth")
-;; ;; Assertion proved.
-;; (assume "NEx")
-;; (by-assume "NEx" "N" "NDef")
-;; (assert "exl x x eqd xLim xs1 N")
-;; (intro 0 (pt "xLim xs1 N"))
-;; (use "InitEqD")
-;; ;; Assertion proved.
-;; (assume "xEx")
-;; (by-assume "xEx" "x" "xDef")
-;; ;; We prove ordinary monotonicity of M from strict monotonicity.
-;; (assert "all p,q(p<=q -> M p<=M q)")
-;; (assume "p0" "q" "p0<=q")
-;; (use "PosLeCases" (pt "p0") (pt "q"))
-;; (use "p0<=q")
-;; (assume "p0<q")
-;; (use "NatLtToLe")
-;; (use "MStrMon")
-;; (use "p0<q")
-;; (assume "p0=q")
-;; (simp "p0=q")
-;; (use "Truth")
-;; ;; Assertion proved.
-;; (assume "MMon")
-;; (assert "exl n yNorm(f x)<<=n*a")
-;; (use "RealLePosRatBound")
-;; (use "RealyNorm")
-;; (use "fBanachNorm")
-;; (simp "xDef")
-;; (use "IshiharaTrickAux" (pt "xSTimes") (pt "xNorm") (pt "xPlus") (pt "xUMinus")
-;;      (pt "ySTimes") (pt "yNorm") (pt "xs") (pt "g") (pt "K") (pt "M"))
-;; (use "InhB")
-;; (use "BanachNormZero")
-;; (use "xsB")
-;; (use "xs1Def")
-;; (use "BanachxSTimes")
-;; (use "BanachxUMinus")
-;; (use "BanachNormPlusInhab")
-;; (use "BanachNormUMinus")
-;; (use "BanachNormTimes")
-;; (use "Conv")
-;; (use "M0")
-;; (use "MMon")
-;; (use "KDef")
-;; (use "NDef")
-;; (use "RealxNorm")
-;; (use "BanachxPlus")
-;; (use "BLim")
-;; ;; IshiharaTrickAux successfully used
-;; (use "0<a")
-;; ;; ?_65:exl n yNorm(f x)<<=n*a -> 
-;; ;;      exnc m a<<=yNorm(f(xs m)) oru all m yNorm(f(xs m))<<=b
-;; (assume "n0Ex")
-;; (by-assume "n0Ex" "n0" "n0Prop")
-;; ;; We will often need monotonicity of K.
-;; (assert "all n,m(n<=m -> K n<=K m)")
-;; (assume "n" "m" "n<=m")
-;; (simp "KDef")
-;; (simp "KDef")
-;; (use "MMon")
-;; (simp "NatToPosLe")
-;; (use "n<=m")
-;; (use "Truth")
-;; (use "Truth")
-;; ;; Assertion proved.
-;; (assume "KMon")
-;; ;; Now the main case distinction, on hn0=0
-;; (cases (pt "H g K n0"))
-;; ;; 103,104
-;; (assume "hn0=0")
-;; (intro 1)
-;; (assert "all n(n<=n0 -> H g K n=Zero)")
-;; (assume "n" "n<=n0")
-;; (use "H0DownMon" (pt "n0"))
-;; (use "KMon")
-;; (use "hn0=0")
-;; (use "n<=n0")
-;; ;; Assertion proved.
-;; (assume "all n(n<=n0 -> H g K n=Zero)")
-;; (assert "all n(n0<n -> (H g K n=Zero -> F) -> F)")
-;; (assume "n1" "n0<n1" "H g K n1=Zero -> F")
-;; (assert "exd n exl m(n<=n1 andnc H g K n=Succ(Succ m))")
-;; (use "HFind")
-;; (simp "KDef")
-;; (use "M0")
-;; (use "H g K n1=Zero -> F")
-;; (assume "ExHyp")
-;; (by-assume "ExHyp" "n" "nProp")
-;; (by-assume "nProp" "m" "mProp")
-;; (use "NatLeLtCases" (pt "n") (pt "n0"))
-;; ;; 129,130
-;; (assume "n<=n0")
-;; (assert "H g K n=Zero")
-;; (use "H0DownMon" (pt "n0"))
-;; (use "KMon")
-;; (use "hn0=0")
-;; (use "n<=n0")
-;; (simp "mProp")
-;; (assume "Absurd")
-;; (use "Absurd")
-;; ;; 130:n0<n -> F
-;; ;; Now derive a contradiction as Ishihara did, using H2Compl and HProp2gVal
-;; (assert "xEq^(xSTimes n(xs m))x")
-;; (use-with "H2Compl"
-;; 	  (pt "xSTimes") (pt "xNorm") (pt "xPlus") (pt "xUMinus") (pt "xLim")
-;; 	  (pt "x") (pt "n") (pt "m") (pt "M") (pt "xs") (pt "K")
-;; 	  (pt "xs1") (pt "N") (pt "g")
-;; 	  "?" "?" "?" "?" "?" "?" "?" "?" "?" "?" "?" "?" "?" "?" "?" "?" "?")
-;; ;; 141-157
-;; ;; ?^141:xB^ x
-;; (simp "xDef")
-;; (use "IshiharaTrickAux" (pt "xSTimes") (pt "xNorm") (pt "xPlus") (pt "xUMinus")
-;;      (pt "ySTimes") (pt "yNorm") (pt "xs") (pt "g") (pt "K") (pt "M"))
-;; (use "InhB")
-;; (use "BanachNormZero")
-;; (use "xsB")
-;; (use "xs1Def")
-;; (use "BanachxSTimes")
-;; (use "BanachxUMinus")
-;; (use "BanachNormPlusInhab")
-;; (use "BanachNormUMinus")
-;; (use "BanachNormTimes")
-;; (use "Conv")
-;; (use "M0")
-;; (use "MMon")
-;; (use "KDef")
-;; (use "NDef")
-;; (use "RealxNorm")
-;; (use "BanachxPlus")
-;; (use "BLim")
-;; ;; IshiharaTrickAux successfully used
-;; ;; ?^142:all n xB^(xs1 n)
-;; (assume "n2")
-;; (simp "xs1Def")
-;; (use "VB")
-;; (use "InhB")
-;; (use "xsB")
-;; (use "BanachxSTimes")
-;; ;; ?^143:all x(xB^ x -> Real(xNorm x))
-;; (auto)
-;; ;;156:all p,n,m(N p<=n -> n<m -> xNorm(xPlus(xs1 n)(xUMinus(xs1 m)))<<=(1#2**p))
-;; (use "VCauchy" (pt "xSTimes") (pt "M") (pt "xs") (pt "K") (pt "g"))
-;; (auto)
-;; ;; ?^184:all n xB^(xs1 n)
-;; (assume "n2")
-;; (simp "xs1Def")
-;; (use "VB")
-;; (use "InhB")
-;; (use "xsB")
-;; (use "BanachxSTimes")
-;; ;; ?^185:all x(xB^ x -> xB^(xUMinus x))
-;; (auto)
-;; ;; ?^196:all n,m Real(xNorm(xPlus(xs1 n)(xUMinus(xs1 m))))
-;; (assume "n2" "m2")
-;; (use "RealxNorm")
-;; (use "BanachxPlus")
-;; (simp "xs1Def")
-;; (use "VB")
-;; (use "InhB")
-;; (use "xsB")
-;; (use "BanachxSTimes")
-;; (use "BanachxUMinus")
-;; ;; ?^210:xB^(xs1 m2)
-;; (simp "xs1Def")
-;; (use "VB")
-;; (use "InhB")
-;; (use "xsB")
-;; (use "BanachxSTimes")
-;; ;; ?^157:H g K n=Succ(Succ m)
-;; (use "mProp")
-;; ;; ?^139:xEq^(xSTimes n(xs m))x -> n0<n -> F
-;; ;; Assertion proved.
-;; (assume "xEq^(xSTimes n(xs m))x""n0<n")
-;; (assert "g m")
-;; (use "HProp2gVal" (pt "K") (pt "n"))
-;; (use "mProp")
-;; (use "KMon")
-;; (use "Truth")
-;; ;; Assertion proved.
-;; ;; ?^216:g m -> F
-;; (assume "gm")
-;; (assert "a<<=yNorm(f(xs m))")
-;; (use "gProp")
-;; (use "gm")
-;; ;; Assertion proved.
-;; ;; ?^222:a<<=yNorm(f(xs m)) -> F
-;; (assume "a<<=yNorm(f(xs m))")
-;; (assert "n*a<<=n*yNorm(f(xs m))")
-;; (use "NatRatRealLeMonTimes")
-;; (use "RealNNegyNorm")
-;; (use "fBanachNorm")
-;; ;; ?^277:xB^(xs m)
-;; (use "xsB")
-;; (use "Truth")
-;; (use "a<<=yNorm(f(xs m))")
-;; ;; Assertion proved.
-;; (assume "n*a<<=n*yNorm(f(xs m))")
-;; (assert "n*a<<=yNorm(ySTimes n(f(xs m)))")
-;; (use "RealLeCompat"
-;;      (pt "RealConstr([n1]RatConstr(NatToInt n)One*a)([p]Zero)")
-;;      (pt "n*yNorm(f(xs m))"))
-;; (use "RealEqRefl")
-;; (use "RealRat")
-;; (simpreal "yNormTimes")
-;; (use "RealEqRefl")
-;; (use "RealTimesReal")
-;; (use "RealRat")
-;; (use "RealyNorm")
-;; (use "fBanachNorm")
-;; (use "xsB")
-;; (use "fBanachNorm")
-;; (use "xsB")
-;; (use "RatNNegToRealNNeg")
-;; (use "Truth")
-;; (use "n*a<<=n*yNorm(f(xs m))")
-;; ;; Assertion proved.
-;; (assume "n*a<<=yNorm(ySTimes n(f(xs m)))")
-;; ;; Was
-;; ;; (assert "n*a<<=yNorm(f x)")
-;; ;; (use "BanachEqvCompat")
-;; ;; Instead we start from xEq^(xSTimes n(xs m))x and derive first
-;; ;; yEq^(f(xSTimes n(xs m)))(f x)) and then
-;; ;; yNorm(f(xSTimes n(xs m)))===yNorm(f x)
-;; ;; Then by compatibility of <<= with === we have n*a<<=yNorm(f x)
-
-;; (assert "yEq^(f(xSTimes n(xs m)))(f x)")
-;; (use "fCompat")
-;; (use "BanachxSTimes")
-;; (use "RealRat")
-;; (use "xsB")
-;; ;; ?^254:xB^ x
-;; (simp "xDef")
-;; (use "IshiharaTrickAux" (pt "xSTimes") (pt "xNorm") (pt "xPlus") (pt "xUMinus")
-;;      (pt "ySTimes") (pt "yNorm") (pt "xs") (pt "g") (pt "K") (pt "M"))
-;; (use "InhB")
-;; (use "BanachNormZero")
-;; (use "xsB")
-;; (use "xs1Def")
-;; (use "BanachxSTimes")
-;; (use "BanachxUMinus")
-;; (use "BanachNormPlusInhab")
-;; (use "BanachNormUMinus")
-;; (use "BanachNormTimes")
-;; (use "Conv")
-;; (use "M0")
-;; (use "MMon")
-;; (use "KDef")
-;; (use "NDef")
-;; (use "RealxNorm")
-;; (use "BanachxPlus")
-;; (use "BLim")
-;; ;; IshiharaTrickAux successfully used
-;; ;; ?^255:xEq^(xSTimes n(xs m))x
-;; (use "xEq^(xSTimes n(xs m))x")
-;; ;; ?^251:yEq^(f(xSTimes n(xs m)))(f x) -> F
-;; (assume "yEq^(f(xSTimes n(xs m)))(f x)")
-;; (assert "yNorm(f(xSTimes n(xs m)))===yNorm(f x)")
-;; (use "yNormCompat")
-;; (use "fBanachNorm")
-;; (use "BanachxSTimes")
-;; (use "RealRat")
-;; (use "xsB")
-;; (use "fBanachNorm")
-;; (simp "xDef")
-;; (use "BLim")
-;; (use "VCauchy" (pt "xSTimes") (pt "M") (pt "xs") (pt "K") (pt "g"))
-;; (auto)
-;; ;; ?^291:all n xB^(xs1 n)
-;; (assume "n2")
-;; (simp "xs1Def")
-;; (use "VB")
-;; (use "InhB")
-;; (use "xsB")
-;; (use "BanachxSTimes")
-;; ;; ?^292:all x(xB^ x -> xB^(xUMinus x))
-;; (auto)
-;; ;; ?^303:all n,m Real(xNorm(xPlus(xs1 n)(xUMinus(xs1 m))))
-;; (assume "n2" "m2")
-;; (use "RealxNorm")
-;; (use "BanachxPlus")
-;; ;; ?^311:xB^(xs1 n2)
-;; (simp "xs1Def")
-;; (use "VB")
-;; (use "InhB")
-;; (use "xsB")
-;; (use "BanachxSTimes")
-;; (use "BanachxUMinus")
-;; ;; ?^317:xB^(xs1 m2)
-;; (simp "xs1Def")
-;; (use "VB")
-;; (use "InhB")
-;; (use "xsB")
-;; (use "BanachxSTimes")
-;; ;; ?^281:yEq^(f(xSTimes n(xs m)))(f x)
-;; (use "yEq^(f(xSTimes n(xs m)))(f x)")
-;; ;; Assertion proved.
-;; (assume "yNorm(f(xSTimes n(xs m)))===yNorm(f x)")
-;; (assert "n*a<<=yNorm(f x)")
-;; (use "RealLeCompat"
-;;      (pt "RealConstr([nat]n*a)([p]Zero)") (pt "yNorm(f(xSTimes n(xs m)))"))
-;; (use "RealEqRefl")
-;; (use "RealRat")
-;; (use "yNorm(f(xSTimes n(xs m)))===yNorm(f x)")
-;; (simp "fLin*")
-;; (use "n*a<<=yNorm(ySTimes n(f(xs m)))")
-;; ;; "Assertion proved.
-;; (assume "n*a<<=yNorm(f x)")
-;; ;; With n0Prop: yNorm(f x)<<=n0*a we get n*a<=n0*a contradicting n0<n
-;; (assert "n*a<=n0*a")
-;; ;; (add-global-assumption
-;; ;;  "RealLeTransRat"
-;; ;;  "all a,x,b(a<<=x -> x<<=b -> a<=b)")
-;; (use "RealLeTransRat" (pt "yNorm(f x)"))
-;; (use "n*a<<=yNorm(f x)")
-;; (use "n0Prop")
-;; ;; Assertion proved.
-;; (assume "n*a<=n0*a")
-;; (assert "n0*a<n*a")
-;; (use "RatLtMonTimesNat")
-;; (use "0<a")
-;; (use "n0<n")
-;; ;; Assertion proved.
-;; (assume "n0*a<n*a")
-;; ;; Assertion proved.
-;; (assert "n*a<n*a")
-;; (use "RatLeLtTrans" (pt "n0*a"))
-;; (use "n*a<=n0*a")
-;; (use "n0*a<n*a")
-;; (assume "Absurd")
-;; (use "Absurd")
-;; ;; ?^114:all n(n0<n -> (H g K n=Zero -> F) -> F) -> all m yNorm(f(xs m))<<=b
-;; ;; Here we need that M is strictly monotonic, to use HProp0Cor
-;; (assume "all n(n0<n -> (H g K n=Zero -> F) -> F)")
-;; (assert "all n H g K n=Zero")
-;; (assume "n")
-;; (use "NatLeLtCases" (pt "n") (pt "n0"))
-;; (use "all n(n<=n0 -> H g K n=Zero)")
-;; (assume "n0<n")
-;; (use "StabAtom")
-;; (use "all n(n0<n -> (H g K n=Zero -> F) -> F)")
-;; (use "n0<n")
-;; (assume "all n H g K n=Zero" "m")
-;; (use "gProp")
-;; (use "HProp01Cor" (pt "K") (pt "Succ m"))
-;; (use "all n H g K n=Zero")
-;; (assert "all n n<K(Succ n)")
-;; (ind)
-;; (use "NatLeLtTrans" (pt "K Zero"))
-;; (simp "KDef")
-;; (use "Truth")
-;; (simp "KDef")
-;; (simp "KDef")
-;; (use "MStrMon")
-;; (use "Truth")
-;; (assume "n" "IH")
-;; (use "NatLtLeTrans" (pt "Succ(K(Succ n))"))
-;; (use "IH")
-;; (use "NatLtToSuccLe")
-;; (simp "KDef")
-;; (simp "KDef")
-;; (use "MStrMon")
-;; (simp "NatToPosLt")
-;; (use "Truth")
-;; (use "Truth")
-;; (use "Truth")
-;; ;; Assertion proved.
-;; (assume "all n n<K(Succ n)")
-;; (use "all n n<K(Succ n)")
-;; ;; ?_104:all n(
-;; ;;        H g K n0=Succ n -> 
-;; ;;        exnc m a<<=yNorm(f(xs m)) oru all m yNorm(f(xs m))<<=b)
-;; (assume "n" "hn0=n+1")
-;; (intro 0)
-;; (assert "exd n1 exl m(n1<=n0 andnc H g K n1=m+2)")
-;; (use "HFind")
-;; (simp "KDef")
-;; (use "M0")
-;; (simp "hn0=n+1")
-;; (assume "Absurd")
-;; (use "Absurd")
-;; ;; Assertion proved.
-;; (assume "exd n1 exl m(n1<=n0 andnc H g K n1=m+2)")
-;; (by-assume "exd n1 exl m(n1<=n0 andnc H g K n1=m+2)" "n1" "n1Prop")
-;; (by-assume "n1Prop" "m" "mProp")
-;; (intro 0 (pt "m"))
-;; (use "gProp")
-;; (use "HProp2gVal" (pt "K") (pt "n1"))
-;; (use "mProp")
-;; (use "KMon")
-;; (use "Truth")
-;; ;; ?_16:exl g 
-;; ;;       all m(
-;; ;;        (g m -> a<<=yNorm(f(xs m))) andnc ((g m -> F) -> yNorm(f(xs m))<<=b))
-;; (intro 0 (pt "[m]negb(g1 m)"))
-;; (ng #t)
-;; (assume "m")
-;; (split)
-;; (assume "negb(g1 m)")
-;; (use "g1Prop")
-;; (cases (pt "g1 m"))
-;; (assume "g1 m" "Useless")
-;; (simphyp-with-to "negb(g1 m)" "g1 m" "Absurd")
-;; (use "Absurd")
-;; (assume "Useless" "Absurd")
-;; (use "Absurd")
-;; (assume "negb(g1 m) -> F")
-;; (use "g1Prop")
-;; (cases (pt "g1 m"))
-;; (strip)
-;; (use "Truth")
-;; (assume "g1 m -> F")
-;; (use "negb(g1 m) -> F")
-;; (simp "g1 m -> F")
-;; (use "Truth")
-;; ;; Proof finished.
-;; ;; (cdp)
+;; (cp)
+(save "IshiharaTrick")
 
 (define eterm (proof-to-extracted-term))
 
@@ -3297,7 +2741,7 @@
  all rea,x(Real rea -> xB^ x -> xB^(xSTimes rea x)) ->
  all x(xB^ x -> xNorm(xPlus(Inhab alpha)x)===xNorm x) ->
  all x(xB^ x -> xNorm(xUMinus x)===xNorm x) ->
- all rea,x(RealNNeg rea -> xB^ x -> xNorm(xSTimes rea x)===rea*xNorm x) ->
+ all rea,x(0<<=rea -> xB^ x -> xNorm(xSTimes rea x)===rea*xNorm x) ->
  all xs,M((all p,n,m(M p<=n -> n<m ->
                      xNorm(xPlus(xs n)(xUMinus(xs m)))<<=(1#2**p)) ->
    xB^(xLim xs M))) ->
@@ -3308,8 +2752,8 @@
  all x1,x2(xB^ x1 -> xB^ x2 -> xEq^ x1 x2 -> yEq^(f x1)(f x2)) ->
  all y(yN^ y -> Real(yNorm y)) ->
  all y1,y2(yN^ y1 -> yN^ y2 -> yEq^ y1 y2 -> yNorm y1===yNorm y2) ->
- all y(yN^ y -> RealNNeg(yNorm y)) ->
- all rea,y(RealNNeg rea -> yN^ y -> yNorm(ySTimes rea y)===rea*yNorm y) ->
+ all y(yN^ y -> 0<<=yNorm y) ->
+ all rea,y(0<<=rea -> yN^ y -> yNorm(ySTimes rea y)===rea*yNorm y) ->
  all rea,x f(xSTimes rea x)eqd ySTimes rea(f x) ->
  all p,m(M p<=m -> xNorm(xs m)<<=(1#2**p)) ->
  M 1=Zero ->
@@ -3323,7 +2767,7 @@
 	"BanachNormPlusInhab" "BanachNormUMinus" "BanachNormTimes"
 	"BLim" "BCompl" "fBanachNorm" "fCompat"
 	"RealyNorm" "yNormCompat"
-	"RealNNegyNorm" "yNormTimes"
+	"0<<=yNorm" "yNormTimes"
 	"fLin*" "Conv" "M0" "MStrMon" "0<a" "a<b" "(1#2**p)<=b-a")
 (assert "exl g all m((g m -> yNorm(f(xs m))<<=b) andnc
                      ((g m -> F) -> a<<=yNorm(f(xs m))))")
@@ -3546,17 +2990,20 @@
 ;; Assertion proved.
 ;; ?^222:a<<=yNorm(f(xs m)) -> F
 (assume "a<<=yNorm(f(xs m))")
-(assert "n*a<<=n*yNorm(f(xs m))")
-(use "NatRatRealLeMonTimes")
-(use "RealNNegyNorm")
-(use "fBanachNorm")
-;; ?^277:xB^(xs m)
-(use "xsB")
+(assert "RealTimes n a<<=n*yNorm(f(xs m))")
+(use "RealLeMonTimesTwo")
+(use "RatLeToRealLe")
+(use "Truth")
+(use "RatLeToRealLe")
+(use "RatLtToLe")
+(use "0<a")
+(use "RatLeToRealLe")
 (use "Truth")
 (use "a<<=yNorm(f(xs m))")
 ;; Assertion proved.
-(assume "n*a<<=n*yNorm(f(xs m))")
-(assert "n*a<<=yNorm(ySTimes n(f(xs m)))")
+;; ?^226:RealTimes n a<<=n*yNorm(f(xs m)) -> F
+(assume "RealTimes n a<<=n*yNorm(f(xs m))")
+(assert "RealTimes n a<<=yNorm(ySTimes n(f(xs m)))")
 (use "RealLeCompat"
      (pt "RealConstr([n1]RatConstr(NatToInt n)One*a)([p]Zero)")
      (pt "n*yNorm(f(xs m))"))
@@ -3571,11 +3018,11 @@
 (use "xsB")
 (use "fBanachNorm")
 (use "xsB")
-(use "RatNNegToRealNNeg")
+(use "RatLeToRealLe")
 (use "Truth")
-(use "n*a<<=n*yNorm(f(xs m))")
+(use "RealTimes n a<<=n*yNorm(f(xs m))")
 ;; Assertion proved.
-(assume "n*a<<=yNorm(ySTimes n(f(xs m)))")
+(assume "RealTimes n a<<=yNorm(ySTimes n(f(xs m)))")
 ;; Was
 ;; (assert "n*a<<=yNorm(f x)")
 ;; (use "BanachEqvCompat")
@@ -3584,12 +3031,13 @@
 ;; yNorm(f(xSTimes n(xs m)))===yNorm(f x)
 ;; Then by compatibility of <<= with === we have n*a<<=yNorm(f x)
 
+
 (assert "yEq^(f(xSTimes n(xs m)))(f x)")
 (use "fCompat")
 (use "BanachxSTimes")
 (use "RealRat")
 (use "xsB")
-;; ?^254:xB^ x
+;; ?^257:xB^ x
 (simp "xDef")
 (use "IshiharaTrickAux" (pt "xSTimes") (pt "xNorm") (pt "xPlus") (pt "xUMinus")
      (pt "ySTimes") (pt "yNorm") (pt "xs") (pt "g") (pt "K") (pt "M"))
@@ -3611,9 +3059,9 @@
 (use "BanachxPlus")
 (use "BLim")
 ;; IshiharaTrickAux successfully used
-;; ?^255:xEq^(xSTimes n(xs m))x
+;; ?^258:xEq^(xSTimes n(xs m))x
 (use "xEq^(xSTimes n(xs m))x")
-;; ?^251:yEq^(f(xSTimes n(xs m)))(f x) -> F
+;; ?^254:yEq^(f(xSTimes n(xs m)))(f x) -> F
 (assume "yEq^(f(xSTimes n(xs m)))(f x)")
 (assert "yNorm(f(xSTimes n(xs m)))===yNorm(f x)")
 (use "yNormCompat")
@@ -3626,33 +3074,33 @@
 (use "BLim")
 (use "VCauchy" (pt "xSTimes") (pt "M") (pt "xs") (pt "K") (pt "g"))
 (auto)
-;; ?^291:all n xB^(xs1 n)
+;; ?^294:all n xB^(xs1 n)
 (assume "n2")
 (simp "xs1Def")
 (use "VB")
 (use "InhB")
 (use "xsB")
 (use "BanachxSTimes")
-;; ?^292:all x(xB^ x -> xB^(xUMinus x))
+;; ?^295:all x(xB^ x -> xB^(xUMinus x))
 (auto)
-;; ?^303:all n,m Real(xNorm(xPlus(xs1 n)(xUMinus(xs1 m))))
+;; ?^306:all n,m Real(xNorm(xPlus(xs1 n)(xUMinus(xs1 m))))
 (assume "n2" "m2")
 (use "RealxNorm")
 (use "BanachxPlus")
-;; ?^311:xB^(xs1 n2)
+;; ?^314:xB^(xs1 n2)
 (simp "xs1Def")
 (use "VB")
 (use "InhB")
 (use "xsB")
 (use "BanachxSTimes")
 (use "BanachxUMinus")
-;; ?^317:xB^(xs1 m2)
+;; ?^320:xB^(xs1 m2)
 (simp "xs1Def")
 (use "VB")
 (use "InhB")
 (use "xsB")
 (use "BanachxSTimes")
-;; ?^281:yEq^(f(xSTimes n(xs m)))(f x)
+;; ?^284:yEq^(f(xSTimes n(xs m)))(f x)
 (use "yEq^(f(xSTimes n(xs m)))(f x)")
 ;; Assertion proved.
 (assume "yNorm(f(xSTimes n(xs m)))===yNorm(f x)")
@@ -3663,14 +3111,11 @@
 (use "RealRat")
 (use "yNorm(f(xSTimes n(xs m)))===yNorm(f x)")
 (simp "fLin*")
-(use "n*a<<=yNorm(ySTimes n(f(xs m)))")
+(use "RealTimes n a<<=yNorm(ySTimes n(f(xs m)))")
 ;; "Assertion proved.
 (assume "n*a<<=yNorm(f x)")
 ;; With n0Prop: yNorm(f x)<<=n0*a we get n*a<=n0*a contradicting n0<n
 (assert "n*a<=n0*a")
-;; (add-global-assumption
-;;  "RealLeTransRat"
-;;  "all a,x,b(a<<=x -> x<<=b -> a<=b)")
 (use "RealLeTransRat" (pt "yNorm(f x)"))
 (use "n*a<<=yNorm(f x)")
 (use "n0Prop")
@@ -3774,7 +3219,7 @@
 (simp "g1 m -> F")
 (use "Truth")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 
 (define eterm (proof-to-extracted-term))
 
@@ -3823,3 +3268,4 @@
 (add-computation-rules
  "(V alpha)xSTimes g K xs n" "(Seq alpha)xSTimes(H g K)(H g K n)xs n")
 
+ 
