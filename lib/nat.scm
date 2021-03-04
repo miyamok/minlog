@@ -1,7 +1,7 @@
-;; 2020-08-28.  nat.scm
+;; 2021-01-10.  nat.scm
 
 ;; (load "~/git/minlog/init.scm")
-
+ 
 (display "loading nat.scm ...") (newline)
 
 (add-algs "nat" '("Zero" "nat") '("Succ" "nat=>nat"))
@@ -4548,21 +4548,38 @@
 (add-rewrite-rule "(m--l)*n" "m*n--l*n")
 
 ;; SuccNatMinus
-(set-goal "all m,n(m<n -> Succ(n--m)=Succ(n)--m)")
+(set-goal "all m,n(m<=n -> Succ(n--m)=Succ(n)--m)")
 (ind)
-(ng)
-(strip)
+(assume "n" "Useless")
 (use "Truth")
 (assume "m" "IH")
 (cases)
-(ng)
 (assume "Absurd")
+(use "EfAtom")
 (use "Absurd")
 (assume "n")
 (use "IH")
 ;; Proof finished.
 ;; (cdp)
 (save "SuccNatMinus")
+
+;; Code discarded 2021-02-15
+;; ;; SuccNatMinus
+;; (set-goal "all m,n(m<n -> Succ(n--m)=Succ(n)--m)")
+;; (ind)
+;; (ng)
+;; (strip)
+;; (use "Truth")
+;; (assume "m" "IH")
+;; (cases)
+;; (ng)
+;; (assume "Absurd")
+;; (use "Absurd")
+;; (assume "n")
+;; (use "IH")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save "SuccNatMinus")
 
 ;; NatLeMonPlus
 (set-goal "all n,m,l,l0(n<=m -> l<=l0 -> n+l<=m+l0)")
@@ -4916,6 +4933,40 @@
 ;; Proof finished.
 ;; (cdp)
 (save "NatLtMonMinus")
+
+;; NatMinusZero
+(set-goal "all n,m(n<=m -> n--m=0)")
+(ind)
+;; Base
+(strip)
+(use "Truth")
+;; Step
+(assume "n" "IH")
+(cases)
+;; Zero
+(assume "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; Succ
+(assume "m" "n<=m")
+(use "IH")
+(use "n<=m")
+;; Proof finished.
+;; (cdp)
+(save "NatMinusZero")
+
+(set-goal "all n,m (n<=n--m+m)=True")
+(ind)
+(assume "m")
+(strip)
+(use "Truth")
+(assume "n" "IH")
+(cases)
+(use "Truth")
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(add-rewrite-rule "n<=n--m+m" "True")
 
 ;;  NatLeastUpBound
 (set-goal "all n0,n,pf NatLeastUp n0 n pf<=n")
