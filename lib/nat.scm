@@ -1,4 +1,4 @@
-;; 2021-01-10.  nat.scm
+;; 2021-10-20.  nat.scm
 
 ;; (load "~/git/minlog/init.scm")
  
@@ -215,9 +215,9 @@
 (define neterm (rename-variables (nt eterm)))
 (pp neterm)
 
-;; [n0]
-;;  (CoRec nat=>nat)n0
-;;  ([n1][if n1 (DummyL nat ysum nat) ([n2]Inr((InR nat nat)n2))])
+;; [n]
+;;  (CoRec nat=>nat)n
+;;  ([n0][if n0 (DummyL nat ysum nat) ([n1]Inr((InR nat nat)n1))])
 
 ;; TotalNatNcToCoTotalNc
 (set-goal "allnc n^(TotalNatNc n^ -> CoTotalNatNc n^)")
@@ -1701,25 +1701,6 @@
 ;; (cdp)
 (save "NatEqToEqD")
 
-;; BooleEqToEqD
-(set-goal "all boole1,boole2(boole1=boole2 -> boole1 eqd boole2)")
-(cases)
-(cases)
-(assume "Useless")
-(use "InitEqD")
-(assume "T=F")
-(use "EfEqD")
-(use "T=F")
-(cases)
-(assume "F=T")
-(use "EfEqD")
-(use "F=T")
-(assume "Useless")
-(use "InitEqD")
-;; Proof finished.
-;; (cdp)
-(save "BooleEqToEqD")
-
 ;; Computation rules for the program constants.
 
 ;; For NatPlus
@@ -1806,17 +1787,34 @@
 ;; 0
 
 (set-totality-goal "NatPlus")
-(assume "n^" "Tn" "m^" "Tm")
-(elim "Tm")
-(ng #t)
-(use "Tn")
-(assume "l^" "Tl" "IH")
+(fold-alltotal)
+(assume "n")
+(fold-alltotal)
+(ind)
+;; 5,6
+(use "TotalVar")
+;; 6
+(assume "m" "IH")
 (ng #t)
 (use "TotalNatSucc")
 (use "IH")
 ;; Proof finished.
 ;; (cdp)
 (save-totality)
+
+;; Alternative, with elim
+;; (set-totality-goal "NatPlus")
+;; (assume "n^" "Tn" "m^" "Tm")
+;; (elim "Tm")
+;; (ng #t)
+;; (use "Tn")
+;; (assume "l^" "Tl" "IH")
+;; (ng #t)
+;; (use "TotalNatSucc")
+;; (use "IH")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save-totality)
 
 ;; NatPlusEqP
 (set-goal "allnc n^1,n^2(EqPNat n^1 n^2 -> allnc m^1,m^2(EqPNat m^1 m^2 ->
@@ -1863,6 +1861,7 @@
 ;; Proof finished.
 ;; (cdp)
 (add-rewrite-rule "n+(m+l)" "n+m+l")
+(save "NatPlusAssoc")
 
 ;; NatPlusComm
 (set-goal "all n,m n+m=m+n")
@@ -1909,18 +1908,36 @@
 ;; Properties of NatTimes
 
 (set-totality-goal "NatTimes")
-(assume "n^" "Tn" "m^" "Tm")
-(elim "Tm")
-(ng #t)
-(use "TotalNatZero")
-(assume "l^" "Tl" "IH")
+(fold-alltotal)
+(assume "n")
+(fold-alltotal)
+(ind)
+;; 5,6
+(use "TotalVar")
+;; 6
+(assume "m" "IH")
 (ng #t)
 (use "NatPlusTotal")
 (use "IH")
-(use "Tn")
+(use "TotalVar")
 ;; Proof finished
 ;; (cdp)
 (save-totality)
+
+;; Alternative, with elim
+;; (set-totality-goal "NatTimes")
+;; (assume "n^" "Tn" "m^" "Tm")
+;; (elim "Tm")
+;; (ng #t)
+;; (use "TotalNatZero")
+;; (assume "l^" "Tl" "IH")
+;; (ng #t)
+;; (use "NatPlusTotal")
+;; (use "IH")
+;; (use "Tn")
+;; ;; Proof finished
+;; ;; (cdp)
+;; (save-totality)
 
 ;; Alternative, with AllTotalElim
 ;; (set-totality-goal "NatTimes")
@@ -2076,6 +2093,7 @@
 ;; Proof finished.
 ;; (cdp)
 (add-rewrite-rule "n*(m*l)" "n*m*l")
+(save "NatTimesAssoc")
 
 ;; NatTimesCancelL
 (set-goal "all n,m,l(Zero<n -> n*m=n*l -> m=l)")
@@ -2125,27 +2143,59 @@
 ;; (pp "TotalBooleTrue")
 ;; (pp "TotalBooleFalse")
 
+;; (display-pconst "NatLt")
+;;   comprules
+;; 0	n<0	False
+;; 1	0<Succ n	True
+;; 2	Succ n<Succ m	n<m
+
 (set-totality-goal "NatLt")
-(assume "n^" "Tn")
-(elim "Tn")
-(assume "m^" "Tm")
-(elim "Tm")
-(ng #t)
-(use "TotalBooleFalse")
-(assume "l^" "Tl" "Useless")
-(ng #t)
-(use "TotalBooleTrue")
-(assume "m^" "Tm" "IH" "l^" "Tl")
-(elim "Tl")
-(ng #t)
-(use "TotalBooleFalse")
-(assume "l^0" "Tl0" "Useless")
-(ng #t)
+(assert
+ "allnc m^(TotalNat m^ -> allnc n^(TotalNat n^ -> TotalBoole(n^ <m^)))")
+(fold-alltotal)
+(ind)
+;; 5,6
+(fold-alltotal)
+(assume "n")
+(use "TotalVar")
+;; 6
+(assume "n" "IH")
+(fold-alltotal)
+(cases)
+;; 11,12
+(use "TotalVar")
+;; 12
+(assume "m")
 (use "IH")
-(use "Tl0")
+(use "TotalVar")
+;; Assertion proved.
+(auto)
 ;; Proof finished.
 ;; (cdp)
 (save-totality)
+
+;; Alternative, with elim
+;; (set-totality-goal "NatLt")
+;; (assume "n^" "Tn")
+;; (elim "Tn")
+;; (assume "m^" "Tm")
+;; (elim "Tm")
+;; (ng #t)
+;; (use "TotalBooleFalse")
+;; (assume "l^" "Tl" "Useless")
+;; (ng #t)
+;; (use "TotalBooleTrue")
+;; (assume "m^" "Tm" "IH" "l^" "Tl")
+;; (elim "Tl")
+;; (ng #t)
+;; (use "TotalBooleFalse")
+;; (assume "l^0" "Tl0" "Useless")
+;; (ng #t)
+;; (use "IH")
+;; (use "Tl0")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save-totality)
 
 ;; ;; Alternative, with AllTotalElim
 ;; (set-totality-goal "NatLt")
@@ -2287,6 +2337,31 @@
 ;; (cdp)
 (save "NatLeAntiSym")
 
+;; NatLePlusCancelR
+(set-goal "all n,m,l(n+l<=m+l -> n<=m)")
+(assume "n" "m")
+(ind)
+;; 3,4
+(assume "LeH")
+(use "LeH")
+;; 4
+(assume "l" "IH")
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(save "NatLePlusCancelR")
+
+;; NatLePlusCancelL
+(set-goal "all n,m,l(n+m<=n+l -> m<=l)")
+(assume "n" "m" "l")
+(simp "NatPlusComm")
+(simp (pf "n+l=l+n"))
+(use "NatLePlusCancelR")
+(use "NatPlusComm")
+;; Proof finished.
+;; (cdp)
+(save "NatLePlusCancelL")
+
 ;; NatLtPlusCancelR as rewrite rule
 (set-goal "all n,m,l(n+m<l+m)=(n<l)")
 (assert "all n,l,m(n+m<l+m)=(n<l)")
@@ -2359,27 +2434,55 @@
 
 ;; Properties of NatLe
 
+;; (display-pconst "NatLe")
+;;   comprules
+;; 0	0<=n	True
+;; 1	Succ n<=0	False
+;; 2	Succ n<=Succ m	n<=m
+
 (set-totality-goal "NatLe")
-(assume "n^" "Tn")
-(elim "Tn")
-(assume "m^" "Tm")
-(elim "Tm")
-(ng #t)
-(use "TotalBooleTrue")
-(assume "l^" "Tl" "Useless")
-(ng #t)
-(use "TotalBooleTrue")
-(assume "m^" "Tm" "IH" "l^" "Tl")
-(elim "Tl")
-(ng #t)
-(use "TotalBooleFalse")
-(assume "l^0" "Tl0" "Useless")
-(ng #t)
+(fold-alltotal)
+(ind)
+;; 3,4
+(fold-alltotal)
+(assume "n")
+(use "TotalVar")
+;; 4
+(assume "n" "IH")
+(fold-alltotal)
+(cases)
+;; 9,10
+(use "TotalVar")
+;; 10
+(assume "m")
 (use "IH")
-(use "Tl0")
+(use "TotalVar")
 ;; Proof finished.
 ;; (cdp)
 (save-totality)
+
+;; Alternative, with elim
+;; (set-totality-goal "NatLe")
+;; (assume "n^" "Tn")
+;; (elim "Tn")
+;; (assume "m^" "Tm")
+;; (elim "Tm")
+;; (ng #t)
+;; (use "TotalBooleTrue")
+;; (assume "l^" "Tl" "Useless")
+;; (ng #t)
+;; (use "TotalBooleTrue")
+;; (assume "m^" "Tm" "IH" "l^" "Tl")
+;; (elim "Tl")
+;; (ng #t)
+;; (use "TotalBooleFalse")
+;; (assume "l^0" "Tl0" "Useless")
+;; (ng #t)
+;; (use "IH")
+;; (use "Tl0")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save-totality)
 
 ;; ;; Alternative, with AllTotalElim
 ;; (set-totality-goal "NatLe")
@@ -2682,6 +2785,7 @@
 ;; Proof finished.
 ;; (cdp)
 (save "NatLeLin")
+(save "NatLeLeCases")
 
 (define eterm (proof-to-extracted-term))
 (define neterm (rename-variables (nt eterm)))
@@ -2714,6 +2818,20 @@
 ;; Proof finished.
 ;; (cdp)
 (save "NatLePred")
+
+;; NatSuccPred
+(set-goal "all n(Zero<n -> Succ(Pred n)=n)")
+(cases)
+;; 2,3
+(assume "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 3
+(assume "n" "Useless")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "NatSuccPred")
 
 ;; NatLtMonPred
 (set-goal "all n,m(0<n -> n<m -> Pred n<Pred m)")
@@ -2802,17 +2920,35 @@
 
 ;; Properties of NatMinus and Pred
 
+;; (display-pconst "Pred")
+;;   comprules
+;; 0	Pred 0	0
+;; 1	Pred(Succ n)	n
+
 (set-totality-goal "Pred")
-(assume "n^" "Tn")
-(elim "Tn")
-(ng #t)
-(use "TotalNatZero")
-(assume "m^" "Tm" "Useless")
-(ng #t)
-(use "Tm")
+(fold-alltotal)
+(cases)
+;; 3,4
+(use "TotalVar")
+;; 4
+(assume "n")
+(use "TotalVar")
 ;; Proof finished.
 ;; (cdp)
 (save-totality)
+
+;; Alternative, with elim
+;; (set-totality-goal "Pred")
+;; (assume "n^" "Tn")
+;; (elim "Tn")
+;; (ng #t)
+;; (use "TotalNatZero")
+;; (assume "m^" "Tm" "Useless")
+;; (ng #t)
+;; (use "Tm")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save-totality)
 
 ;; ;; Alternative, with AllTotalElim
 ;; (set-totality-goal "Pred")
@@ -2838,18 +2974,39 @@
 ;; (cdp)
 (save "PredEqP")
 
+;; (display-pconst "NatMinus")
+;;   comprules
+;; 0	n--0	n
+;; 1	n--Succ m	Pred(n--m)
+
 (set-totality-goal "NatMinus")
-(assume "n^" "Tn" "m^" "Tm")
-(elim "Tm")
-(ng #t)
-(use "Tn")
-(assume "l^" "Tl" "IH")
-(ng #t)
+(fold-alltotal)
+(assume "n")
+(fold-alltotal)
+(ind)
+;; 5,6
+(use "TotalVar")
+;; 6
+(assume "m" "IH")
 (use "PredTotal")
 (use "IH")
 ;; Proof finished.
 ;; (cdp)
 (save-totality)
+
+;; Alternative, with elim
+;; (set-totality-goal "NatMinus")
+;; (assume "n^" "Tn" "m^" "Tm")
+;; (elim "Tm")
+;; (ng #t)
+;; (use "Tn")
+;; (assume "l^" "Tl" "IH")
+;; (ng #t)
+;; (use "PredTotal")
+;; (use "IH")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save-totality)
 
 ;; ;; Alternative, with AllTotalElim
 ;; (set-totality-goal "NatMinus")
@@ -2912,32 +3069,115 @@
 ;; (cdp)
 (add-rewrite-rule "Succ n--n" "1")
 
+;; NatPlusMinusAssoc
+(set-goal "all n,m,l(l<=m -> n+(m--l)=n+m--l)")
+(assume "n")
+(ind)
+;; 3,4
+(ng #t)
+(assume "l" "l=0")
+(simp "l=0")
+(use "Truth")
+;; 4
+(assume "m" "IH")
+(cases)
+;; 9,10
+(ng #t)
+(assume "Useless")
+(use "Truth")
+;; 10
+(assume "l" "l<=m")
+(ng)
+(use "IH")
+(use "l<=m")
+;; Proof finished.
+;; (cdp)
+(save "NatPlusMinusAssoc")
+
+;; NatMinusPlusPlus
+(set-goal "all n,m,l n+l--(m+l)=n--m")
+(assume "n" "m")
+(ind)
+;; 3,4
+(use "Truth")
+(assume "l" "IH")
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(save "NatMinusPlusPlus")
+
+;; NatMinusPlusPlusR
+(set-goal "all n,m,l l+n--(l+m)=n--m")
+(assume "n" "m" "l")
+(simp (pf "l+n=n+l"))
+(simp (pf "l+m=m+l"))
+(use "NatMinusPlusPlus")
+(use "NatPlusComm")
+(use "NatPlusComm")
+;; Proof finshed.
+;; (cdp)
+(save "NatMinusPlusPlusR")
+
 ;; Properties of NatMax
 
+;; (display-pconst "NatMax")
+;;   comprules
+;; 0	n max 0	n
+;; 1	0 max Succ n	Succ n
+;; 2	Succ n max Succ m	Succ(n max m)
+
 (set-totality-goal "NatMax")
-(assume "n^" "Tn")
-(elim "Tn")
-(assume "m^" "Tm")
-(elim "Tm")
-(ng #t)
-(use "TotalNatZero")
-(assume "l^" "Tl" "Useless")
-(ng #t)
-(use "TotalNatSucc")
-(use "Tl")
-(assume "m^" "Tm" "IH" "l^" "Tl")
-(elim "Tl")
-(ng #t)
-(use "TotalNatSucc")
-(use "Tm")
-(assume "l^0" "Tl0" "Useless")
+(assert
+ "allnc m^(TotalNat m^ -> allnc n^(TotalNat n^ -> TotalNat(n^ max m^)))")
+(fold-alltotal)
+(ind)
+;; 5,6
+(fold-alltotal)
+(assume "n")
+(use "TotalVar")
+;; 6
+(assume "n" "IH")
+(fold-alltotal)
+(cases)
+;; 11,12
+(use "TotalVar")
+;; 12
+(assume "m")
 (ng #t)
 (use "TotalNatSucc")
 (use "IH")
-(use "Tl0")
+(use "TotalVar")
+;; Assertion proved.
+(auto)
 ;; Proof finished.
 ;; (cdp)
 (save-totality)
+
+;; Alternative, with elim
+;; (set-totality-goal "NatMax")
+;; (assume "n^" "Tn")
+;; (elim "Tn")
+;; (assume "m^" "Tm")
+;; (elim "Tm")
+;; (ng #t)
+;; (use "TotalNatZero")
+;; (assume "l^" "Tl" "Useless")
+;; (ng #t)
+;; (use "TotalNatSucc")
+;; (use "Tl")
+;; (assume "m^" "Tm" "IH" "l^" "Tl")
+;; (elim "Tl")
+;; (ng #t)
+;; (use "TotalNatSucc")
+;; (use "Tm")
+;; (assume "l^0" "Tl0" "Useless")
+;; (ng #t)
+;; (use "TotalNatSucc")
+;; (use "IH")
+;; (use "Tl0")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save-totality)
 
 ;; ;; Alternative, with AllTotalElim
 ;; (set-totality-goal "NatMax")
@@ -3113,28 +3353,62 @@
 
 ;; Properties of NatMin
 
+;; (display-pconst "NatMin")
+;;   comprules
+;; 0	n min 0	0
+;; 1	0 min Succ n	0
+;; 2	Succ n min Succ m	Succ(n min m)
+
 (set-totality-goal "NatMin")
-(assume "n^" "Tn")
-(elim "Tn")
-(assume "m^" "Tm")
-(elim "Tm")
-(ng #t)
-(use "TotalNatZero")
-(assume "l^" "Tl" "Useless")
-(ng #t)
-(use "TotalNatZero")
-(assume "m^" "Tm" "IH" "l^" "Tl")
-(elim "Tl")
-(ng #t)
-(use "TotalNatZero")
-(assume "l^0" "Tl0" "Useless")
+(assert
+ "allnc m^(TotalNat m^ -> allnc n^(TotalNat n^ -> TotalNat(n^ min m^)))")
+(fold-alltotal)
+(ind)
+;; 5,6
+(fold-alltotal)
+(assume "n")
+(use "TotalVar")
+;; 6
+(assume "n" "IH")
+(fold-alltotal)
+(cases)
+;; 11,12
+(use "TotalVar")
+;; 12
+(assume "m")
 (ng #t)
 (use "TotalNatSucc")
 (use "IH")
-(use "Tl0")
+(use "TotalVar")
+;; Assertion proved.
+(auto)
 ;; Proof finished.
 ;; (cdp)
 (save-totality)
+
+;; Alternative, with elim
+;; (set-totality-goal "NatMin")
+;; (assume "n^" "Tn")
+;; (elim "Tn")
+;; (assume "m^" "Tm")
+;; (elim "Tm")
+;; (ng #t)
+;; (use "TotalNatZero")
+;; (assume "l^" "Tl" "Useless")
+;; (ng #t)
+;; (use "TotalNatZero")
+;; (assume "m^" "Tm" "IH" "l^" "Tl")
+;; (elim "Tl")
+;; (ng #t)
+;; (use "TotalNatZero")
+;; (assume "l^0" "Tl0" "Useless")
+;; (ng #t)
+;; (use "TotalNatSucc")
+;; (use "IH")
+;; (use "Tl0")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save-totality)
 
 ;; ;; Alternative, with AllTotalElim
 ;; (set-totality-goal "NatMin")
@@ -3359,55 +3633,6 @@
 ;; (cdp)
 (save "NegToEqFalse")
 
-;; BooleAeqToEq
-(set-goal "all boole1,boole2(
- (boole1 -> boole2) -> (boole2 -> boole1) -> boole1=boole2)")
-(cases)
-(cases)
-(strip)
-(use "Truth")
-(assume "Absurd" "Useless")
-(use-with "Absurd" "Truth")
-(cases)
-(assume "Useless" "Absurd")
-(use-with "Absurd" "Truth")
-(strip)
-(use "Truth")
-;; Proof finished.
-;; (cdp)
-(save "BooleAeqToEq")
-
-;; BooleEqToAeqLeft
-(set-goal "all boole1,boole2(boole1=boole2 -> boole1 -> boole2)")
-(cases)
-(cases)
-(strip)
-(use "Truth")
-(assume "Absurd" "Useless")
-(use "Absurd")
-(cases)
-(strip)
-(use "Truth")
-(assume "Useless" "Absurd")
-(use "Absurd")
-;; Proof finished.
-;; (cdp)
-(save "BooleEqToAeqLeft")
-
-;; BooleEqToAeqRight
-(set-goal "all boole1,boole2(boole1=boole2 -> boole2 -> boole1)")
-(cases)
-(strip)
-(use "Truth")
-(cases)
-(assume "Absurd" "Useless")
-(use "Absurd")
-(assume "Useless" "Absurd")
-(use "Absurd")
-;; Proof finished.
-;; (cdp)
-(save "BooleEqToAeqRight")
-
 ;; OrIntroLeft
 (set-goal "all boole1,boole2(boole1 -> boole1 orb boole2)")
 (cases)
@@ -3474,7 +3699,49 @@
 ;; (cdp)
 (save "IfOrb")
 
+;; NatNegbLeEqLt
+(set-goal "all n,m negb(n<=m)=(m<n)")
+(assume "n" "m")
+(cases (pt "n<=m"))
+(assume "n<=m")
+(cases (pt "m<n"))
+(assume "m<n")
+(use-with "NatLeLtTrans" (pt "n") (pt "m") (pt "n") "?" "?")
+(use "n<=m")
+(use "m<n")
+;; 7
+(strip)
+(use "Truth")
+;; 4
+(assume "n<=m -> F")
+(inst-with-to "NatNotLeToLt" (pt "n") (pt "m") "n<=m -> F" "m<n")
+(cases (pt "m<n"))
+(strip)
+(use "Truth")
+(assume "(m<n -> F)")
+(use "(m<n -> F)")
+(use "m<n")
+;; Proof finished.
+;; (cdp)
+(save "NatNegbLeEqLt")
+
+;; (display-pconst "NegConst")
+
+;; NatNegbLtEqLe
+(set-goal "all n,m negb(n<m)=(m<=n)")
+(assume "n" "m")
+(simp "<-" "NatNegbLeEqLt")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "NatNegbLtEqLe")
+
 ;; Properties of AllBNat
+
+;; (display-pconst "AllBNat")
+;;   comprules
+;; 0	AllBNat 0 pf	True
+;; 1	AllBNat(Succ n)pf	[if (AllBNat n pf) (pf n) False]
 
 ;; AllBNatTotal
 (set-goal (rename-variables (term-to-totality-formula (pt "AllBNat"))))
@@ -4228,6 +4495,10 @@
 ;; (cdp)
 (save "NatNatNatTotalToExtNc")
 
+;; (display-pconst "NatLeastUp")
+;;   comprules
+;; 0	NatLeastUp n0 n pf  [if (n0<=n) (NatLeast(n--n0)([m]pf(m+n0))+n0) 0]
+
 (set-totality-goal "NatLeastUp")
 
 ;; allnc n^(
@@ -4788,6 +5059,23 @@
 ;; (cdp)
 (save "NatMinusPlus")
 
+;; NatPlusMinusMinus
+(set-goal "all n,m,l(n<=m -> m<=l -> m--n+(l--m)=l--n)")
+(assume "n" "m" "l" "n<=m" "m<=l")
+(simp "NatPlusMinus")
+(simp "NatMinusPlus")
+(simp "<-" "NatPlusMinusAssoc")
+(ng #t)
+(use "Truth")
+(use "NatLeTrans" (pt "m"))
+(use "n<=m")
+(use "m<=l")
+(use "n<=m")
+(use "m<=l")
+;; Proof finished.
+;; (cdp)
+(save "NatPlusMinusMinus")
+
 ;; NatMinusPlusEq
 (set-goal "all n,m(m<=n -> n--m+m=n)")
 (assume "n" "m" "m<=n")
@@ -4797,6 +5085,30 @@
 ;; Proof finished.
 ;; (cdp)
 (save "NatMinusPlusEq")
+
+;; NatMinusEq
+(set-goal "all n1,m1,n2,m2(m1<=n1 -> m2+n1=m1+n2 -> n1--m1=n2--m2)")
+(assume "n1" "m1" "n2" "m2" "m1<=n1" "EqH")
+(assert "m2<=n2")
+(use "NatLePlusCancelR" (pt "n1"))
+(simp "EqH")
+(simp "NatPlusComm")
+(use "NatLeMonPlus")
+(use "Truth")
+(use "m1<=n1")
+;; Assertion proved.
+(assume "m2<=n2")
+(use "NatPlusCancelR" (pt "m2"))
+(simp "NatMinusPlusEq")
+(simp "NatMinusPlus")
+(simp "NatPlusComm")
+(simp "EqH")
+(use "Truth")
+(use "m1<=n1")
+(use "m2<=n2")
+;; Proof finished.
+;; (cdp)
+(save "NatMinusEq")
 
 ;; NatMinusMinus
 (set-goal  "all n,m,l(l<=m -> m<=n+l -> n--(m--l)=n+l--m)")
@@ -4955,10 +5267,32 @@
 ;; (cdp)
 (save "NatMinusZero")
 
-(set-goal "all n,m (n<=n--m+m)=True")
+;; NatMinusMax
+(set-goal "all n,m n max m--n=m--n")
+(assume "n" "m")
+(use "NatLeLtCases" (pt "n") (pt "m"))
+;; 3,4
+(assume "Lenm")
+(simp "NatMaxEq2")
+(use "Truth")
+(use "Lenm")
+;; 4
+(assume "Ltmn")
+(simp "NatMaxEq1")
+(simp (pf "m--n=Zero"))
+(use "Truth")
+(use "NatMinusZero")
+(use "NatLtToLe")
+(use "Ltmn")
+(use "NatLtToLe")
+(use "Ltmn")
+;; Proof finished.
+;; (cdp)
+(save "NatMinusMax")
+
+(set-goal "all n,m n<=n--m+m")
 (ind)
 (assume "m")
-(strip)
 (use "Truth")
 (assume "n" "IH")
 (cases)
@@ -5516,10 +5850,12 @@
  "NatDouble(Succ n)" "Succ(Succ(NatDouble n))")
 
 (set-totality-goal "NatDouble")
-(assume "n^" "Tn")
-(elim "Tn")
-(use "TotalNatZero")
-(assume "m^" "Tm" "IH")
+(fold-alltotal)
+(ind)
+;; 3,4
+(use "TotalVar")
+;; 4
+(assume "n" "IH")
 (ng #t)
 (use "TotalNatSucc")
 (use "TotalNatSucc")
@@ -5527,6 +5863,20 @@
 ;; Proof finished.
 ;; (cdp)
 (save-totality)
+
+;; Alternative, with elim
+;; (set-totality-goal "NatDouble")
+;; (assume "n^" "Tn")
+;; (elim "Tn")
+;; (use "TotalNatZero")
+;; (assume "m^" "Tm" "IH")
+;; (ng #t)
+;; (use "TotalNatSucc")
+;; (use "TotalNatSucc")
+;; (use "IH")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save-totality)
 
 ;; NatMaxDouble
 (set-goal "all n,m NatDouble n max NatDouble m=NatDouble(n max m)")
@@ -6111,6 +6461,15 @@
 ;; (cdp)
 (save "NatHalfLtSucc")
 
+;; NatHalfLe
+(set-goal "all n NatHalf n<=n")
+(assume "n")
+(use "NatLtSuccToLe")
+(use "NatHalfLtSucc")
+;; Proof finished.
+;; (cdp)
+(save "NatHalfLe")
+
 ;; NatDoubleHalfEven
 (set-goal "all n(NatEven n -> NatDouble(NatHalf n)=n)")
 (assert "all n((NatEven n -> NatDouble(NatHalf n)=n) andnc
@@ -6192,6 +6551,75 @@
 ;; Proof finished.
 ;; (cdp)
 (save "NatLtZeroHalfFinally")
+
+;; NatDoublePlus
+(set-goal "all n,m NatDouble(n+m)=NatDouble n+NatDouble m")
+(assume "n")
+(ind)
+(use "Truth")
+(assume "m" "IH")
+(ng #t)
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(save "NatDoublePlus")
+
+;; NatDoublePlusEq
+(set-goal "all n n+n=NatDouble n")
+(ind)
+(use "Truth")
+(assume "n" "IH")
+(ng #t)
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(save "NatDoublePlusEq")
+
+;; NatTimesDouble
+(set-goal "all n,m NatDouble n*NatDouble m=NatDouble(NatDouble(n*m))")
+(assume "n")
+(ind)
+(use "Truth")
+(assume "m" "IH")
+(ng #t)
+(simp "IH")
+(assert "NatDouble(n*m+n)=NatDouble(n*m)+NatDouble n")
+ (use "NatDoublePlus")
+(assume "EqHyp1")
+(simp "EqHyp1")
+(assert "NatDouble(NatDouble(n*m)+NatDouble n)=
+         NatDouble(NatDouble(n*m))+NatDouble(NatDouble(n))")
+ (use "NatDoublePlus")
+(assume "EqHyp2")
+(simp "EqHyp2")
+(assert "NatDouble(NatDouble n)=NatDouble n+NatDouble n")
+ (simp "NatDoublePlusEq")
+ (use "Truth")
+(assume "EqHyp3")
+(simp "EqHyp3")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "NatTimesDouble")
+
+;; NatDoubleTimes2
+(set-goal "all n,m NatDouble(n*m)=n*NatDouble m")
+(assume "n")
+(ind)
+(use "Truth")
+(assume "m" "IH")
+(ng #t)
+(simp "NatDoublePlus")
+(simp "IH")
+(assert "NatDouble n=n+n")
+ (simp "NatDoublePlusEq")
+ (use "Truth")
+(assume "EqHyp1")
+(simp "EqHyp1")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "NatDoubleTimes2")
 
 ;; For use with grec we add
 
