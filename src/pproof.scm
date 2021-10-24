@@ -1,4 +1,4 @@
-;; 2021-03-01.  pproof.scm
+;; 2021-10-16.  pproof.scm
 ;; 11. Partial proofs
 ;; ==================
 
@@ -614,7 +614,8 @@
     (display-num-goal (car (pproof-state-to-num-goals)))))
 
 (define (normalize-goal-intern num-goals proof maxgoal . ng-info)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (drop-info (num-goal-to-drop-info num-goal))
@@ -682,7 +683,8 @@
     (display-num-goal (car (pproof-state-to-num-goals)))))
 
 (define (assume-intern num-goals proof maxgoal . x-list)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (drop-info (num-goal-to-drop-info num-goal))
@@ -927,7 +929,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply use-intern num-goals proof maxgoal x elab-path-and-terms))
     (pproof-state-history-push PPROOF-STATE)
@@ -937,7 +941,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (if ;x determines a closed proof
      (or (and (string? x) (assoc x THEOREMS))
 	 (and (string? x) (assoc x GLOBAL-ASSUMPTIONS))
@@ -956,7 +962,8 @@
 	    (display-new-goals num-goals number)))))
 
 (define (use-intern num-goals proof maxgoal x . elab-path-and-terms)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (ignore-deco-flag (num-goal-to-ignore-deco-flag num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (context (goal-to-context goal))
@@ -1057,7 +1064,8 @@
 
 (define (use2-hyp-or-new-goal-intern
 	 num-goals proof maxgoal x . elab-path-and-terms)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (context (goal-to-context goal))
 	 (ncvars (goal-to-ncvars goal))
@@ -1139,7 +1147,8 @@
 
 (define (use2-closed-proof-intern
 	 num-goals proof maxgoal closed-proof . elab-path-and-terms)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (context (goal-to-context goal))
 	 (goal-formula (goal-to-formula goal))
@@ -1779,14 +1788,17 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply use-with-intern num-goals proof maxgoal x x-list))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (use-with-intern num-goals proof maxgoal x . x-list)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (ignore-deco-flag (num-goal-to-ignore-deco-flag num-goal))
 	 (goal-formula (goal-to-formula goal))
@@ -2373,14 +2385,17 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply inst-with-intern num-goals proof maxgoal x x-list))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (inst-with-intern num-goals proof maxgoal x . x-list)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (drop-info (num-goal-to-drop-info num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
@@ -2435,7 +2450,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply inst-with-to-intern
 		 num-goals proof maxgoal x
@@ -2456,7 +2473,8 @@
     (let* ((pproof-state1
 	    (apply inst-with-intern num-goals proof maxgoal x-and-x-list))
 	   (num-goals (pproof-state-to-num-goals pproof-state1))
-	   (num-goal (car num-goals))
+	   (num-goal
+	    (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	   (goal (num-goal-to-goal num-goal))
 	   (context (goal-to-context goal))
 	   (avars (context-to-avars context))
@@ -2478,13 +2496,16 @@
     (let* ((num-goals (pproof-state-to-num-goals))
 	   (proof (pproof-state-to-proof))
 	   (maxgoal (pproof-state-to-maxgoal))
-	   (number (num-goal-to-number (car num-goals))))
+	   (number
+	    (num-goal-to-number
+	     (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
       (set! PPROOF-STATE (cut-intern num-goals proof maxgoal formula))
       (pproof-state-history-push PPROOF-STATE)
       (display-new-goals num-goals number))))
 
 (define (cut-intern num-goals proof maxgoal side-premise-formula)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (formula (goal-to-formula goal)))
     (use-with-intern num-goals proof maxgoal
@@ -2505,13 +2526,16 @@
     (let* ((num-goals (pproof-state-to-num-goals))
 	   (proof (pproof-state-to-proof))
 	   (maxgoal (pproof-state-to-maxgoal))
-	   (number (num-goal-to-number (car num-goals))))
+	   (number
+	    (num-goal-to-number
+	     (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
       (set! PPROOF-STATE (assert-intern num-goals proof maxgoal formula))
       (pproof-state-history-push PPROOF-STATE)
       (display-new-goals num-goals number))))
 
 (define (assert-intern num-goals proof maxgoal formula)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (goal-formula (goal-to-formula goal))
 	 (pproof-state1 (use-with-intern
@@ -2541,7 +2565,8 @@
     (display-num-goal (car (pproof-state-to-num-goals)))))
 
 (define (strip-intern num-goals proof maxgoal . x)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (drop-info (num-goal-to-drop-info num-goal))
@@ -2690,7 +2715,8 @@
     (display-num-goal (car (pproof-state-to-num-goals)))))
 
 (define (drop-intern num-goals proof maxgoal . x-list)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (drop-info (num-goal-to-drop-info num-goal))
@@ -2739,7 +2765,8 @@
     (display-num-goal (car (pproof-state-to-num-goals)))))
 
 (define (drop-except-intern num-goals proof maxgoal . x-list)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (drop-info (num-goal-to-drop-info num-goal))
@@ -2788,7 +2815,8 @@
     (display-num-goal (car (pproof-state-to-num-goals)))))
 
 (define (name-hyp-intern num-goals proof maxgoal i string)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (drop-info (num-goal-to-drop-info num-goal))
@@ -2825,7 +2853,8 @@
     (display-num-goal (car (pproof-state-to-num-goals)))))
 
 (define (split-intern num-goals proof maxgoal)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (drop-info (num-goal-to-drop-info num-goal))
@@ -3072,13 +3101,16 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE (apply ind-intern num-goals proof maxgoal opt-term))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (ind-intern num-goals proof maxgoal . opt-term)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (formula (goal-to-formula goal))
@@ -3149,7 +3181,8 @@
   (let* ((num-goals (pproof-state-to-num-goals pproof))
          (proof (pproof-state-to-proof pproof))
          (maxgoal (pproof-state-to-maxgoal pproof))
-         (num-goal (car num-goals))
+         (num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
          (goal (num-goal-to-goal num-goal))
          (drop-info (num-goal-to-drop-info num-goal))
          (hypname-info (num-goal-to-hypname-info num-goal))
@@ -3176,7 +3209,8 @@
   (let* ((num-goals (pproof-state-to-num-goals pproof))
          (proof (pproof-state-to-proof pproof))
          (maxgoal (pproof-state-to-maxgoal pproof))
-         (num-goal (car num-goals))
+         (num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
          (goal (num-goal-to-goal num-goal))
          (drop-info (num-goal-to-drop-info num-goal))
          (hypname-info (num-goal-to-hypname-info num-goal))
@@ -3197,14 +3231,17 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply simind-intern num-goals proof maxgoal all-formulas))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (simind-intern num-goals proof maxgoal . all-formulas)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
          (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (formula (goal-to-formula goal))
@@ -3272,14 +3309,17 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply gind-intern num-goals proof maxgoal term opt-terms))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (gind-intern num-goals proof maxgoal measure . opt-terms)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
          (goal (num-goal-to-goal num-goal))
          (formula (goal-to-formula goal))
          (types (if (not (term-form? measure))
@@ -3346,14 +3386,17 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply intro-intern num-goals proof maxgoal i terms))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (intro-intern num-goals proof maxgoal i . terms)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (formula (goal-to-formula goal))
 	 (idpredconst
@@ -3372,14 +3415,17 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply intro-with-intern num-goals proof maxgoal i x-list))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (intro-with-intern num-goals proof maxgoal i . x-list)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (formula (goal-to-formula goal))
 	 (idpredconst
@@ -3421,7 +3467,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply elim-intern
 		 num-goals proof maxgoal
@@ -3430,7 +3478,8 @@
     (display-new-goals num-goals number)))
 
 (define (elim-intern num-goals proof maxgoal . opt-idhyp-and-imp-formulas)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
@@ -3606,14 +3655,17 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply inversion-intern num-goals proof maxgoal x imp-formulas))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (inversion-intern num-goals proof maxgoal x . imp-formulas)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (goal-formula (goal-to-formula goal))
@@ -3749,14 +3801,17 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE (apply simplified-inversion-intern
 			      num-goals proof maxgoal x imp-formulas))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (simplified-inversion-intern num-goals proof maxgoal x . imp-formulas)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (goal-formula (goal-to-formula goal))
@@ -3928,7 +3983,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply coind-intern
 		 num-goals proof maxgoal opt-hyp-and-imp-formulas))
@@ -3936,7 +3993,8 @@
     (display-new-goals num-goals number)))
 
 (define (coind-intern num-goals proof maxgoal . opt-hyp-and-imp-formulas)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
@@ -4134,13 +4192,16 @@
     (let* ((num-goals (pproof-state-to-num-goals))
 	   (proof (pproof-state-to-proof))
 	   (maxgoal (pproof-state-to-maxgoal))
-	   (number (num-goal-to-number (car num-goals))))
+	   (number
+	    (num-goal-to-number
+	     (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
       (set! PPROOF-STATE (ex-intro-intern num-goals proof maxgoal term))
       (pproof-state-history-push PPROOF-STATE)
       (display-new-goals num-goals number))))
 
 (define (ex-intro-intern num-goals proof maxgoal term)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (context (goal-to-context goal))
@@ -4165,13 +4226,16 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE (ex-elim-intern num-goals proof maxgoal x))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (ex-elim-intern num-goals proof maxgoal x)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
@@ -4232,7 +4296,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE (apply by-assume-intern
 			      num-goals proof maxgoal exhyp varnames-and-hyps))
     (pproof-state-history-push PPROOF-STATE)
@@ -4242,7 +4308,8 @@
 
 (define (by-assume-intern
 	 num-goals proof maxgoal exhyp . varnames-and-hyps)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
@@ -4343,7 +4410,8 @@
        (else (myerror "by-assume-intern" "unexpected exhyp" exhyp))))))
 
 (define (exi-elim-intern num-goals proof maxgoal x)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
@@ -4415,13 +4483,16 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE (apply cases-intern num-goals proof maxgoal x))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (cases-intern num-goals proof maxgoal . x)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (formula (goal-to-formula goal)))
@@ -4524,14 +4595,17 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (casedist-intern num-goals proof maxgoal test))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (casedist-intern num-goals proof maxgoal test)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (context (goal-to-context goal))
@@ -4643,7 +4717,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply simp-with-intern
 		 num-goals proof maxgoal opt-dir-or-x x-and-xs-or-xs))
@@ -4664,7 +4740,8 @@
 		(myerror "simp-with-intern" "more arguments expected")
 		(car x-and-x-list)))
 	 (x-list (cdr x-and-x-list))
-	 (num-goal (car num-goals))
+	 (num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (drop-info (num-goal-to-drop-info num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
@@ -4924,7 +5001,8 @@
 (define (simp-with-kernel-aux num-goals proof maxgoal
 			      negatom-or-eq-proof new-num-goals new-maxgoal
 			      used-kernel bvar goal-formula-without-kernel)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (drop-info (num-goal-to-drop-info num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
@@ -4992,7 +5070,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals)))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing"))))
 	 (simp-result
 	  (apply simp-intern
 		 num-goals proof maxgoal opt-dir-or-x x-and-xs-or-xs)))
@@ -5018,7 +5098,8 @@
 		(myerror "simp-intern" "more arguments expected")
 		(car x-and-elab-path-and-terms)))
 	 (elab-path-and-terms (cdr x-and-elab-path-and-terms))
-	 (num-goal (car num-goals))
+	 (num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
 	 (context (goal-to-context goal))
@@ -5128,7 +5209,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply simprat-with-intern
 		 num-goals proof maxgoal opt-dir-or-x x-and-xs-or-xs))
@@ -5149,7 +5232,8 @@
 		(myerror "simprat-with-intern" "more arguments expected")
 		(car x-and-x-list)))
 	 (x-list (cdr x-and-x-list))
-	 (num-goal (car num-goals))
+	 (num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (drop-info (num-goal-to-drop-info num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
@@ -5412,7 +5496,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals)))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing"))))
 	 (simprat-result
 	  (apply simprat-intern
 		 num-goals proof maxgoal opt-dir-or-x x-and-xs-or-xs)))
@@ -5438,7 +5524,8 @@
 		(myerror "simprat-intern" "more arguments expected")
 		(car x-and-elab-path-and-terms)))
 	 (elab-path-and-terms (cdr x-and-elab-path-and-terms))
-	 (num-goal (car num-goals))
+	 (num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
 	 (context (goal-to-context goal))
@@ -5548,7 +5635,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply simpreal-with-intern
 		 num-goals proof maxgoal opt-dir-or-x x-and-xs-or-xs))
@@ -5569,7 +5658,8 @@
 		(myerror "simpreal-with-intern" "more arguments expected")
 		(car x-and-x-list)))
 	 (x-list (cdr x-and-x-list))
-	 (num-goal (car num-goals))
+	 (num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (drop-info (num-goal-to-drop-info num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
@@ -6929,7 +7019,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals)))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing"))))
 	 (search-result (realproof-intern num-goals proof maxgoal)))
     (if (not search-result)
 	(begin (display-comment "no proof found")
@@ -6950,7 +7042,8 @@
 			 (car (pproof-state-to-num-goals)))))))))))  
 
 (define (realproof-intern num-goals proof maxgoal)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (context (goal-to-context goal))
 	 (formula (goal-to-formula goal))
@@ -7263,7 +7356,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals)))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing"))))
 	 (simpreal-result
 	  (apply simpreal-intern
 		 num-goals proof maxgoal opt-dir-or-x x-and-xs-or-xs)))
@@ -7289,7 +7384,8 @@
 		(myerror "simpreal-intern" "more arguments expected")
 		(car x-and-elab-path-and-terms)))
 	 (elab-path-and-terms (cdr x-and-elab-path-and-terms))
-	 (num-goal (car num-goals))
+	 (num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
 	 (context (goal-to-context goal))
@@ -7474,7 +7570,8 @@
 
 (define (simprsum opt-dir-or-alleq-fla . alleq-fla-and-xs-or-xs)
   (let* ((num-goals (pproof-state-to-num-goals))
-	 (num-goal (car num-goals))
+	 (num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (goal-formula (goal-to-formula goal))
 	 (terms (if (predicate-form? goal-formula)
@@ -7554,7 +7651,9 @@
 	   (null? (pproof-state-to-num-goals res))
 					;or realproof not applicable
 	   (let* ((num-goals (car res))
-		  (num-goal (car num-goals))
+		  (num-goal
+		   (if (pair? num-goals) (car num-goals)
+		       (myerror "goal missing")))
 		  (goal (num-goal-to-goal num-goal))
 		  (formula (goal-to-formula goal)))
 	     (not (and (predicate-form? formula)
@@ -7988,7 +8087,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply simphyp-with-intern
 		 num-goals proof maxgoal hyp opt-dir rest))
@@ -8007,7 +8108,8 @@
 		(myerror "simphyp-with-intern" "more arguments expected")
 		(car x-and-x-list)))
 	 (x-list (cdr x-and-x-list))
-	 (num-goal (car num-goals))
+	 (num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (drop-info (num-goal-to-drop-info num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
@@ -8318,7 +8420,8 @@
 (define (simphyp-with-kernel-aux
 	 num-goals proof maxgoal negatom-or-eq-proof new-num-goals new-maxgoal
 	 used-kernel bvar leaf-formula-without-kernel leaf)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (goal-formula (goal-to-formula goal))
 	 (drop-info (num-goal-to-drop-info num-goal))
@@ -8407,7 +8510,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE
 	  (apply simphyp-with-to-intern
 		 num-goals proof maxgoal hyp opt-dir-and-xs-and-name))
@@ -8429,7 +8534,8 @@
 	    (apply simphyp-with-intern
 		   num-goals proof maxgoal hyp opt-dir-and-xs))
 	   (num-goals (pproof-state-to-num-goals pproof-state1))
-	   (num-goal (car num-goals))
+	   (num-goal
+	    (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	   (goal (num-goal-to-goal num-goal))
 	   (context (goal-to-context goal))
 	   (avars (context-to-avars context))
@@ -8441,7 +8547,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals)))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing"))))
 	 (simphyp-result
 	  (apply simphyp-intern num-goals proof maxgoal hyp opt-dir rest)))
     (if (not simphyp-result)
@@ -8466,7 +8574,8 @@
 		(myerror "simphyp-intern" "more arguments expected")
 		(car x-and-elab-path-and-terms)))
 	 (elab-path-and-terms (cdr x-and-elab-path-and-terms))
-	 (num-goal (car num-goals))
+	 (num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
 	 (context (goal-to-context goal))
@@ -8566,7 +8675,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals)))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing"))))
 	 (simphyp-result
 	  (apply simphyp-to-intern
 		 num-goals proof maxgoal hyp opt-dir-or-x
@@ -8594,7 +8705,8 @@
 	    (apply simphyp-intern
 		   num-goals proof maxgoal hyp opt-dir-and-xs))
 	   (num-goals (pproof-state-to-num-goals pproof-state1))
-	   (num-goal (car num-goals))
+	   (num-goal
+	    (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	   (goal (num-goal-to-goal num-goal))
 	   (context (goal-to-context goal))
 	   (avars (context-to-avars context))
@@ -8617,13 +8729,16 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE (invar-intern num-goals proof maxgoal term))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (invar-intern num-goals proof maxgoal term)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (formula (goal-to-formula goal))
@@ -8713,13 +8828,16 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE (fold-alltotal-intern num-goals proof maxgoal))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (fold-alltotal-intern num-goals proof maxgoal)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (context (goal-to-context goal))
@@ -8789,13 +8907,16 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE (min-pr-intern num-goals proof maxgoal x measure))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (min-pr-intern num-goals proof maxgoal x measure)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
@@ -8911,7 +9032,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE (apply by-assume-minimal-wrt-intern
 			      num-goals proof maxgoal exc-hyp
 			      varnames-and-measure-and-minhyp-and-hyps))
@@ -8921,7 +9044,8 @@
 (define (by-assume-minimal-wrt-intern
 	 num-goals proof maxgoal exc-hyp .
 	 varnames-and-measure-and-minhyp-and-hyps-and-opt-gindthmname)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
@@ -9355,13 +9479,16 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE (apply exc-intro-intern num-goals proof maxgoal terms))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (exc-intro-intern num-goals proof maxgoal . terms)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (context (goal-to-context goal))
@@ -9599,13 +9726,16 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE (exc-elim-intern num-goals proof maxgoal x))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (exc-elim-intern num-goals proof maxgoal x)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
          (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (hypname-info (num-goal-to-hypname-info num-goal))
@@ -10009,13 +10139,16 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE (pair-intern num-goals proof maxgoal))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (pair-elim-intern num-goals proof maxgoal)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
          (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (goal-formula (goal-to-formula goal))
@@ -10038,13 +10171,16 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals))))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing")))))
     (set! PPROOF-STATE (admit-intern num-goals proof maxgoal))
     (pproof-state-history-push PPROOF-STATE)
     (display-new-goals num-goals number)))
 
 (define (admit-intern num-goals proof maxgoal)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (context (goal-to-context goal))
 	 (ncvars (goal-to-ncvars goal))
@@ -10411,7 +10547,8 @@
 	 (rest (if (null? x)
 		   '()
 		   (cdr x)))
-	 (num-goal (car num-goals))
+	 (num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
 	 (context (goal-to-context goal))
 	 (avars (context-to-avars context))
@@ -10552,7 +10689,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals)))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing"))))
 	 (search-result (apply search-intern
 			       num-goals proof maxgoal
 			       mult-and-aconst-names-with-mult)))
@@ -10576,7 +10715,8 @@
 
 (define (search-intern
 	 num-goals proof maxgoal . mult-and-aconst-names-with-mult)
-  (let* ((num-goal (car num-goals))
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (goal (num-goal-to-goal num-goal))
  	 (ex-flag-and-search-result
 	  (apply mult-and-given-leaves-with-mult-to-ex-flag-and-search-result
@@ -10663,7 +10803,9 @@
   (let* ((num-goals (pproof-state-to-num-goals))
 	 (proof (pproof-state-to-proof))
 	 (maxgoal (pproof-state-to-maxgoal))
-	 (number (num-goal-to-number (car num-goals)))
+	 (number
+	  (num-goal-to-number
+	   (if (pair? num-goals) (car num-goals) (myerror "goal missing"))))
 	 (search-result (apply searchex-intern
 			       num-goals proof maxgoal
 			       mult-and-aconst-names-with-mult)))
@@ -10695,7 +10837,8 @@
 		       "searchex" "positive integer expected" first)))))
 	 (rest (if (null? mult-and-aconst-names-with-mult) '()
 		   (cdr mult-and-aconst-names-with-mult)))
-	 (num-goal (car num-goals))
+	 (num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
 	 (number (num-goal-to-number num-goal))
 	 (goal (num-goal-to-goal num-goal))
 	 (context (goal-to-context goal))
