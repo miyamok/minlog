@@ -1,4 +1,4 @@
-;; 2020-12-15.  axiom.scm
+;; 2021-12-15.  axiom.scm
 ;; 8. Assumption variables and axioms
 ;; ==================================
 ;; To be renamed into avars scheme, with the axioms section transferred
@@ -2704,9 +2704,9 @@
 			(term-to-totality-formula term)
 			"or the unfolded totality formula"
 			(term-to-unfolded-totality-formula term))))
-	    (if (t-deg-one? t-deg)
-		(comment "Warning: pconst " name
-			 " should have been added with t-deg zero"))
+	    ;; (if (t-deg-one? t-deg)
+	    ;; 	(comment "Warning: pconst " name
+	    ;; 		 " should have been added with t-deg zero"))
 	    (change-t-deg-to-one name))
 					;string not pconstname+Total
 	  (if (not (or (formula-with-mr-predicates? formula)
@@ -2927,11 +2927,11 @@
 		 (mk-and totality-formulas)
 		 "or the conjunction of unfolded totality formulas"
 		 (mk-and unfolded-totality-formulas)))
-    (for-each (lambda (pconst-name t-deg)
-		(if (t-deg-one? t-deg)
-		    (comment "Warning: pconst " pconst-name
-			     " should have been added with t-deg zero")))
-	      pconst-names t-degs)
+    ;; (for-each (lambda (pconst-name t-deg)
+    ;; 		(if (t-deg-one? t-deg)
+    ;; 		    (comment "Warning: pconst " pconst-name
+    ;; 			     " should have been added with t-deg zero")))
+    ;; 	      pconst-names t-degs)
     ;; Change t-deg-zero in each pconst to t-deg-one
     (apply change-t-deg-to-one pconst-names)
     (let* ((new-pconsts (map pconst-name-to-pconst pconst-names)) ;t-deg-one
