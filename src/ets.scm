@@ -1,4 +1,4 @@
-;; 2021-02-24.  ets.scm
+;; 2021-10-24.  ets.scm
 ;; 16. Extracted terms
 ;; ===================
 
@@ -66,6 +66,39 @@
 		       (term-to-type eterm)
 		       et-type))
 	  (add-computation-rule (make-term-in-const-form pconst) eterm)))))))
+
+;; Code discarded 2021-10-24
+;; (define (animate thm-or-ga-name . opt-eterm)
+;;   (let* ((pconst-name
+;; 	  (theorem-or-global-assumption-name-to-pconst-name thm-or-ga-name))
+;; 	 (pconst (pconst-name-to-pconst pconst-name))
+;; 	 (info1 (assoc thm-or-ga-name THEOREMS))
+;; 	 (info2 (assoc (string-append "c" thm-or-ga-name "0CompRule")
+;; 		       THEOREMS)))
+;;     (if
+;;      (and info1 (not info2))
+;;      (let* ((proof (theorem-name-to-proof thm-or-ga-name))
+;; 	    (eterm (proof-to-extracted-term proof))
+;; 	    (neterm (nt eterm)))
+;;        (add-computation-rule (make-term-in-const-form pconst) neterm))
+;;      (let* ((info3 (assoc thm-or-ga-name GLOBAL-ASSUMPTIONS))
+;; 	    (info4 (assoc (string-append "c" thm-or-ga-name "0CompRule")
+;; 			  GLOBAL-ASSUMPTIONS)))
+;;        (if
+;; 	(and info3 (not info4))
+;; 	(let* ((eterm (if (pair? opt-eterm)
+;; 			  (car opt-eterm)
+;; 			  (myerror "animate" "eterm expected for"
+;; 				   thm-or-ga-name)))
+;; 	       (et-type (formula-to-et-type
+;; 			 (aconst-to-uninst-formula
+;; 			  (global-assumption-name-to-aconst
+;; 			   thm-or-ga-name)))))
+;; 	  (if (not (equal? (term-to-type eterm) et-type))
+;; 	      (myerror "animate" "equal types expected"
+;; 		       (term-to-type eterm)
+;; 		       et-type))
+;; 	  (add-computation-rule (make-term-in-const-form pconst) eterm)))))))
 
 (define (deanimate thm-or-ga-name)
   (let* ((pconst-name
@@ -6250,6 +6283,59 @@
 	       (newline)
 	       (pp (string-append "c" thm-name "0CompRule")))))))))
 
+;; Code discarded 2021-10-24
+;; (define (add-sound thm-name)
+;;   (let* ((info (assoc thm-name THEOREMS))
+;; 	 (proof (if info
+;; 		    (theorem-name-to-proof thm-name)
+;; 		    (myerror "add-sound" "theorem" thm-name "missing")))
+;; 	 (sname (string-append thm-name "Sound"))) ;LSound
+;;     (if
+;;      (is-used? sname '() 'theorem)
+;;      *the-non-printing-object*
+;;      (let* ((sproof (proof-to-soundness-proof proof))
+;; 	    (pconst-name (theorem-or-global-assumption-name-to-pconst-name
+;; 			  thm-name)) ;cL
+;; 	    (fla (aconst-to-formula (theorem-name-to-aconst thm-name)))
+;; 	    (uninst-type (formula-to-et-type fla))
+;; 	    (eterm (proof-to-extracted-term proof))
+;; 	    (neterm (nt eterm)))
+;;        (if COMMENT-FLAG
+;; 	   (begin (set! COMMENT-FLAG #f)
+;; 		  (if (not (assoc pconst-name PROGRAM-CONSTANTS))
+;; 		      (add-program-constant pconst-name uninst-type))
+;; 		  (if (not (assoc (string-append pconst-name "0CompRule")
+;; 				  THEOREMS))
+;; 		      (add-computation-rule
+;; 		       (make-term-in-const-form
+;; 			(pconst-name-to-pconst pconst-name))
+;; 		       neterm))
+;; 		  (set! COMMENT-FLAG #t))
+;; 	   (begin (if (not (assoc pconst-name PROGRAM-CONSTANTS))
+;; 		      (add-program-constant pconst-name uninst-type))
+;; 		  (if (not (assoc (string-append pconst-name "0CompRule")
+;; 				  THEOREMS))
+;; 		      (add-computation-rule
+;; 		       (make-term-in-const-form
+;; 			(pconst-name-to-pconst pconst-name))
+;; 		       neterm))))
+;;        (let* ((pconst (pconst-name-to-pconst pconst-name))
+;; 	      (pconst-term (make-term-in-const-form pconst))
+;; 	      (new-sfla (rename-variables
+;; 			 (real-and-formula-to-mr-formula-aux pconst-term fla)))
+;; 	      (new-sproof (proof-to-proof-with-new-formula sproof new-sfla))
+;; 	      (saconst (make-aconst sname 'theorem new-sfla empty-subst)))
+;; 	 (set! THEOREMS (cons (list sname saconst new-sproof) THEOREMS))
+;; 	 (comment "ok, " sname " has been added as a new theorem:")
+;; 	 (if COMMENT-FLAG
+;; 	     (begin
+;; 	       (newline)
+;; 	       (pp sname)
+;; 	       (newline)
+;; 	       (comment "with computation rule")
+;; 	       (newline)
+;; 	       (pp (string-append "c" thm-name "0CompRule")))))))))
+
 ;; In proof-to-soundness-proof it is checked that the proven formula
 ;; is mr-free and c.r.
 
@@ -7389,6 +7475,153 @@
 ;; Proof finished.
 ;; (cdp)
 (save "OrUMRElim")
+
+;; Added 2021-10-15
+
+;; AndbIntro
+(set-goal "all boole1, boole2(boole1 -> boole2 -> boole1 andb boole2)")
+(cases)
+;; 2,3
+(cases)
+;; 4,5
+(assume "Useless1" "Useless2")
+(use "Truth")
+;; 5
+(assume "Useless" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 3
+(assume "boole" "Absurd" "Useless")
+(use "EfAtom")
+(use "Absurd")
+;; Proof finished.
+;; (cdp)
+(save "AndbIntro")
+
+;; AndbElim0
+(set-goal "all boole1, boole2(boole1 andb boole2 -> boole1)")
+(cases)
+;; 2,3
+(assume "boole" "Useless")
+(use "Truth")
+;; 3
+(assume "boole" "Absurd")
+(use "Absurd")
+;; Proof finished.
+;; (cdp)
+(save "AndbElim0")
+
+;; AndbElim1
+(set-goal "all boole1, boole2(boole1 andb boole2 -> boole2)")
+(cases)
+;; 2,3
+(assume "boole" "Conj")
+(use "Conj")
+;; 3
+(assume "boole" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; Proof finished.
+;; (cdp)
+(save "AndbElim1")
+
+(set-goal "all boole negb negb boole=boole")
+(cases)
+(use "Truth")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(add-rewrite-rule "negb negb boole" "boole")
+
+;; (display-pconst "NegConst")
+
+;; IfBooleMonImp
+(set-goal "all boole1,boole2, boole3,boole4,boole(
+ [if boole boole1 boole2] -> (boole1 -> boole3) -> (boole2 -> boole4) ->
+ [if boole boole3 boole4])")
+(assume "boole1" "boole2" " boole3" "boole4")
+(cases)
+;; 3,4
+(ng #t)
+(assume "H1" "Imp" "Useless")
+(use "Imp")
+(use "H1")
+;; 4
+(ng #t)
+(assume "H2" "Useless" "Imp")
+(use "Imp")
+(use "H2")
+;; Proof finished.
+;; (cdp)
+(save "IfBooleMonImp")
+
+;; BooleEqToEqD
+(set-goal "all boole1,boole2(boole1=boole2 -> boole1 eqd boole2)")
+(cases)
+(cases)
+(assume "Useless")
+(use "InitEqD")
+(assume "T=F")
+(use "EfEqD")
+(use "T=F")
+(cases)
+(assume "F=T")
+(use "EfEqD")
+(use "F=T")
+(assume "Useless")
+(use "InitEqD")
+;; Proof finished.
+;; (cdp)
+(save "BooleEqToEqD")
+
+;; BooleAeqToEq
+(set-goal "all boole1,boole2(
+ (boole1 -> boole2) -> (boole2 -> boole1) -> boole1=boole2)")
+(cases)
+(cases)
+(strip)
+(use "Truth")
+(assume "Absurd" "Useless")
+(use-with "Absurd" "Truth")
+(cases)
+(assume "Useless" "Absurd")
+(use-with "Absurd" "Truth")
+(strip)
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "BooleAeqToEq")
+
+;; BooleEqToAeqLeft
+(set-goal "all boole1,boole2(boole1=boole2 -> boole1 -> boole2)")
+(cases)
+(cases)
+(strip)
+(use "Truth")
+(assume "Absurd" "Useless")
+(use "Absurd")
+(cases)
+(strip)
+(use "Truth")
+(assume "Useless" "Absurd")
+(use "Absurd")
+;; Proof finished.
+;; (cdp)
+(save "BooleEqToAeqLeft")
+
+;; BooleEqToAeqRight
+(set-goal "all boole1,boole2(boole1=boole2 -> boole2 -> boole1)")
+(cases)
+(strip)
+(use "Truth")
+(cases)
+(assume "Absurd" "Useless")
+(use "Absurd")
+(assume "Useless" "Absurd")
+(use "Absurd")
+;; Proof finished.
+;; (cdp)
+(save "BooleEqToAeqRight")
 
 (set! COMMENT-FLAG #t)
 
