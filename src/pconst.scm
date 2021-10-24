@@ -1,4 +1,4 @@
-;; 2020-12-15.  pconst.scm
+;; 2021-10-23.  pconst.scm
 ;; 4. Constants
 ;; ============
 
@@ -1228,13 +1228,13 @@
 			new-alist-for-name)
 		  pconsts-except-name))
       (set! THEOREMS
-	    (list-transform-positive THEOREMS
-	      ;; remove those with string-to-first-name = name and
-	      ;; string-to-last-name = CompRule
-	      (lambda (x)
-		(let ((thm-name (car x)))
-		  (or (not (string=? (string-to-last-name thm-name) "CompRule"))
-		      (not (string=? (string-to-first-name thm-name) name)))))))
+      	    (list-transform-positive THEOREMS
+      	      ;; remove those with string-to-first-name = name and
+      	      ;; string-to-last-name = CompRule
+      	      (lambda (x)
+      		(let ((thm-name (car x)))
+      		  (or (not (string=? (string-to-last-name thm-name) "CompRule"))
+      		      (not (string=? (string-to-first-name thm-name) name)))))))
       (comment "ok, computation rules of the form " (term-to-string lhs)
 	       " removed"))))
 
@@ -1280,13 +1280,13 @@
 			new-alist-for-name)
 		  pconsts-except-name))
       (set! THEOREMS
-	    (list-transform-positive THEOREMS
-	      ;; remove those with string-to-first-name = name and
-	      ;; string-to-last-name = CompRule
-	      (lambda (x)
-		(let ((thm-name (car x)))
-		  (or (not (string=? (string-to-last-name thm-name) "RewRule"))
-		      (not (string=? (string-to-first-name thm-name) name)))))))
+      	    (list-transform-positive THEOREMS
+      	      ;; remove those with string-to-first-name = name and
+      	      ;; string-to-last-name = CompRule
+      	      (lambda (x)
+      		(let ((thm-name (car x)))
+      		  (or (not (string=? (string-to-last-name thm-name) "RewRule"))
+      		      (not (string=? (string-to-first-name thm-name) name)))))))
       (comment "ok, rewrite rules with lhs of the form "
 	       (term-to-string lhs)
 	       " removed"))))
