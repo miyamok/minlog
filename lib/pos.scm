@@ -1,4 +1,4 @@
-;; 2021-03-01.  pos.scm
+;; 2021-10-20.  pos.scm
 
 ;; (load "~/git/minlog/init.scm")
 ;; (set! COMMENT-FLAG #f)
@@ -15,6 +15,7 @@
 ;; will be reintroduced here, with a different assigned procedure.
 
 (remove-nat-tokens)
+(add-display (py "nat") (make-display-creator1 "ListLength" "Lh" 'prefix-op))
 
 ;; The functions make-numeric-term (used by the parser) and
 ;; is-numeric-term?, numeric-term-to-number (used by term-to-expr and
@@ -680,77 +681,126 @@
 
 ;; We define the inverse NatToPos of PosToNat , using GRec
 
-(add-program-constant "NatToPosStep" (py "nat=>(nat=>pos)=>pos"))
+;; (add-program-constant "NatToPosStep" (py "nat=>(nat=>pos)=>pos"))
 
-;; Rules for NatToPosStep
+;; ;; Rules for NatToPosStep
 
-(add-computation-rules
- "NatToPosStep n(nat=>pos)"
- "[if (NatEven n)
-      (SZero((nat=>pos)(NatHalf n)))
-      [if (n=Succ Zero) One (SOne((nat=>pos)(NatHalf n)))]]")
+;; (add-computation-rules
+;;  "NatToPosStep n(nat=>pos)"
+;;  "[if (n<=Succ Zero) One
+;;       [if (NatEven n)
+;;  	  (SZero((nat=>pos)(NatHalf n)))
+;; 	  (SOne((nat=>pos)(NatHalf n)))]]")
 
-;; NatToPosStepTotal
-(set-totality-goal "NatToPosStep")
-(assume "nat^" "Tnat" "(nat=>pos)^" "Th")
-(ng #t)
-(use "BooleIfTotal")
-(use "NatEvenTotal")
-(use "Tnat")
-(use "TotalPosSZero")
-(use "Th")
-(use "NatHalfTotal")
-(use "Tnat")
-(use "BooleIfTotal")
-(use "NatEqTotal")
-(use "Tnat")
-(use "TotalNatSucc")
-(use "TotalNatZero")
-(use "TotalPosOne")
-(use "TotalPosSOne")
-(use "Th")
-(use "NatHalfTotal")
-(use "Tnat")
-;; Proof finished.
-;; (cdp)
-(save-totality)
+;; (add-computation-rules
+;;  "NatToPosStep n(nat=>pos)"
+;;  "[if (NatEven n)
+;;       (SZero((nat=>pos)(NatHalf n)))
+;;       [if (n=Succ Zero) One (SOne((nat=>pos)(NatHalf n)))]]")
+
+;; ;; NatToPosStepTotal
+;; (set-totality-goal "NatToPosStep")
+;; (fold-alltotal)
+;; (assume "n")
+;; (fold-alltotal)
+;; (assume "nat=>pos")
+;; (ng #t)
+;; (use "BooleIfTotal")
+;; (use "TotalVar")
+;; (use "TotalVar")
+;; (use "BooleIfTotal")
+;; (use "TotalVar")
+;; (use "TotalVar")
+;; (use "TotalVar")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save-totality)
+
+;; ;; NatToPosStepTotal
+;; (set-totality-goal "NatToPosStep")
+;; (assume "nat^" "Tnat" "(nat=>pos)^" "Th")
+;; (ng #t)
+;; (use "BooleIfTotal")
+;; (use "NatEvenTotal")
+;; (use "Tnat")
+;; (use "TotalPosSZero")
+;; (use "Th")
+;; (use "NatHalfTotal")
+;; (use "Tnat")
+;; (use "BooleIfTotal")
+;; (use "NatEqTotal")
+;; (use "Tnat")
+;; (use "TotalNatSucc")
+;; (use "TotalNatZero")
+;; (use "TotalPosOne")
+;; (use "TotalPosSOne")
+;; (use "Th")
+;; (use "NatHalfTotal")
+;; (use "Tnat")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save-totality)
 
 (add-program-constant "NatToPos" (py "nat=>pos"))
 
 ;; Rules for NatToPos
 
 (add-computation-rules
- "NatToPos n" "(GRec nat pos)([n]n)n NatToPosStep")
+ "NatToPos n"
+ "(GRec nat pos)([n]n)n ([n,nat=>pos][if (n<=Succ Zero) One
+    [if (NatEven n)
+	(SZero((nat=>pos)(NatHalf n)))
+	(SOne((nat=>pos)(NatHalf n)))]])")
+
+;; (add-computation-rules
+;;  "NatToPos n" "(GRec nat pos)([n]n)n NatToPosStep")
 
 ;; NatToPosTotal
-(set-totality-goal  "NatToPos")
-(use "AllTotalElim")
+(set-totality-goal "NatToPos")
+(fold-alltotal)
 (assume "n")
 (ng #t)
 (use "BooleIfTotal")
-(use "NatEvenTotal")
-(use "NatTotalVar")
-(use "TotalPosSZero")
-(use "PosTotalVar")
+(use "TotalVar")
+(use "TotalVar")
 (use "BooleIfTotal")
-(use "NatEqTotal")
-(use "NatTotalVar")
-(use "TotalNatSucc")
-(use "TotalNatZero")
-(use "TotalPosOne")
-(use "TotalPosSOne")
-(use "PosTotalVar")
+(use "TotalVar")
+(use "TotalVar")
+(use "TotalVar")
 ;; Proof finished.
 ;; (cdp)
 (save-totality)
 
-;; NatToPosDef
-(set-goal "all n NatToPos n=(GRec nat pos)([n]n)n NatToPosStep")
+;; Use cNatPos instead of the pconst NatToPos to block unwanted unfoldings
+
+;; NatPos
+(set-goal "all n exl p p=NatToPos n")
+(assume "n")
+(intro 0 (pt "NatToPos n"))
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "NatPos")
+
+(animate "NatPos")
+
+;; NatPosExFree
+(set-goal "all n cNatPos n=NatToPos n")
 (assume "n")
 (use "Truth")
-;; Proof finished
+;; Proof finished.
 ;; (cdp)
-(save "NatToPosDef")
+(save "NatPosExFree")
+
+(deanimate "NatPos")
+
+(set-totality-goal "cNatPos")
+(fold-alltotal)
+(assume "n")
+(use "PosTotalVar")
+;; Proof finished.
+;; (cdp)
+(save "cNatPosTotal")
 
 ;; Rules for PosPlus
 
@@ -855,7 +905,7 @@
 ;; (cdp)
 (save "PosPlusEqP")
 
-;; NatLt0Pos
+;; NatLtZeroPos
 (set-goal "all p Zero<p")
 (ind)
 (use "Truth")
@@ -868,6 +918,7 @@
 (use "Truth")
 ;; Proof finished.
 ;; (cdp)
+(save "NatLtZeroPos")
 (save "NatLt0Pos")
 
 ;; SZeroPosPlus
@@ -994,15 +1045,28 @@
 (save "GRecDef")
 
 ;; NatToPosEqSZeroNatToPosHalf
-(set-goal "all n(Zero<n -> NatEven n ->
+(set-goal "all n(Succ Zero<n -> NatEven n ->
                    NatToPos n=SZero(NatToPos(NatHalf n)))")
-(assume "n" "0<n" "En")
+(assume "n" "1<n" "En")
+(ng #t)
+(assert "n<=Succ Zero -> F")
+(assume "n<=1")
+(assert "Succ Zero<Succ Zero")
+(use "NatLtLeTrans" (pt "n"))
+(use "1<n")
+(use "n<=1")
+(assume "Absurd")
+(use "Absurd")
+(assume "Not1<n")
+(simp "Not1<n")
 (ng #t)
 (simp "En")
 (ng #t)
 (assert "NatHalf n<n")
  (use "NatHalfLt")
- (use "0<n")
+ (use "NatLtTrans" (pt "Succ Zero"))
+ (use "Truth")
+ (use "1<n")
 (assume "NatHalf n<n")
 (simp "NatHalf n<n")
 (ng #t)
@@ -1012,17 +1076,28 @@
 (save "NatToPosEqSZeroNatToPosHalf")
 
 ;; NatToPosEqSOneNatToPosHalf
-(set-goal "all n(Zero<n -> (NatEven n -> F) -> (n=Succ Zero -> F) ->
+(set-goal "all n(Succ Zero<n -> (NatEven n -> F) -> 
                  NatToPos n=SOne(NatToPos(NatHalf n)))")
-(assume "n" "0<n" "NatEven n -> F" "n=Succ Zero -> F")
+(assume "n" "1<n" "NotEn")
 (ng #t)
-(simp "NatEven n -> F")
+(assert "n<=Succ Zero -> F")
+(assume "n<=1")
+(assert "Succ Zero<Succ Zero")
+(use "NatLtLeTrans" (pt "n"))
+(use "1<n")
+(use "n<=1")
+(assume "Absurd")
+(use "Absurd")
+(assume "NotLen1")
+(simp "NotLen1")
 (ng #t)
-(simp "n=Succ Zero -> F")
+(simp "NotEn")
 (ng #t)
 (assert "NatHalf n<n")
- (use "NatHalfLt")
- (use "0<n")
+(use "NatHalfLt")
+(use "NatLtTrans" (pt "Succ Zero"))
+(use "Truth")
+(use "1<n")
 (assume "NatHalf n<n")
 (simp "NatHalf n<n")
 (ng #t)
@@ -1030,6 +1105,41 @@
 ;; Proof finished.
 ;; (cdp)
 (save "NatToPosEqSOneNatToPosHalf")
+
+;; ;; NatToPosEqSOneNatToPosHalf
+;; (set-goal "all n(Succ Zero<n -> (NatEven n -> F) -> 
+;;                  NatToPos n=SOne(NatToPos(NatHalf n)))")
+;; (assume "n" "1<n" "NotEn")
+;; (ng #t)
+;; (assert "n<=Succ Zero -> F")
+;; (assume "n<=1")
+;; (use "Not1<n")
+;; (assert "n<=Succ Zero -> F")
+;; (assume "n<=1")
+;; (assert "Succ Zero<Succ Zero")
+;; (use "NatLtLeTrans" (pt "n"))
+;; (use "1<n")
+;; (use "n<=1")
+;; (assume "Absurd" "Not1<n")
+;; (use "Absurd")
+;; (search)
+;; (assume "NotLen1")
+;; (simp "NotLen1")
+;; (ng #t)
+;; (simp "NotEn")
+;; (ng #t)
+;; (assert "NatHalf n<n")
+;; (use "NatHalfLt")
+;; (use "NatLtTrans" (pt "Succ Zero"))
+;; (use "Truth")
+;; (use "1<n")
+;; (assume "NatHalf n<n")
+;; (simp "NatHalf n<n")
+;; (ng #t)
+;; (use "Truth")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save "NatToPosEqSOneNatToPosHalf")
 
 ;; NatHalfSuccEven
 (set-goal "all n(NatEven n -> NatHalf(Succ n)=NatHalf n)")
@@ -1068,17 +1178,27 @@
 ;; PosToNatToPosId
 (set-goal "all n(Zero<n -> PosToNat(NatToPos n)=n)")
 (use "CVIndPvar")
-(assume "Absurd")
-(strip)
+(assume "Absurd" "n^" "Useless")
 (use "EfAtom")
 (use "Absurd")
 (assume "n" "Prog" "0<n")
+(use "NatLeLtCases" (pt "n") (pt "Succ Zero"))
+;; 7,8
+(assume "n<=1")
+(simp "n<=1")
+(ng #t)
+(use "NatLeAntiSym")
+(use "NatLtToSuccLe")
+(use "0<n")
+(use "n<=1")
+;; 8
+(assume "1<n")
 (cases (pt "NatEven n"))
-;; 8,9
+;; 16,17
 (assume "En")
 (assert "NatToPos n=SZero(NatToPos(NatHalf n))")
  (use "NatToPosEqSZeroNatToPosHalf")
- (use "0<n")
+ (use "1<n")
  (use "En")
 (assume "NatToPos n=SZero(NatToPos(NatHalf n))")
 (simp "NatToPos n=SZero(NatToPos(NatHalf n))")
@@ -1091,29 +1211,19 @@
 (use "En")
 (use "NatHalfLt")
 (use "0<n")
-;; 9
-(assume "NatEven n -> F")
-(cases (pt "n=Succ Zero"))
-(assume "n=1")
-(simp "n=1")
-(ng #t)
-(simp "NatEven n -> F")
-(ng #t)
-(simp "n=1")
-(use "Truth")
-(assume "n=1 -> F")
+;; 17
+(assume "NotEn")
 (assert "NatToPos n=SOne(NatToPos(NatHalf n))")
  (use "NatToPosEqSOneNatToPosHalf")
- (use "0<n")
- (use "NatEven n -> F")
- (use "n=1 -> F")
+ (use "1<n")
+ (use "NotEn")
 (assume "NatToPos n=SOne(NatToPos(NatHalf n))")
 (simp "NatToPos n=SOne(NatToPos(NatHalf n))")
 (simp "PosToNat2CompRule")
 (cases (pt "n"))
 (assume "n=0")
 (use "EfAtom")
-(simphyp-with-to "NatEven n -> F" "n=0" "Absurd")
+(simphyp-with-to "NotEn" "n=0" "Absurd")
 (use "Absurd")
 (use "Truth")
 (assume "n1" "n=Succ n1")
@@ -1121,7 +1231,7 @@
 (assert "NatEven n1")
 (use "NatOddSuccToEven")
 (simp "<-" "n=Succ n1")
-(use "NatEven n -> F")
+(use "NotEn")
 (assume "En1")
 (simp "NatHalfSuccEven")
 (assert "PosToNat(SZero(NatToPos(NatHalf n1)))=n1")
@@ -1129,34 +1239,29 @@
  (simp "Prog")
  (use "NatDoubleHalfEven")
  (use "En1")
- (cases (pt "n1"))
- (assume "n1=0")
- (use "n=1 -> F")
- (simp "n=Succ n1")
- (use "n1=0")
- (cases)
- (ng #t)
- (assume "n1=1")
- (simphyp-with-to "En1" "n1=1" "Absurd")
- (use "Absurd")
- (ng #t)
- (strip)
- (use "Truth")
+ (simphyp-with-to "1<n" "n=Succ n1" "0<n1")
+
+ (use "NatLtZeroHalfEven")
+ (use "0<n1")
+ (use "En1")
+ ;; ?^61:NatHalf n1<n
  (simp "n=Succ n1")
  (use "NatHalfLtSucc")
-(assume "PosToNat(SZero(NatToPos(NatHalf n1)))=n1")
+ ;; Assertion proved.
+ (assume "PosToNat(SZero(NatToPos(NatHalf n1)))=n1")
 (simp "Prog")
 (simp "NatDoubleHalfEven")
 (use "Truth")
 (use "En1")
 (use "NatLtZeroHalfEven")
-(cases (pt "n1"))
-(assume "n1=0")
-(use "n=1 -> F")
-(simp "n=Succ n1")
-(use "n1=0")
-(strip)
-(use "Truth")
+;; ?^75:Zero<n1
+(assert "Succ Zero<Succ n1")
+(simp "<-" "n=Succ n1")
+(use "1<n")
+;; Assertion proved.
+(assume "S0<Sn1")
+(use "S0<Sn1")
+;; 76
 (use "En1")
 (simp "n=Succ n1")
 (use "NatHalfLtSucc")
@@ -1164,6 +1269,16 @@
 ;; Proof finished.
 ;; (cdp)
 (save "PosToNatToPosId")
+
+;; PosEqTrans
+(set-goal "all p,q,r(p=q -> q=r -> p=r)")
+(assume "p" "q" "r" "=Hyp")
+(simp "<-" "=Hyp")
+(assume "p=r")
+(use "p=r")
+;; Proof finished.
+;; (cdp)
+(save "PosEqTrans")
 
 ;; NatToPosToNatId
 (set-goal "all p NatToPos(PosToNat p)=p")
@@ -1173,57 +1288,70 @@
 (use "Truth")
 ;; 3
 (assume "p" "IH")
+(simp "NatToPos0CompRule")
+(assert "NatDouble(PosToNat p)<=Succ Zero -> F")
+(use "NatLeDoubleOne")
+(use "NatLtZeroPos")
+;; Assertion proved.
+(assume "Assertion")
+(simp "Assertion")
 (ng #t)
 (simp "NatEvenDouble")
 (ng #t)
-(assert "Zero<NatDouble(PosToNat p)")
- (ind (pt "p"))
- (use "Truth")
- (assume "p1" "IH1")
- (ng #t)
- (use "NatLt0Double")
- (use "IH1")
- (assume "p1" "IH1")
- (ng #t)
- (use "Truth")
-(assume "Zero<NatDouble(PosToNat p)")
-(assert "NatHalf(NatDouble(PosToNat p))<NatDouble(PosToNat p)")
- (use "NatHalfLt")
- (use "Zero<NatDouble(PosToNat p)")
-(assume "NatHalf(NatDouble(PosToNat p))<NatDouble(PosToNat p)")
-(simp "NatHalf(NatDouble(PosToNat p))<NatDouble(PosToNat p)")
 (simp "NatHalfDouble")
-(simp "IH")
+(use "PosEqTrans" (pt "NatToPos(PosToNat p)"))
+(simp "NatLtDouble")
+;; ?^19:(GRecGuard nat pos)([n]n)(PosToNat p)
+;;      ([n,(nat=>pos)]
+;;        [if (n<=Succ Zero)
+;;          1
+;;          [if (NatEven n)
+;;           (SZero((nat=>pos)(NatHalf n)))
+;;           (SOne((nat=>pos)(NatHalf n)))]])
+;;      True=
+;;      NatToPos(PosToNat p)
 (use "Truth")
+(use "NatLtZeroPos")
+(use "IH")
 ;; 4
 (assume "p" "IH")
+(simp "NatToPos0CompRule")
 (ng #t)
-(assert "NatEven(Succ(NatDouble(PosToNat p))) -> F")
- (use "NatEvenSucc")
- (use "NatEvenDouble")
-(assume "NatEven(Succ(NatDouble(PosToNat p))) -> F")
-(simp "NatEven(Succ(NatDouble(PosToNat p))) -> F")
-(ng #t)
-(assert "Zero<NatDouble(PosToNat p)")
- (use "NatLt0Double")
- (use "NatLt0Pos")
-(assume "Zero<NatDouble(PosToNat p)")
 (assert "NatDouble(PosToNat p)=Zero -> F")
- (assume "NatDouble(PosToNat p)=Zero")
- (simphyp-with-to "Zero<NatDouble(PosToNat p)" "NatDouble(PosToNat p)=Zero"
-		  "Absurd")
- (use "Absurd")
-(assume "NatDouble(PosToNat p)=Zero -> F")
-(simp "NatDouble(PosToNat p)=Zero -> F")
+(assume "EqH")
+(assert "Zero<NatDouble(PosToNat p)")
+(use "NatLt0Double")
+(use "NatLtZeroPos")
+(simp "EqH")
+(assume "Absurd")
+(use "Absurd")
+;; Assertion proved.
+(assume "Assertion")
+(simp "Assertion")
 (ng #t)
-(assert "NatHalf(Succ(NatDouble(PosToNat p)))<Succ(NatDouble(PosToNat p))")
- (use "NatHalfLt")
- (use "Truth")
-(assume "NatHalf(Succ(NatDouble(PosToNat p)))<Succ(NatDouble(PosToNat p))")
-(simp "NatHalf(Succ(NatDouble(PosToNat p)))<Succ(NatDouble(PosToNat p))")
+(simp "NatEvenSucc")
+(ng #t)
 (simp "NatHalfSuccDouble")
-(simp "IH")
+(assert "p<Succ(NatDouble(PosToNat p))")
+(use "NatLeToLtSucc")
+(use "NatLeDouble")
+;; Asserton proved.
+(assume "LtSucc")
+(simp "LtSucc")
+(use "PosEqTrans" (pt "NatToPos(PosToNat p)"))
+;; ?^44:(GRecGuard nat pos)([n]n)(PosToNat p)
+;;      ([n,(nat=>pos)]
+;;        [if (n<=Succ Zero)
+;;          1
+;;          [if (NatEven n)
+;;           (SZero((nat=>pos)(NatHalf n)))
+;;           (SOne((nat=>pos)(NatHalf n)))]])
+;;      True=
+;;      NatToPos(PosToNat p)
 (use "Truth")
+(use "IH")
+;; ?^36:NatEven(NatDouble(PosToNat p))
+(use "NatEvenDouble")
 ;; Proof finished.
 ;; (cdp)
 (save "NatToPosToNatId")
@@ -1242,6 +1370,44 @@
 ;; (cdp)
 (save "PosToNatInj")
 
+;; NatLtSuccZeroEven
+(set-goal "all n(Zero<n -> NatEven n -> Succ Zero<n)")
+(cases)
+;; 2,3
+(assume "Absurd" "Useless")
+(use "Absurd")
+;; 3
+(cases)
+;; 5,6
+(assume "Useless" "Absurd")
+(use "Absurd")
+;; 6
+(assume "n" "Useless1" "Useless2")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "NatLtSuccZeroEven")
+
+;; NatLtSuccZeroOdd
+(set-goal "all n((NatEven n -> F) -> (n=Succ Zero -> F) -> Succ Zero<n)")
+(cases)
+;; 2,3
+(assume "Absurd" "Useless")
+(use "Absurd")
+(use "Truth")
+;; 3
+(cases)
+;; 6,7
+(assume "Useless" "Absurd")
+(use "Absurd")
+(use "Truth")
+;; 7
+(assume "n" "Useless1" "Useless2")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "NatLtSuccZeroOdd")
+
 ;; SuccPosS
 (set-goal "all n(Zero<n -> NatToPos(Succ n)=PosS(NatToPos n))")
 (assert "all n(Zero<n -> Succ n=PosToNat(PosS(NatToPos n)))")
@@ -1251,7 +1417,8 @@
 (use "EfAtom")
 (use "Absurd")
 (assume "n" "Prog" "0<n")
-(cases (pt "NatEven n")) ;10,11
+(cases (pt "NatEven n"))
+;;10,11
 (assume "En")
 (simp "NatToPosEqSZeroNatToPosHalf")
 (simp "PosS1CompRule")
@@ -1265,16 +1432,20 @@
 (use "0<n")
 (use "En")
 (use "En")
+(use "NatLtSuccZeroEven")
 (use "0<n")
+(use "En")
 ;; 11
 (assume "On")
 (cases (pt "n=Succ Zero"))
+;; 28,29
 (assume "n=1")
 (simp "n=1")
 ;; simp normalizes the goal, which we do not want.  Why?  Ok if order
 ;; in simp-with-intern is changed: consider normalized items last.
 (ng #t)
 (use "Truth")
+;; 29
 (assume "n=/=1")
 (simp "NatToPosEqSOneNatToPosHalf")
 (simp "PosS2CompRule")
@@ -1290,9 +1461,11 @@
 (use "n=/=1")
 (use "NatHalfLt")
 (use "0<n")
-(use "n=/=1")
 (use "On")
-(use "0<n")
+;; ?^35:Succ Zero<n
+(use "NatLtSuccZeroOdd")
+(use "On")
+(use "n=/=1")
 ;; Assertion proved
 (assume "SuccPosSAux" "n" "0<n")
 (simp "SuccPosSAux")
@@ -1315,7 +1488,7 @@
 (simp "PosToNatToPosId")
 (use "Truth")
 (use "Truth")
-(use "NatLt0Pos")
+(use "NatLtZeroPos")
 ;; Proof finished.
 ;; (cdp)
 (save "PosSSucc")
@@ -1570,75 +1743,6 @@
 (add-rewrite-rule "SZero p*q" "SZero(p*q)")
 
 ;; We prove that NatToPos is an isomorphism w.r.t. *
-
-;; NatDoublePlus
-(set-goal "all n,m NatDouble(n+m)=NatDouble n+NatDouble m")
-(assume "n")
-(ind)
-(use "Truth")
-(assume "m" "IH")
-(ng #t)
-(use "IH")
-;; Proof finished.
-;; (cdp)
-(save "NatDoublePlus")
-
-;; NatDoublePlusEq
-(set-goal "all n n+n=NatDouble n")
-(ind)
-(use "Truth")
-(assume "n" "IH")
-(ng #t)
-(use "IH")
-;; Proof finished.
-;; (cdp)
-(save "NatDoublePlusEq")
-
-;; NatTimesDouble
-(set-goal "all n,m NatDouble n*NatDouble m=NatDouble(NatDouble(n*m))")
-(assume "n")
-(ind)
-(use "Truth")
-(assume "m" "IH")
-(ng #t)
-(simp "IH")
-(assert "NatDouble(n*m+n)=NatDouble(n*m)+NatDouble n")
- (use "NatDoublePlus")
-(assume "EqHyp1")
-(simp "EqHyp1")
-(assert "NatDouble(NatDouble(n*m)+NatDouble n)=
-         NatDouble(NatDouble(n*m))+NatDouble(NatDouble(n))")
- (use "NatDoublePlus")
-(assume "EqHyp2")
-(simp "EqHyp2")
-(assert "NatDouble(NatDouble n)=NatDouble n+NatDouble n")
- (simp "NatDoublePlusEq")
- (use "Truth")
-(assume "EqHyp3")
-(simp "EqHyp3")
-(use "Truth")
-;; Proof finished.
-;; (cdp)
-(save "NatTimesDouble")
-
-;; NatDoubleTimes2
-(set-goal "all n,m NatDouble(n*m)=n*NatDouble m")
-(assume "n")
-(ind)
-(use "Truth")
-(assume "m" "IH")
-(ng #t)
-(simp "NatDoublePlus")
-(simp "IH")
-(assert "NatDouble n=n+n")
- (simp "NatDoublePlusEq")
- (use "Truth")
-(assume "EqHyp1")
-(simp "EqHyp1")
-(use "Truth")
-;; Proof finished.
-;; (cdp)
-(save "NatDoubleTimes2")
 
 ;; PosToNatTimes
 (set-goal "all p,q PosToNat(p*q)=PosToNat p*PosToNat q")
@@ -2839,13 +2943,13 @@
 (assert "Succ Zero<=NatDouble(PosToNat p)")
  (use "NatLtToLe")
  (use "NatLtOneDouble")
- (use "NatLt0Pos")
+ (use "NatLtZeroPos")
 (assume "Succ Zero<=NatDouble(PosToNat p)")
 (simp "Succ Zero<=NatDouble(PosToNat p)")
 (use "Truth")
 (assert "Succ Zero<NatDouble(PosToNat p)")
  (use "NatLtOneDouble")
- (use "NatLt0Pos")
+ (use "NatLtZeroPos")
 (assume "Succ Zero<NatDouble(PosToNat p)")
 (simp "Succ Zero<NatDouble(PosToNat p)")
 (use "Truth")
@@ -2856,7 +2960,7 @@
 (use "Truth")
 (assert "Zero<NatDouble(PosToNat p)")
  (use "NatLtOneSuccDouble")
- (use "NatLt0Pos")
+ (use "NatLtZeroPos")
 (assume "Zero<NatDouble(PosToNat p)")
 (simp "Zero<NatDouble(PosToNat p)")
 (use "Truth")
@@ -2867,13 +2971,13 @@
 (split)
 (assert "NatDouble(PosToNat p)<=Succ Zero -> F")
  (use "NatLeDoubleOne")
- (use "NatLt0Pos")
+ (use "NatLtZeroPos")
 (assume "NatDouble(PosToNat p)<=Succ Zero -> F")
 (simp "NatDouble(PosToNat p)<=Succ Zero -> F")
 (use "Truth")
 (assert "NatDouble(PosToNat p)<Succ Zero -> F")
  (use "NatLtDoubleOne")
- (use "NatLt0Pos")
+ (use "NatLtZeroPos")
 (assume "NatDouble(PosToNat p)<Succ Zero -> F")
 (simp "NatDouble(PosToNat p)<Succ Zero -> F")
 (use "Truth")
@@ -2901,7 +3005,7 @@
 (assert "NatDouble(PosToNat p)=Zero -> F")
  (assume "NatDouble(PosToNat p)=Zero")
  (assert "Zero<PosToNat p")
-  (use "NatLt0Pos")
+  (use "NatLtZeroPos")
  (assume "0<p")
  (inst-with-to "NatLt0Double" (pt "PosToNat p") "0<p" "NatLt0DoubleInst")
  (simphyp-with-to "NatLt0DoubleInst" "NatDouble(PosToNat p)=Zero" "Absurd")
@@ -2986,10 +3090,10 @@
 (simp "PosToNatToPosId")
 (simp "PosToNatToPosId")
 (use "NatNotLeToLt")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
 ;; Proof finished.
 ;; (cdp)
 (save "PosNotLeToLt")
@@ -3007,10 +3111,10 @@
 (simp "PosToNatToPosId")
 (simp "PosToNatToPosId")
 (use "NatNotLtToLe")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
 ;; Proof finished.
 ;; (cdp)
 (save "PosNotLtToLe")
@@ -3067,13 +3171,13 @@
 (use "r<=r0")
 ;; ?_35:Zero<NatPlus(PosToNat q)(PosToNat r0)
 (simp "<-" "PosToNatPlus")
-(use "NatLt0Pos")
+(use "NatLtZeroPos")
 (simp "<-" "PosToNatPlus")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
 ;; Proof finished.
 ;; (cdp)
 (save "PosLeMonPlus")
@@ -3116,13 +3220,13 @@
 (use "r<=r0")
 ;; ?_35:Zero<NatTimes(PosToNat q)(PosToNat r0)
 (simp "<-" "PosToNatTimes")
-(use "NatLt0Pos")
+(use "NatLtZeroPos")
 (simp "<-" "PosToNatTimes")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
 ;; Proof finished.
 ;; (cdp)
 (save "PosLeMonTimes")
@@ -3185,12 +3289,12 @@
 (simp "NatToPosToNatId")
 (simp "NatToPosToNatId")
 (use "Truth")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
 (simp "<-" "PosToNatPlus")
-(use "NatLt0Pos")
+(use "NatLtZeroPos")
 (simp "<-" "PosToNatPlus")
-(use "NatLt0Pos")
+(use "NatLtZeroPos")
 (use "NatToPosToNatId")
 (use "NatToPosToNatId")
 ;; Proof finished.
@@ -3222,12 +3326,12 @@
 (simp "NatToPosToNatId")
 (simp "NatToPosToNatId")
 (use "Truth")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
 (simp "<-" "PosToNatPlus")
-(use "NatLt0Pos")
+(use "NatLtZeroPos")
 (simp "<-" "PosToNatPlus")
-(use "NatLt0Pos")
+(use "NatLtZeroPos")
 (use "NatToPosToNatId")
 (use "NatToPosToNatId")
 ;; Proof finished.
@@ -3898,9 +4002,9 @@
 (simp "PosToNatLt")
 (ng #t)
 (use "Truth")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
 ;; Proof finished.
 ;; (cdp)
 (add-rewrite-rule "p+q--q" "p")
@@ -3935,8 +4039,8 @@
 (use "p<q")
 (use "q<r")
 (use "p<q")
-(use "NatLt0Pos")
-(use "NatLt0Pos")
+(use "NatLtZeroPos")
+(use "NatLtZeroPos")
 ;; Proof finished.
 ;; (cdp)
 (save "PosLtMonMinusLeft")
@@ -4459,8 +4563,8 @@
  (simp "NatToPosLe")
  (simp "PosToNatMax")
  (use "NatMaxUB1")
- (use "NatLt0Pos")
- (use "NatLt0Pos")
+ (use "NatLtZeroPos")
+ (use "NatLtZeroPos")
 ;; Assertion proved.
 (simp "NatToPosToNatId")
 (simp "NatToPosToNatId")
@@ -4490,12 +4594,12 @@
  (simp "NatToPosLe")
  (simp "PosToNatMax")
  (use "NatMaxLUB")
- (use "NatLt0Pos")
- (use "NatLt0Pos")
- (use "NatLt0Pos")
- (use "NatLt0Pos")
- (use "NatLt0Pos")
- (use "NatLt0Pos")
+ (use "NatLtZeroPos")
+ (use "NatLtZeroPos")
+ (use "NatLtZeroPos")
+ (use "NatLtZeroPos")
+ (use "NatLtZeroPos")
+ (use "NatLtZeroPos")
 ;; Assertion proved.
 (simp "NatToPosToNatId")
 (simp "NatToPosToNatId")
@@ -4506,6 +4610,46 @@
 ;; Proof finished.
 ;; (cdp)
 (save "PosMaxLUB")
+
+;; PosTimesMaxDistr
+(set-goal "all p,q,r p*(q max r)=p*q max(p*r)")
+(ind)
+;; 2-4
+(assume "q" "r")
+(use "Truth")
+;; 3
+(assume "p" "IH" "q" "r")
+(ng)
+(use "IH")
+;; 4
+(assume "p" "IH" "q" "r")
+(use "PosLeLtCases" (pt "q") (pt "r"))
+;; 9,10
+(assume "q<=r")
+(simp (pf "q max r=r"))
+(simp (pf "SOne p*q max(SOne p*r)=SOne p*r"))
+(use "Truth")
+(use "PosMaxEq2")
+(use "PosLeMonTimes")
+(use "Truth")
+(use "q<=r")
+(use "PosMaxEq2")
+(use "q<=r")
+;; 10
+(assume "r<q")
+(inst-with-to "PosLtToLe" (pt "r") (pt "q") "r<q" "r<=q")
+(simp (pf "q max r=q"))
+(simp (pf "SOne p*q max(SOne p*r)=SOne p*q"))
+(use "Truth")
+(use "PosMaxEq1")
+(use "PosLeMonTimes")
+(use "Truth")
+(use "r<=q")
+(use "PosMaxEq1")
+(use "r<=q")
+;; Proof finished.
+;; (cdp)
+(save "PosTimesMaxDistr")
 
 ;; Rules for PosMin
 
@@ -4581,6 +4725,19 @@
 ;; Proof finished.
 ;; (cdp)
 (add-rewrite-rule "p min One" "One")
+
+(set-goal "all p p min p=p")
+(ind)
+(use "Truth")
+(assume "p" "IH")
+(ng #t)
+(use "IH")
+(assume "p" "IH")
+(ng #t)
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(add-rewrite-rule "p min p" "p")
 
 ;; NatMinOnePos
 (set-goal "all p Succ Zero min p=One")
@@ -4800,8 +4957,8 @@
  (simp "NatToPosLe")
  (simp "PosToNatMin")
  (use "NatMinLB1")
- (use "NatLt0Pos")
- (use "NatLt0Pos")
+ (use "NatLtZeroPos")
+ (use "NatLtZeroPos")
 ;; Assertion proved.
 (simp "NatToPosToNatId")
 (simp "NatToPosToNatId")
@@ -4831,12 +4988,12 @@
  (simp "NatToPosLe")
  (simp "PosToNatMin")
  (use "NatMinGLB")
- (use "NatLt0Pos")
- (use "NatLt0Pos")
- (use "NatLt0Pos")
- (use "NatLt0Pos")
- (use "NatLt0Pos")
- (use "NatLt0Pos")
+ (use "NatLtZeroPos")
+ (use "NatLtZeroPos")
+ (use "NatLtZeroPos")
+ (use "NatLtZeroPos")
+ (use "NatLtZeroPos")
+ (use "NatLtZeroPos")
 ;; Assertion proved.
 (simp "NatToPosToNatId")
 (simp "NatToPosToNatId")
@@ -4982,6 +5139,38 @@
 ;; (cdp)
 (save "PosLogZero")
 
+;; PosLogZeroLt
+(set-goal "all p (Zero<PosLog p)=(1<p)")
+(cases)
+;; 2-4
+(use "Truth")
+;; 3
+(assume "p")
+(use "Truth")
+;; 4
+(assume "p")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "PosLogZeroLt")
+
+;; PosLtZeroLog
+(set-goal "all p(1<p -> Zero<PosLog p)")
+(cases)
+;; 2-4
+(assume "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 3
+(assume "p" "Useless")
+(use "Truth")
+;; 4
+(assume "p" "Useless")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "PosLtZeroLog")
+
 ;; PosLeExpTwoLog
 (set-goal "all p 2**PosLog p<=p")
 (ind)
@@ -5011,6 +5200,42 @@
 ;; Proof finished.
 ;; (cdp)
 (save "PosLtExpTwoSuccLog")
+
+;; PosLeMonLog
+(set-goal "all p,q(p<=q -> PosLog p<=PosLog q)")
+(ind)
+;; 2-4
+(assume "q" "Useless")
+(use "Truth")
+;; 3
+(assume "p" "IH")
+(cases)
+;; 7-9
+(assume "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 8
+(use "IH")
+;; 9
+(use "IH")
+;; 4
+(assume "p" "IH")
+(cases)
+;; 13-15
+(assume "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 14
+(assume "q" "p<q")
+(ng)
+(inst-with-to "PosLtToLe" (pt "p") (pt "q") "p<q" "p<=q")
+(use "IH")
+(use "p<=q")
+;; 15
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(save "PosLeMonLog")
 
 ;; PosExpTwoNatPlus
 (set-goal "2**n*2**m=2**(n+m)")
@@ -5185,21 +5410,63 @@
 ;; (cdp)
 (add-rewrite-rule "1<2**p" "True")
 
-;; NatLtZeroPosToNat
-(set-goal "all p Zero<p")
+;; TwoExpNatLe
+(set-goal "all n,m (2**n<=2**m)=(n<=m)")
 (ind)
+;; 2,3
+(cases)
+;; 4,5
 (use "Truth")
-(assume "p" "IH")
+;; 5
 (ng)
-(simp "<-" "NatDouble0CompRule")
-(simp "NatDoubleLt")
-(use "IH")
-;; 4
-(assume "p" "IH")
+(assume "n")
 (use "Truth")
+;; 3
+(assume "n" "IH")
+(cases)
+;; 9.10
+(ng)
+(use "Truth")
+(assume "m")
+(ng)
+(use "IH")
 ;; Proof finished.
 ;; (cdp)
-(save "NatLtZeroPosToNat")
+(save "TwoExpNatLe")
+
+;; TwoExpNatLt
+(set-goal "all n,m (2**n<2**m)=(n<m)")
+(ind)
+;; 2,3
+(cases)
+;; 4,5
+(use "Truth")
+;; 5
+(ng)
+(assume "n")
+(use "Truth")
+;; 3
+(assume "n" "IH")
+(cases)
+;; 9,10
+(ng)
+(use "Truth")
+(assume "m")
+(ng)
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(save "TwoExpNatLt")
+
+;; TwoExpPosLe
+(set-goal "all p,q (2**p<=2**q)=(p<=q)")
+(assume "p" "q")
+(inst-with-to "TwoExpNatLe" (pt "PosToNat p") (pt "PosToNat q") "Inst")
+(simp "Inst")
+(use "PosToNatLe")
+;; Proof finished.
+;; (cdp)
+(save "TwoExpPosLe")
 
 ;; NatToPosNatPlusSucc
 (set-goal "all p,n NatToPos(p+Succ n)=PosS(NatToPos(p+n))")
@@ -5210,7 +5477,7 @@
 (use "NatLeLtTrans" (pt "Zero+n"))
 (use "Truth")
 (simp "NatLt3RewRule")
-(use "NatLtZeroPosToNat")
+(use "NatLtZeroPos")
 ;; Proof finished.
 ;; (cdp)
 (save "NatToPosNatPlusSucc")
@@ -5351,6 +5618,36 @@
 ;; (cdp)
 (save "PosLeTimesTwoExp")
 
+(set-goal "all p (2**p<=1)=False")
+(assume "p")
+(use "AtomFalse")
+(assume "LeH")
+(assert "2*p<=1")
+(use "PosLeTrans" (pt "2**p"))
+(use "PosLeTimesTwoExp")
+(use "LeH")
+;; Assertion proved.
+(assume "Absurd")
+(use "Absurd")
+;; Proof finished.
+;; (cdp)
+(add-rewrite-rule "2**p<=1" "False")
+
+;; PosTwoExpEqOneFalse
+(set-goal "all p (2**p=1)=False")
+(assume "p")
+(use "AtomFalse")
+(assume "2**p=1")
+(assert "2**p<=1")
+(simp "2**p=1")
+(use "Truth")
+(simp "PosLe19RewRule")
+(assume "Absurd")
+(use "Absurd")
+;; Proof finished.
+;; (cdp)
+(save "PosTwoExpEqOneFalse")
+
 ;; SZeroPosTimes
 (set-goal "all p SZero p=2*p")
 (ind)
@@ -5414,4 +5711,485 @@
 ;; (cdp)
 (save "PosLtMonPosExpTwoPos")
 
+;; Added 2021-08-22
 
+;; PosLeMonNatToPos
+(set-goal "all n,m(n<=m -> NatToPos n<=NatToPos m)")
+(cases)
+;; 2,3
+(assume "m" "Useless")
+(use "Truth")
+;; 3
+(assume "n")
+(cases)
+;; 6,7
+(assume "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; ?^7:all n0(Succ n<=Succ n0 -> NatToPos(Succ n)<=NatToPos(Succ n0))
+(assume "m" "n<=m")
+(simp "NatToPosLe")
+(use "n<=m")
+(use "Truth")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "PosLeMonNatToPos")
+
+;; PosLeMoncNatPos
+(set-goal "all n,m(n<=m -> cNatPos n<=cNatPos m)")
+(assume "n" "m" "n<=m")
+(simp "NatPosExFree")
+(simp "NatPosExFree")
+(use "PosLeMonNatToPos")
+(use "n<=m")
+;; Proof finished.
+;; (cdp)
+(save "PosLeMoncNatPos")
+
+;; NatEvenTwoExp
+(set-goal "all n(Zero<n -> NatEven(PosToNat(2**n)))")
+(cases)
+(assume "Absurd")
+(use "EfAtom")
+(use "Absurd")
+(assume "n" "Useless")
+(ng #t)
+(use "NatEvenDouble")
+;; Proof finished.
+;; (cdp)
+(save "NatEvenTwoExp")
+
+;; Added 2021-10-15
+
+;; NatLePosExpTwo
+(set-goal "all n Succ Zero<=2**n")
+(ind)
+(use "Truth")
+(assume "n" "IH")
+(ng)
+;; ?^5:Succ Zero<=NatDouble(PosToNat(2**n))
+(use "NatLeTrans" (pt "PosToNat(2**n)"))
+(use "IH")
+(use "NatLeDouble")
+;; Proof finished.
+;; (cdp)
+(save "NatLePosExpTwo")
+
+;; ZeroLtTwoExp
+(set-goal "all n Zero<2**n")
+(ind)
+(use "Truth")
+(assume "n" "IH")
+(ng)
+(use "NatLt0Double")
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(save "ZeroLtTwoExp")
+
+(add-program-constant "PosEven" (py "pos=>boole"))
+(add-computation-rules
+ "PosEven 1" "False"
+ "PosEven(SZero p)" "True"
+ "PosEven(SOne p)" "False")
+
+(set-totality-goal "PosEven")
+(fold-alltotal)
+(cases)
+;; 3-5
+(use "TotalVar")
+;; 4
+(assume "p")
+(use "TotalVar")
+;; 5
+(assume "p")
+(use "TotalVar")
+;; Proof finished.
+;; (cdp)
+(save-totality)
+
+(add-program-constant "PosOdd" (py "pos=>boole"))
+(add-computation-rules
+ "PosOdd 1" "True"
+ "PosOdd(SZero p)" "False"
+ "PosOdd(SOne p)" "True")
+
+(set-totality-goal "PosOdd")
+(fold-alltotal)
+(cases)
+;; 3-5
+(use "BooleTotalVar")
+;; 4
+(assume "p")
+(use "BooleTotalVar")
+;; 5
+(assume "p")
+(use "BooleTotalVar")
+;; Proof finished.
+;; (cdp)
+(save-totality)
+
+;; In 2**n*p with p odd both n and p are uniquely determined.  They can
+;; obtained by PosToExp and PosToOdd.
+
+;; PosToExp returns the exponent of two in the prime factor
+;; decomposition of a positive number.
+
+(add-program-constant "PosToExp" (py "pos=>nat"))
+(add-computation-rules
+ "PosToExp 1" "Zero"
+ "PosToExp(SZero p)" "Succ(PosToExp p)"
+ "PosToExp(SOne p)" "Zero")
+
+(set-totality-goal "PosToExp")
+(fold-alltotal)
+(ind)
+;; 3-5
+(use "NatTotalVar")
+;; 4
+(assume "p" "IH")
+(use "TotalNatSucc")
+(use "IH")
+;; 5
+(assume "p" "Useless")
+(use "NatTotalVar")
+;; Proof finished.
+;; (cdp)
+(save-totality)
+
+;; PosToOdd returns the odd part of a positive number,
+(add-program-constant "PosToOdd" (py "pos=>pos"))
+(add-computation-rules
+ "PosToOdd 1" "1"
+ "PosToOdd(SZero p)" "PosToOdd p"
+ "PosToOdd(SOne p)" "SOne p")
+
+(set-totality-goal "PosToOdd")
+(fold-alltotal)
+(ind)
+;; 3-5
+(use "PosTotalVar")
+;; 4
+(assume "p" "IH")
+(use "IH")
+;; 5
+(assume "p" "Useless")
+(use "PosTotalVar")
+;; Proof finished.
+;; (cdp)
+(save-totality)
+
+;; PosTimesExpOddId
+(set-goal "all p 2**PosToExp p*PosToOdd p=p")
+(ind)
+;; 2-4
+(use "Truth")
+(assume "p" "IH")
+(use "IH")
+;; 4
+(ng)
+(assume "p" "Useless")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "PosTimesExpOddId")
+
+;; PosToExpEq
+(set-goal "all n PosToExp(2**n)=n")
+(ind)
+;; 2,3
+(use "Truth")
+;; 3
+(assume "n" "IH")
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(save "PosToExpEq")
+
+;; PosToOddEq
+(set-goal "all n PosToOdd(2**n)=1")
+(ind)
+;; 2,3
+(use "Truth")
+;; 3
+(assume "n" "IH")
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(save "PosToOddEq")
+
+;; PosToExpTimesSOneEq
+(set-goal "all p,n PosToExp(2**n*SOne p)=n")
+(cases)
+;; 2-4
+(ind)
+;; 5,6
+(ng)
+(use "Truth")
+;; 6
+(assume "n" "IH")
+(ng)
+(use "IH")
+;; 3
+(assume "p")
+(ind)
+;; 11,12
+(ng)
+(use "Truth")
+;; 12
+(assume "n" "IH")
+(ng)
+(use "IH")
+;; 4
+(assume "p")
+(ind)
+;; 17,18
+(ng)
+(use "Truth")
+;; 19
+(assume "n" "IH")
+(ng)
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(save "PosToExpTimesSOneEq")
+
+;; PosToExpTimesEq
+(set-goal "all n,p(PosOdd p -> PosToExp(2**n*p)=n)")
+(assume "n")
+(cases)
+;; 3-5
+(assume "Useless")
+(use "PosToExpEq")
+;; 4
+(assume "p" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 5
+(assume "p" "Useless")
+(use "PosToExpTimesSOneEq")
+;; Proof finished.
+;; (cdp)
+(save "PosToExpTimesEq")
+
+;; PosToOddTimesSOneEq
+(set-goal "all p,n PosToOdd(2**n*SOne p)=SOne p")
+(cases)
+;; 2-4
+(ind)
+;; 5,6
+(use "Truth")
+;; 6
+(assume "n" "IH")
+(use "IH")
+;; 3
+(assume "p")
+(ind)
+;; 9,10
+(use "Truth")
+;; 10
+(assume "n" "IH")
+(ng)
+(use "IH")
+;; 4
+(assume "p")
+(ind)
+;; 14,15
+(use "Truth")
+;; 15
+(assume "n" "IH")
+(ng)
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(save "PosToOddTimesOneEq")
+
+;; PosToOddTimesEq
+(set-goal "all p,n(PosOdd p -> PosToOdd(2**n*p)=p)")
+(ind)
+;; 2-4
+(assume "n" "Useless")
+(ng)
+(use "PosToOddEq")
+;; 3
+(assume "p" "IH" "n" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 4
+(assume "p" "IH" "n" "Useless")
+(use "PosToOddTimesOneEq")
+;; Proof finished.
+;; (cdp)
+(save "PosToOddTimesEq")
+
+;; NatToPosDouble
+(set-goal "all n(Zero<n -> SZero(NatToPos n)=NatToPos(NatDouble n))")
+(assume "n" "0<n")
+(simp "<-" "NatDoublePlusEq")
+(simp "NatToPosPlus")
+(use "SZeroPosPlus")
+(use "0<n")
+(use "0<n")
+;; Proof finished.
+;; (cdp)
+(save "NatToPosDouble")
+
+;; PosLogTwoExp
+(set-goal "all n PosLog(2**n)=n")
+(ind)
+(use "Truth")
+(assume "n" "IH")
+(ng)
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(save "PosLogTwoExp")
+;; (add-rewrite-rule "PosLog(2**n)" "n")
+
+;; PosLogTimes
+(set-goal "all n,p PosLog(p*2**n)=PosLog p+n")
+(ind)
+;; 2,3
+(assume "p")
+(use "Truth")
+;; 3
+(assume "n" "IH")
+(cases)
+;; 6-8
+(ng #t)
+(use "PosLogTwoExp")
+;; 7
+(assume "p")
+(ng #t)
+(use "IH")
+;; 8
+(assume "p")
+(ng #t)
+(simp (pf "SZero(p*2**n)+2**n=SOne p*2**n"))
+(simp "IH")
+(ng #t)
+(use "Truth")
+;; ?^15:SZero(p*2**n)+2**n=SOne p*2**n
+(ng #t)
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "PosLogTimes")
+
+;; PosLogTimes cannot be generalized to arbitrary arguments.  Counterexample:
+;; (pp (nt (pt "PosLog 6"))) ;2
+;; (pp (nt (pt "PosLog 7"))) ;2
+;; (pp (nt (pt "PosLog 42"))) ;5
+
+;; PosLeTwoExpToEqTwoExpTimes
+(set-goal "all n,m(2**n<=2**m -> 2**m=2**n*2**(m--n))")
+(assume "n" "m" "LeH")
+(simp "PosExpTwoNatPlus")
+(simp "NatPlusComm")
+(simp "NatMinusPlusEq")
+(use "Truth")
+(simp "<-" "TwoExpNatLe")
+(use "LeH")
+;; Proof finished.
+;; (cdp)
+(save "PosLeTwoExpToEqTwoExpTimes")
+
+;; PosLogMax
+(set-goal "all p,q PosLog(p max q)=PosLog p max PosLog q")
+(assume "p" "q")
+(use "NatLeAntiSym")
+;; 3,4
+(cases (pt "p<=q"))
+;; 5,6
+(assume "p<=q")
+(simp "PosMaxEq2")
+(use "NatMaxUB2")
+(use "p<=q")
+;; 6
+(assume "Notp<=q")
+(simp "PosMaxEq1")
+(use "NatMaxUB1")
+(use "PosLtToLe")
+(use "PosNotLeToLt")
+(use "Notp<=q")
+;; 4
+(cases (pt "p<=q"))
+;; 15,16
+(assume "p<=q")
+(simp "PosMaxEq2")
+(use "NatMaxLUB")
+(use "PosLeMonLog")
+(use "p<=q")
+(use "Truth")
+(use "p<=q")
+;; 16
+(assume "Notp<=q")
+(simp "PosMaxEq1")
+(use "NatMaxLUB")
+(use "Truth")
+(use "PosLeMonLog")
+(use "PosLtToLe")
+(use "PosNotLeToLt")
+(use "Notp<=q")
+(use "PosLtToLe")
+(use "PosNotLeToLt")
+(use "Notp<=q")
+;; Proof finished.
+;; (cdp)
+(save "PosLogMax")
+
+;; NatToPosMax
+(set-goal "all n,m NatToPos(n max m)=NatToPos n max NatToPos m")
+(assume "n" "m")
+(use "PosLeAntiSym")
+;; 3,4
+(cases (pt "n<=m"))
+;; 5,6
+(assume "n<=m")
+(simp "NatMaxEq2")
+(use "PosMaxUB2")
+(use "n<=m")
+;; 6
+(assume "Notn<=m")
+(simp "NatMaxEq1")
+(use "PosMaxUB1")
+(use "NatLtToLe")
+(use "NatNotLeToLt")
+(use "Notn<=m")
+;; 4
+(cases (pt "n<=m"))
+;; 15,16
+(assume "n<=m")
+(simp "NatMaxEq2")
+(use "PosMaxLUB")
+(use "PosLeMonNatToPos")
+(use "n<=m")
+(use "Truth")
+(use "n<=m")
+;; 16
+(assume "Notn<=m")
+(simp "NatMaxEq1")
+(use "PosMaxLUB")
+(use "Truth")
+(use "PosLeMonNatToPos")
+(use "NatLtToLe")
+(use "NatNotLeToLt")
+(use "Notn<=m")
+(use "NatLtToLe")
+(use "NatNotLeToLt")
+(use "Notn<=m")
+;; Proof finished.
+;; (cdp)
+(save "NatToPosMax")
+
+;; NatPosMax
+(set-goal "all n,m cNatPos(n max m)=cNatPos n max cNatPos m")
+(assume "n" "m")
+(simp "NatPosExFree")
+(simp "NatPosExFree")
+(simp "NatPosExFree")
+(use "NatToPosMax")
+;; Proof finished.
+;; (cdp)
+(save "NatPosMax")
