@@ -1,4 +1,4 @@
-;; 2020-07-17.  list.scm.
+;; 2021-10-20.  list.scm.
 
 ;; (load "~/git/minlog/init.scm")
 ;; (set! COMMENT-FLAG #f)
@@ -23,7 +23,46 @@
 ;; Example: :: for Cons.  x::y::z:
 ;; Here : is postfix for z
 
-(add-infix-display-string "Cons" "::" 'pair-op) ;right associative
+;; The line below is commented out.
+;; (add-infix-display-string "Cons" "::" 'pair-op) ;right associative
+;; Instead add-token and add-display are specially done for ::
+
+(add-token
+ "::" 'pair-op
+ (lambda (x y)
+   (mk-term-in-app-form
+    (make-term-in-const-form
+     (let* ((const (constr-name-to-constr "Cons"))
+	    (uninst-type (const-to-uninst-type const))
+	    (patterns (arrow-form-to-arg-types uninst-type 2)) ;al, list al
+	    (instances (map term-to-type (list x y))) ;e.g.  nat, list int
+	    (type1 (car instances)) ;nat
+	    (type2 (car (alg-form-to-types (cadr instances)))) ;int
+	    (tsubst (cond ((type-le? type1 type2)
+			   (make-subst (car patterns) type2))
+			  ((type-le? type2 type1)
+			   (make-subst (car patterns) type1))
+			  (else (myerror "comparable types expected"
+					 type1 type2)))))
+       (const-substitute const tsubst #f)))
+    x y)))
+
+(add-display
+ (py "list alpha")
+ (lambda (x)
+   (if (term-in-app-form? x)
+       (let ((op (term-in-app-form-to-final-op x))
+	     (args (term-in-app-form-to-args x)))
+	 (if
+	  (and (term-in-const-form? op)
+	       (string=? "Cons"
+			 (const-to-name (term-in-const-form-to-const op)))
+	       (= 2 (length args)))
+	  (list 'pair-op  "::"
+		(term-to-token-tree (car args))
+		(term-to-token-tree (cadr args)))
+	  #f))
+       #f)))
 
 ;; The postfix-op ":" with "x:" for "x::(Nil rho)" needs a special
 ;; treatment with explicit uses of add-token and add-display.
@@ -1247,7 +1286,39 @@
 ;; associates to the left.
 
 (add-program-constant "ListLength" (py "list alpha=>nat") t-deg-zero)
-(add-prefix-display-string "ListLength" "Lh")
+;; (add-prefix-display-string "ListLength" "Lh")
+(add-token
+ "Lh" 'prefix-op
+ (lambda (x)
+   (make-term-in-app-form
+    (make-term-in-const-form
+     (let* ((const (pconst-name-to-pconst "ListLength"))
+	    (uninst-type (const-to-uninst-type const))
+	    (pattern (arrow-form-to-arg-type uninst-type))
+	    (instance (term-to-type x))
+	    (tsubst (type-match pattern instance)))
+       (if tsubst
+	   (const-substitute const tsubst #f)
+	   (myerror "types do not match" pattern instance))))
+    x)))
+
+(add-display (py "nat") (make-display-creator1 "ListLength" "Lh" 'prefix-op))
+
+;; (add-display
+;;  (py "nat")
+;;  (lambda (x)
+;;    (if (term-in-app-form? x)
+;;        (let ((op (term-in-app-form-to-final-op x)))
+;; 	 (if
+;; 	  (and (term-in-const-form? op)
+;; 	       (string=? "ListLength"
+;; 			 (const-to-name (term-in-const-form-to-const op))))
+;; 	  (list 'prefix-op "Lh"
+;; 		(term-to-token-tree (term-in-app-form-to-arg x)))
+;; 	  #f))
+;;        #f)))
+
+;; (make-display-creator1 "ListLength" "Lh" 'prefix-op)
 
 (add-computation-rules
  "Lh(Nil alpha)" "Zero"
@@ -2171,12 +2242,12 @@
  "Consn" (py "alpha=>nat=>list alpha=>list alpha") t-deg-zero)
 
 (add-computation-rules
- "(Consn alpha)x 0 xs" "x::xs"
+ "(Consn alpha)x 0 xs" "xs"
  "(Consn alpha)x(Succ n)(Nil alpha)" "x::(Consn alpha)x n(Nil alpha)"
  "(Consn alpha)x(Succ n)(x1::xs)" "x1::(Consn alpha)x n(xs)")
 
 ;; (pp (nt (pt "(Consn nat)n 7(0::1::2:)")))
-;; => 0::1::2::n::n::n::n::n:
+;; => 0::1::2::n::n::n::n:
 
 (set-totality-goal "Consn")
 (assume "x^" "Tx" "n^" "Tn")
@@ -2185,13 +2256,9 @@
 (assume "xs^" "Txs")
 (elim "Txs")
 (ng #t)
-(use "TotalListCons")
-(use "Tx")
 (use "TotalListNil")
 (assume "x^1" "Tx1" "xs^1" "Txs1" "Useless")
 (ng #t)
-(use "TotalListCons")
-(use "Tx")
 (use "TotalListCons")
 (use "Tx1")
 (use "Txs1")
@@ -2229,11 +2296,9 @@
 (assume "xs^" "Txs")
 (elim "Txs")
 (ng #t)
-(use "STotalListCons")
 (use "STotalListNil")
 (assume "x^1" "xs^1" "Txs1" "Useless")
 (ng #t)
-(use "STotalListCons")
 (use "STotalListCons")
 (use "Txs1")
 ;; Step
@@ -2257,7 +2322,7 @@
         STotalList xs^ ->
         all n(
          Lh xs^ <=n ->
-         Lh(xs^ :+:(Consn alpha)x^1(n--Lh xs^)(Nil alpha))eqd Succ n))")
+         Lh(xs^ :+:(Consn alpha)x^1(n--Lh xs^)(Nil alpha))eqd n))")
 (assume "x^1" "xs^" "STxs")
 (elim "STxs")
 (ind)
@@ -2304,7 +2369,7 @@
         STotalList xs^ ->
         all n(
          Lh xs^ <=n ->
-         Lh(xs^ ++(Consn alpha)x^1(n--Lh xs^)(Nil alpha))eqd Succ n))")
+         Lh(xs^ ++(Consn alpha)x^1(n--Lh xs^)(Nil alpha))eqd n))")
 (assume "x^1" "xs^" "STxs")
 (elim "STxs")
 (ind)
@@ -3344,6 +3409,25 @@
 ;; (cdp)
 (save "ListRestAppdGen")
 
+;; ListLhInitRestEq
+(set-goal "all xs(NatEven Lh xs ->
+ Lh(NatHalf Lh xs init xs)=
+ Lh(NatHalf Lh xs rest xs))")
+(assume "xs" "Exs")
+(simp "ListLhInit")
+(simp "ListLhRest")
+(use "NatPlusCancelR" (pt "NatHalf Lh xs"))
+(simp "NatMinusPlusEq")
+(simp "NatDoublePlusEq")
+(use "NatDoubleHalfEven")
+(use "Exs")
+(use "NatHalfLe")
+(use "NatHalfLe")
+(use "NatHalfLe")
+;; Proof finshed.
+;; (cdp)
+(save "ListLhInitRestEq")
+
 ;; Now ListFilter
 
 (add-var-name "xtop" (py "alpha=>boole"))
@@ -3829,6 +3913,146 @@
 ;; (Inhab alpha)::
 ;; (CoRec unit=>list alpha)Dummy
 ;; ([unit]Inr((Inhab alpha)pair(InR unit (list alpha))unit))
+
+;; Added 2021-06-14
+
+;; To approximate Riemann integrable functions we use equidistant
+;; partitions whose length is a power of two, denoted EL xs below.
+;; For rational arguments we can view them as step functions.
+
+;; A basic operation for step functions is refining them by doubling
+;; each argument.
+
+(add-program-constant "ListRef" (py "list alpha=>list alpha"))
+(add-prefix-display-string "ListRef" "Ref")
+
+(add-computation-rules
+ "Ref(Nil alpha)" "(Nil alpha)"
+ "Ref(x::xs)" "x::x::Ref xs")
+
+(set-totality-goal "ListRef")
+(fold-alltotal)
+(ind)
+(use "TotalVar")
+(assume "x" "xs" "IH")
+(ng)
+(use "TotalListCons")
+(use "TotalVar")
+(use "TotalListCons")
+(use "TotalVar")
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(save-totality)
+
+;; ListLhRef
+(set-goal "all xs Lh(Ref xs)=NatDouble Lh xs")
+(ind)
+;; 2,3
+(use "Truth")
+;; 3
+(assume "x" "xs" "IH")
+(ng)
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(save "ListLhRef")
+
+(add-program-constant "ListItRef" (py "nat=>list alpha=>list alpha"))
+(add-infix-display-string "ListItRef" "rf" 'pair-op) ;right associative
+
+(add-computation-rules
+ "Zero rf xs" "xs"
+ "Succ n rf xs" "Ref(n rf xs)")
+
+;; (add-computation-rules
+;;  "Zero rf xs" "xs"
+;;  "Succ n rf(Nil alpha)" "(Nil alpha)"
+;;  "Succ n rf(x::xs)" "x::x::(n rf xs)")
+
+(set-totality-goal "ListItRef")
+(fold-alltotal)
+(ind)
+(fold-alltotal)
+(assume "xs")
+(use "TotalVar")
+(assume "n" "IH")
+(fold-alltotal)
+(assume "xs")
+(ng)
+(use "ListRefTotal")
+(use "IH")
+(use "TotalVar")
+;; Proof finished.
+;; (cdp)
+(save-totality)
+
+(set-goal "all n(n rf(Nil alpha))eqd(Nil alpha)")
+(ind)
+;; 2,3
+(use "InitEqD")
+;; 3
+(assume "n" "IH")
+(ng #t)
+(simp "IH")
+(use "InitEqD")
+;; Proof finished.
+;; (cdp)
+(add-rewrite-rule "n rf(Nil alpha)" "(Nil alpha)")
+
+;; We defined ItRef by Succ n rf xs=Ref(n rf xs).  An
+;; alternative would be Succ n rf xs= n rf(Ref xs).  Generally
+;; for iteration the latter follows from the former.
+
+;; ListItRefEq
+(set-goal "all xs,n (Succ n rf xs)eqd(n rf Ref xs)")
+(assume "xs")
+(ind)
+(use "InitEqD")
+(assume "n" "IH")
+(simp "ListItRef1CompRule")
+(simp "ListItRef1CompRule")
+(simp "ListItRef1CompRule")
+(simp "<-" "IH")
+(use "InitEqD")
+;; Proof finished.
+;; (cdp)
+(save "ListItRefEq")
+
+;; ListItRefPlus
+(set-goal "all xs,n,m (n+m rf xs)eqd(m rf n rf xs)")
+(assume "xs" "n")
+(ind)
+(use "InitEqD")
+(assume "m" "IH")
+(ng #t)
+(simp "IH")
+(use "InitEqD")
+;; Proof finished.
+;; (cdp)
+(save "ListItRefPlus")
+
+;; ListItRefComm
+(set-goal "all xs,n,m (n rf m rf xs)eqd(m rf n rf xs)")
+(assume "xs" "n" "m")
+(simp "<-" "ListItRefPlus")
+(simp "<-" "ListItRefPlus")
+(simp "NatPlusComm")
+(use "InitEqD")
+;; Proof finished.
+;; (cdp)
+(save "ListItRefComm")
+
+;; Added 2021-09-14
+;; ListLtLhRef
+(set-goal "all xs(Zero<Lh xs -> Lh xs<Lh Ref xs)")
+(assume "xs" "0<Lx")
+(simp "ListLhRef")
+(use "NatLtDouble")
+(use "0<Lx")
+;; Proof finished.
+;; (cdp)
+(save "ListLtLhRef")
 
 ;; (display-default-varnames)
 
