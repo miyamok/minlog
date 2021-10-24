@@ -1,4 +1,4 @@
-;; 2021-02-24.  rat.scm.
+;; 2021-10-21.  rat.scm.
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -1431,6 +1431,34 @@
 ;; Proof finished.
 (save "RatLtToLe")
 
+;; RatLeLtCases
+(set-goal "all a,b((a<=b -> Pvar) -> (b<a -> Pvar) -> Pvar)")
+(cases)
+(assume "k" "p")
+(cases)
+(assume "j" "q")
+(ng #t)
+(use "IntLeLtCases")
+;; Proof finished.
+;; (cdp)
+(save "RatLeLtCases")
+
+;; RatLeLeCases
+(set-goal "all a,b((a<=b -> Pvar) -> (b<=a -> Pvar) -> Pvar)")
+(assume "a" "b" "H1" "H2")
+(use "RatLeLtCases" (pt "a") (pt "b"))
+;; 3,4
+(use "H1")
+;; 4
+(assume "b<a")
+(use "H2")
+(use "RatLtToLe")
+(use "b<a")
+;; Proof finished.
+;; (cdp)
+(save "RatLeLeCases")
+(save "RatLeLin")
+
 ;; At this point we should add all rewrite rules for RatLe and RatLt
 
 (set-goal "all a (a<a)=False")
@@ -2450,6 +2478,17 @@
 ;; Proof finished.
 (save "RatTimesPlusDistrLeft")
 
+;; RatDoubleEqv
+(set-goal "all a a+a==2*a")
+(assume "a")
+(simp (pf "2=RatPlus 1 1"))
+(simprat "RatTimesPlusDistrLeft")
+(use "Truth")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "RatDoubleEqv")
+
 ;; RatUMinusCompat
 (set-goal "all a,b(a==b -> ~a== ~b)")
 (cases)
@@ -3329,12 +3368,24 @@
 (assume "p" "q")
 (use "RatLeTrans" (pt "2**Succ(PosLog p)#2**PosLog q"))
 (use "RatLePosExpTwo")
-(simp "cRatLeBound0CompRule")
-(simp (pf "([p0,p1]Succ(PosLog p0)--PosLog p1)p q=Succ(PosLog p)--PosLog q"))
+(use "RatLeTrans" (pt "(2**(Succ(PosLog p)--PosLog q)#1)"))
 (use "RatLePosExpTwoMinus")
 (use "Truth")
 ;; Proof finished.
 (save "RatLeBoundExFree")
+
+;; Code discarded 2021-10-24.
+;; ;; RatLeBoundExFree
+;; (set-goal "all p,q (p#q)<=2**cRatLeBound p q")
+;; (assume "p" "q")
+;; (use "RatLeTrans" (pt "2**Succ(PosLog p)#2**PosLog q"))
+;; (use "RatLePosExpTwo")
+;; (simp "cRatLeBound0CompRule")
+;; (simp (pf "([p0,p1]Succ(PosLog p0)--PosLog p1)p q=Succ(PosLog p)--PosLog q"))
+;; (use "RatLePosExpTwoMinus")
+;; (use "Truth")
+;; ;; Proof finished.
+;; (save "RatLeBoundExFree")
 
 (deanimate "RatLeBound")
 
@@ -4038,6 +4089,7 @@
 (assume "Assertion")
 (use "Assertion")
 ;; Proof finished.
+;; (cdp)
 (save "RatPlusHalfExpPosS")
 
 ;; Using RatLePlusRInv and RatLePlusR we prove
@@ -4096,6 +4148,7 @@
 (use "RatLePlusRInv")
 (use "AllHyp")
 ;; Proof finished.
+;; (cdp)
 (save "RatLeAllPlusToLe")
 
 ;; RatHalfPlus
@@ -4127,9 +4180,19 @@
 (ng)
 (use "Truth")
 ;; Proof finished.
+;; (cdp)
 (save "RatHalfPlus")
 
 ;; Properties of RatMax
+
+(set-goal "all a a max a=a")
+(cases)
+(assume "k" "p")
+(ng)
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(add-rewrite-rule "a max a" "a")
 
 ;; RatMaxEq1
 (set-goal "all a,b(b<=a -> a max b=a)")
@@ -4142,6 +4205,7 @@
 (simp "jp<=kq")
 (use "Truth")
 ;; Proof finished.
+;; (cdp)
 (save "RatMaxEq1")
 
 ;; RatMaxUB1
@@ -4159,6 +4223,7 @@
 (use "IntNotLeToLt")
 (use "NotLeHyp")
 ;; Proof finished.
+;; (cdp)
 (save "RatMaxUB1")
 
 ;; RatMaxUB2
@@ -4174,6 +4239,7 @@
 (assume "Useless")
 (use "Truth")
 ;; Proof finished.
+;; (cdp)
 (save "RatMaxUB2")
 
 ;; RatMaxLUB
@@ -4194,6 +4260,7 @@
 (assume "Useless")
 (use "jr<=iq")
 ;; Proof finished.
+;; (cdp)
 (save "RatMaxLUB")
 
 ;; RatMaxEq2
@@ -4205,7 +4272,12 @@
 (use "Truth")
 (use "RatMaxUB2")
 ;; Proof finished.
+;; (cdp)
 (save "RatMaxEq2")
+
+;; Reason for ==, i.e., the difference to RatMaxEq1 (with =): The
+;; definition of RatMax prefers the lhs.  It is returned in case of
+;; equality, where the rhs would do as well.
 
 ;; RatLeMonMax
 (set-goal "all a,b,c,d(a<=b -> c<=d -> a max c<=b max d)")
@@ -4232,6 +4304,7 @@
 (use "Assertion2")
 (use "c<=d")
 ;; Proof finished.
+;; (cdp)
 (save "RatLeMonMax")
 
 ;; RatMaxComm
@@ -4245,6 +4318,7 @@
 (use "RatMaxUB2")
 (use "RatMaxUB1")
 ;; Proof finished.
+;; (cdp)
 (save "RatMaxComm")
 
 ;; RatMaxAssoc
@@ -4268,6 +4342,7 @@
 (use "RatMaxUB2")
 (use "RatMaxUB2")
 ;; Proof finished.
+;; (cdp)
 (save "RatMaxAssoc")
 
 ;; RatMaxCompat
@@ -4290,6 +4365,117 @@
 (use "c=d")
 ;; Proof finished.
 (save "RatMaxCompat")
+
+;; RatPlusMaxDistr
+(set-goal "all a,b,c a+(b max c)==(a+b)max(a+c)")
+(assume "a" "b" "c")
+(use "RatLeAntiSym")
+;; 3,4
+(use "RatLeLtCases" (pt "b") (pt "c"))
+;; 5,6
+(assume "b<=c")
+(simprat (pf "b max c==c"))
+;; 8,9
+(use "RatMaxUB2")
+;; 9
+(use "RatMaxEq2")
+(use "b<=c")
+;; 6
+(assume "c<b")
+(simprat (pf "b max c==b"))
+(use "RatMaxUB1")
+(simp "RatMaxEq1")
+(use "Truth")
+(use "RatLtToLe")
+(use "c<b")
+;; 4
+(use "RatLeLtCases" (pt "b") (pt "c"))
+;; 17,18
+(assume "b<=c")
+(simprat (pf "b max c==c"))
+(use "RatMaxLUB")
+;; 22,23
+(use "RatLeMonPlus")
+(use "Truth")
+(use "b<=c")
+(use "Truth")
+(use "RatMaxEq2")
+(use "b<=c")
+;; 18
+(assume "c<b")
+(simprat (pf "b max c==b"))
+;; 28,29
+(use "RatMaxLUB")
+;; 30,31
+(use "Truth")
+;; 31
+(use "RatLeMonPlus")
+(use "Truth")
+(use "RatLtToLe")
+(use "c<b")
+(simp "RatMaxEq1")
+(use "Truth")
+(use "RatLtToLe")
+(use "c<b")
+;; Proof finished.
+;; (cdp)
+(save "RatPlusMaxDistr")
+
+;; RatTimesMaxDistr
+(set-goal "all a,b,c(0<=a -> a*(b max c)==a*b max(a*c))")
+(assume "a" "b" "c" "0<=a")
+(simp (pf "a*(b max c)=(b max c)*a"))
+(simp (pf "a*b=b*a"))
+(simp (pf "a*c=c*a"))
+;; ?^7:b max c*a==b*a max(c*a)
+(use "RatLeLeCases" (pt "b") (pt "c"))
+;; 9,10
+(assume "b<=c")
+(simprat (pf "b max c==c"))
+;; 12,13
+(simprat "RatMaxEq2")
+(use "Truth")
+(use "RatLeMonTimes")
+(use "0<=a")
+(use "b<=c")
+;; ?^13:b max c==c
+(use "RatMaxEq2")
+(use "b<=c")
+;; 10
+(assume "c<=b")
+(simprat (pf "b max c==b"))
+;; 20,21
+(simp "RatMaxEq1")
+(use "Truth")
+(use "RatLeMonTimes")
+(use "0<=a")
+(use "c<=b")
+;; ?^21:b max c==b
+(simp "RatMaxEq1")
+(use "Truth")
+(use "c<=b")
+;; ?^8:a*c=c*a
+(use "RatTimesComm")
+;; ?^6:a*b=b*a
+(use "RatTimesComm")
+;; ?^4:a*(b max c)=b max c*a
+(use "RatTimesComm")
+;; Proof finished.
+;; (cdp)
+(save "RatTimesMaxDistr")
+
+;; RatTimesMaxDistrLeft
+(set-goal "all a,b,c(0<=c -> (a max b)*c==a*c max(b*c))")
+(assume "a" "b" "c")
+(simp "RatTimesComm")
+(simp (pf "a*c=c*a"))
+(simp (pf "b*c=c*b"))
+(use "RatTimesMaxDistr")
+(use "RatTimesComm")
+(use "RatTimesComm")
+;; Proof finished.
+;; (cdp)
+(save "RatTimesMaxDistrLeft")
 
 ;; RatAbsMax
 (set-goal "all a abs a=a max ~a")
