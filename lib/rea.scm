@@ -1,4 +1,4 @@
-;; 2021-03-04.  rea.scm
+;; 2021-10-15.  rea.scm
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -1010,36 +1010,37 @@
 
 ;; Every real has an upper bound, that is the reals are Archimedian ordered.
 
-;; Use cNatPos instead of the pconst NatToPos to block unwanted unfoldings
+;; 2021-10-15.  NatPos NatPosExfree cNatPosTotal moved to lib/pos.scm
+;; ;; Use cNatPos instead of the pconst NatToPos to block unwanted unfoldings
 
-;; NatPos
-(set-goal "all n exl p p=NatToPos n")
-(assume "n")
-(intro 0 (pt "NatToPos n"))
-(use "Truth")
-;; Proof finished.
-;; (cdp)
-(save "NatPos")
+;; ;; NatPos
+;; (set-goal "all n exl p p=NatToPos n")
+;; (assume "n")
+;; (intro 0 (pt "NatToPos n"))
+;; (use "Truth")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save "NatPos")
 
-(animate "NatPos")
+;; (animate "NatPos")
 
-;; NatPosExFree
-(set-goal "all n cNatPos n=NatToPos n")
-(assume "n")
-(use "Truth")
-;; Proof finished.
-;; (cdp)
-(save "NatPosExFree")
+;; ;; NatPosExFree
+;; (set-goal "all n cNatPos n=NatToPos n")
+;; (assume "n")
+;; (use "Truth")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save "NatPosExFree")
 
-(deanimate "NatPos")
+;; (deanimate "NatPos")
 
-(set-totality-goal "cNatPos")
-(fold-alltotal)
-(assume "n")
-(use "PosTotalVar")
-;; Proof finished.
-;; (cdp)
-(save "cNatPosTotal")
+;; (set-totality-goal "cNatPos")
+;; (fold-alltotal)
+;; (assume "n")
+;; (use "PosTotalVar")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save "cNatPosTotal")
 
 ;; 2021-02-05.  
 ;; Use cRBd instead of the pconst RealBd to block unwanted unfoldings
@@ -5490,7 +5491,7 @@
 (use "RealTimesComm")
 (autoreal)
 ;; Proof finished
-(cdp)
+;; (cdp)
 (save "RealTimesCompat")
 
 ;; RealUDivCompat below is formulated with two occurrences of q.  This
