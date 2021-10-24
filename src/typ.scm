@@ -1,4 +1,4 @@
-;; 2020-07-08.  typ.scm
+;; 2021-10-16.  typ.scm
 ;; 2. Types
 ;; ========
 
@@ -2639,9 +2639,10 @@
 			subst-constrs
 			embedded-subst-step-param-arg-varterm-lists)))
 	     (lambda (term)
-	       (apply
-		mk-term-in-app-form
-		(make-term-in-const-form rec-const) term step-terms))))))))
+	       (nbe-normalize-term
+		(apply
+		 mk-term-in-app-form
+		 (make-term-in-const-form rec-const) term step-terms)))))))))
     ((and (arrow-form? type1) (arrow-form? type2))
      (lambda (r)
        (let* ((argtype1 (arrow-form-to-arg-type type1))
