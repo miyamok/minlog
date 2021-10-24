@@ -1,4 +1,4 @@
-;; 2021-03-04.  rseq.scm.  Based on Jan Belle's exp.scm.
+;; 2021-04-01.  rseq.scm.  Based on Jan Belle's exp.scm.
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -542,6 +542,47 @@
 ;; Proof finished.
 ;; (cdp)
 (save "RealConvUniq")
+
+;; Using RealConvUniq and RealConvLim we prove
+
+;; RealLimConst
+(set-goal "allnc x,M(Real x -> Mon M -> RealLim([n]x)M===x)")
+(assume "x" "M" "Rx" "MonM")
+(use "RealConvUniq" (pt "[n]x") (pt "M") (pt "M"))
+;; 3,4
+(use "RealConvLim")
+;; 5-7
+(assume "n")
+(use "Rx")
+;; 6
+(assume "p" "n" "m" "nBd" "mBd")
+(ng #t)
+(simpreal "RealPlusMinusZero")
+(use "RatLeToRealLe")
+(use "Truth")
+(use "Rx")
+;; 7
+(use "MonElim")
+(use "MonM")
+;; ?^4:RealConv([n]x)x M
+(intro 0)
+;; 15-18
+(assume "n")
+(use "Rx")
+;; 16
+(use "Rx")
+;; 17
+(use "MonM")
+;; 18
+(assume "p" "n" "nBd")
+(ng #t)
+(simpreal "RealPlusMinusZero")
+(use "RatLeToRealLe")
+(use "Truth")
+(use "Rx")
+;; Proof finished.
+;; (cdp)
+(save "RealLimConst")
 
 ;; RealConvCompat
 (set-goal "all xs,x,M,ys,y,N(all n(xs n===ys n) -> x===y -> all p(M p=N p) ->
@@ -1109,7 +1150,7 @@
       (M1 1<=m -> abs(xs1 m)<<=2**n1) -> 
       M0(p+cNatPos(Succ n1))max M1(p+cNatPos(Succ n0))<=n -> 
       M0(p+cNatPos(Succ n1))max M1(p+cNatPos(Succ n0))<=m -> 
-      abs(xs0 n*xs1 n+ ~(xs0 m*xs1 m))<<=(1#2**p))"))
+      abs(xs0 n*xs1 n+ ~(xs0 m*xs1 m))<<=(1#2**p))")
 
 (assume "n0" "n1" "xs0Bound" "xs1Bound" "xs0xs1modp<=n" "xs0xs1modp<=m")
 (use "RealLeTrans" (pt "abs(xs0 n*xs1 n+ ~(xs0 n*xs1 m))+
