@@ -1,4 +1,4 @@
-;; 2021-03-01.  examples/analysis/sddiv.scm
+;; 2021-03-24.  examples/analysis/sddiv.scm
 ;; Uses material from Franziskus Wiesnet's Master thesis
 
 ;; (load "~/git/minlog/init.scm")
@@ -9,7 +9,6 @@
 (libload "pos.scm")
 (libload "int.scm")
 (libload "rat.scm")
-(remove-var-name "x" "y" "z")
 (libload "rea.scm")
 ;; (set! COMMENT-FLAG #t)
 
