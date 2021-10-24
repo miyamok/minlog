@@ -1,4 +1,4 @@
-;; 2020-04-06.  examples/analysis/digits.scm
+;; 2021-03-04.  examples/analysis/digits.scm
 
 ;; Dependency of files
 
@@ -27,7 +27,6 @@
 ;; (libload "pos.scm")
 ;; (libload "int.scm")
 ;; (libload "rat.scm")
-;; (remove-var-name "x" "y" "z")
 ;; (libload "rea.scm")
 ;; ;; (set! COMMENT-FLAG #t)
 
