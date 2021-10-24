@@ -1,4 +1,4 @@
-;; 2020-12-15.  proof.scm
+;; 2021-10-18.  proof.scm
 ;; 10. Proofs
 ;; ==========
 
@@ -7692,42 +7692,43 @@
 ;; checked that in c.r. parts every aconst has relevant pvars
 ;; substituted by c.r. cterms only.
 
-(define (check-and-display-proof . opt-proof-or-thm-name-and-ignore-deco-flag)
+(define (check-proof display-flag . opt-proof-and-ignore-deco-flag)
   (let* ((proof-and-ignore-deco-flag
 	  (cond
-	   ((null? opt-proof-or-thm-name-and-ignore-deco-flag)
+	   ((null? opt-proof-and-ignore-deco-flag)
 	    (list (current-proof) #f))
-	   ((= 1 (length opt-proof-or-thm-name-and-ignore-deco-flag))
-	    (let ((first (car opt-proof-or-thm-name-and-ignore-deco-flag)))
+	   ((= 1 (length opt-proof-and-ignore-deco-flag))
+	    (let ((first (car opt-proof-and-ignore-deco-flag)))
 	      (cond ((proof-form? first) (list first #f))
-		    ((string? first)
-		     (list (theorem-name-to-proof first) #f))
 		    ((boolean? first) (list (current-proof) first))
-		    (else (myerror "check-and-display-proof"
-				   "proof or theorem name or boolean expected"
+		    (else (myerror "check-proof" "proof or boolean expected"
 				   first)))))
-	   ((= 2 (length opt-proof-or-thm-name-and-ignore-deco-flag)
-	       (let ((first (car opt-proof-or-thm-name-and-ignore-deco-flag))
-		     (second
-		      (cadr opt-proof-or-thm-name-and-ignore-deco-flag)))
-		 (cond ((and (proof-form? first) (boolean? second))
-			(list first second))
-		       ((and (string? first) (boolean? second))
-			(list (theorem-name-to-proof first) second))
-		       (else (myerror
-			      "check-and-display-proof"
-			      "proof or theorem name and boolean expected"
-			      first second))))))
-	   (else (myerror "check-and-display-proof"
+	   ((= 2 (length opt-proof-and-ignore-deco-flag)
+	       (let ((first (car opt-proof-and-ignore-deco-flag))
+		     (second (cadr opt-proof-and-ignore-deco-flag)))
+		 (if (and (proof-form? first) (boolean? second))
+		     (list first second)
+		     (myerror "check-proof" "proof and boolean expected"
+			      first second)))))
+	   (else (myerror "check-proof"
 			  "list of length <=2 expected"
-			  opt-proof-or-thm-name-and-ignore-deco-flag))))
+			  opt-proof-and-ignore-deco-flag))))
 	 (proof (car proof-and-ignore-deco-flag))
 	 (ignore-deco-flag (cadr proof-and-ignore-deco-flag))
 	 (nc-viols (nc-violations proof))
 	 (h-deg-viols (h-deg-violations proof))
 	 (avar-convention-viols
-	  (avar-convention-violations proof ignore-deco-flag)))
-    (check-and-display-proof-aux proof 0 ignore-deco-flag)
+	  (avar-convention-violations proof ignore-deco-flag))
+	 (free-avars (proof-to-free-avars proof))
+	 (aconsts (proof-to-aconsts proof))
+	 (theorems (list-transform-positive
+		       aconsts
+		     (lambda (ac) (eq? 'theorem (aconst-to-kind ac)))))
+	 (impl-gas (list-transform-positive
+		       GLOBAL-ASSUMPTIONS
+		     (lambda (ga)
+		       (initial-substring? "RewriteGA"(car ga))))))
+    (check-proof-aux display-flag proof 0 ignore-deco-flag)
     (if (pair? nc-viols)
 	(begin
 	  (comment
@@ -7765,420 +7766,1003 @@
 	      (pp (avar-to-formula avar1))
 	      (comment "and")
 	      (pp (avar-to-formula avar2))))))
-    *the-non-printing-object*))
+    (comment "Ok, proof is correct.")
+    (if (pair? free-avars)
+	(comment "Free assumption variables present.")
+	(comment "No free assumption variables."))
+    (if (pair? impl-gas)
+	(comment
+	 "Implicit global assumptions possibly used (unproven rewrite rules): "
+	 (map car impl-gas))
+	(comment
+	 "No implicit global assumptions (unproven rewrite rules)."))
+    (if (pair? theorems)
+	(comment "Theorems used: " (map aconst-to-name theorems))
+	(comment "No theorems used.")))
+  *the-non-printing-object*)
 
-(define (check-and-display-proof-aux proof n ignore-deco-flag)
-  (if
-   COMMENT-FLAG
-   (cond
-    ((proof-in-avar-form? proof)
-     (let* ((fla (proof-to-formula proof))
-	    (new-ignore-deco-flag
-	     (or ignore-deco-flag (formula-of-nulltype? fla)))
-	    (avar (proof-in-avar-form-to-avar proof)))
-       (if (not (avar? avar)) (myerror "avar expected" avar))
-       (let ((avar-fla (avar-to-formula avar)))
-	 (check-formula fla)
-	 (check-formula avar-fla)
-	 (if (not (classical-formula=? fla avar-fla new-ignore-deco-flag))
-	     (myerror "equal formulas expected" fla avar-fla))
-	 (if CDP-COMMENT-FLAG
-	     (begin
-	       (display-comment (make-string n #\.))
-	       (dff fla) (display " by assumption ")
-	       (display (avar-to-string avar)) (newline))))))
-    ((proof-in-aconst-form? proof)
-     (let* ((fla (proof-to-formula proof))
-	    (new-ignore-deco-flag
-	     (or ignore-deco-flag (formula-of-nulltype? fla)))
-	    (aconst (proof-in-aconst-form-to-aconst proof)))
-       (check-aconst aconst ignore-deco-flag)
-       (let ((aconst-fla (aconst-to-formula aconst)))
-	 (check-formula fla)
-	 (check-formula aconst-fla)
-	 (if (not (classical-formula=? fla aconst-fla new-ignore-deco-flag))
-	     (myerror "equal formulas expected" fla aconst-fla))
-	 (if ;check for correct Elim in case of an n.c. idpc
-	  (string=? "Elim" (aconst-to-name aconst))
-	  (let* ((kernel (all-allnc-form-to-final-kernel aconst-fla))
-		 (prems (imp-form-to-premises kernel))
-		 (concl (imp-form-to-final-conclusion kernel))
-		 (idpc-fla (if (pair? prems) (car prems)
-			       (myerror "imp premises expected in" kernel)))
-		 (pred (if (predicate-form? idpc-fla)
-			   (predicate-form-to-predicate idpc-fla)
-			   (myerror "predicate formula expected" idpc-fla)))
-		 (idpc-name (if (idpredconst-form? pred)
-				(idpredconst-to-name pred)
-				(myerror "idpredconst expected" pred)))
-		 (clauses (idpredconst-name-to-clauses idpc-name)))
-	    (if (and (null? (idpredconst-name-to-opt-alg-name idpc-name))
+;; Code discarded 2021-10-24
+;; (define (check-proof display-flag . opt-proof-or-thm-name-and-ignore-deco-flag)
+;;   (let* ((proof-and-ignore-deco-flag
+;; 	  (cond
+;; 	   ((null? opt-proof-or-thm-name-and-ignore-deco-flag)
+;; 	    (list (current-proof) #f))
+;; 	   ((= 1 (length opt-proof-or-thm-name-and-ignore-deco-flag))
+;; 	    (let ((first (car opt-proof-or-thm-name-and-ignore-deco-flag)))
+;; 	      (cond ((proof-form? first) (list first #f))
+;; 		    ((string? first)
+;; 		     (list (theorem-name-to-proof first) #f))
+;; 		    ((boolean? first) (list (current-proof) first))
+;; 		    (else (myerror "check-proof"
+;; 				   "proof or theorem name or boolean expected"
+;; 				   first)))))
+;; 	   ((= 2 (length opt-proof-or-thm-name-and-ignore-deco-flag)
+;; 	       (let ((first (car opt-proof-or-thm-name-and-ignore-deco-flag))
+;; 		     (second
+;; 		      (cadr opt-proof-or-thm-name-and-ignore-deco-flag)))
+;; 		 (cond ((and (proof-form? first) (boolean? second))
+;; 			(list first second))
+;; 		       ((and (string? first) (boolean? second))
+;; 			(list (theorem-name-to-proof first) second))
+;; 		       (else (myerror
+;; 			      "check-proof"
+;; 			      "proof or theorem name and boolean expected"
+;; 			      first second))))))
+;; 	   (else (myerror "check-proof"
+;; 			  "list of length <=2 expected"
+;; 			  opt-proof-or-thm-name-and-ignore-deco-flag))))
+;; 	 (proof (car proof-and-ignore-deco-flag))
+;; 	 (ignore-deco-flag (cadr proof-and-ignore-deco-flag))
+;; 	 (nc-viols (nc-violations proof))
+;; 	 (h-deg-viols (h-deg-violations proof))
+;; 	 (avar-convention-viols
+;; 	  (avar-convention-violations proof ignore-deco-flag))
+;; 	 (free-avars (proof-to-free-avars proof))
+;; 	 (impl-gas (list-transform-positive
+;; 		       GLOBAL-ASSUMPTIONS
+;; 		     (lambda (ga)
+;; 		       (initial-substring? "RewriteGA"(car ga)))))
+;; 	 (expl-gas (proof-to-global-assumptions proof)))
+;;     (check-proof-aux display-flag proof 0 ignore-deco-flag)
+;;     (if (pair? nc-viols)
+;; 	(begin
+;; 	  (comment
+;; 	   "Incorrect proof: nc-intro with computational variable(s)")
+;; 	  (for-each comment (map (lambda (x)
+;; 				   (if (var-form? x)
+;; 				       (var-to-string x)
+;; 				       (avar-to-string x)))
+;; 				 nc-viols))))
+;;     (if
+;;      (pair? h-deg-viols)
+;;      (begin
+;;        (comment
+;; 	"Proof not suitable for extraction.  h-deg violations at aconst(s)")
+;;        (for-each comment h-deg-viols)))
+;;     (if (pair? avar-convention-viols)
+;; 	(begin
+;; 	  (comment
+;; 	   "Proof does not respect the avar convention.")
+;; 	  (do ((l avar-convention-viols (cdr l)))
+;; 	      ((null? l))
+;; 	    (let* ((pair (car l))
+;; 		   (flagged-avar1 (car pair))
+;; 		   (flagged-avar2 (cadr pair))
+;; 		   (avar1 (cadr flagged-avar1))
+;; 		   (avar2 (cadr flagged-avar2)))
+;; 	      (comment "The same avar with name "
+;; 		       (let ((name (avar-to-name avar1)))
+;; 			 (if (string=? "" name)
+;; 			     DEFAULT-AVAR-NAME
+;; 			     name)		       )
+;; 		       " and index "
+;; 		       (avar-to-index avar1)
+;; 		       " carries the two different formulas")
+;; 	      (pp (avar-to-formula avar1))
+;; 	      (comment "and")
+;; 	      (pp (avar-to-formula avar2))))))
+;;     (comment "Ok, proof is correct.")
+;;     (if (pair? free-avars)
+;; 	(comment "Free assumption variables present.")
+;; 	(comment "No free assumption variables."))
+;;     (if (pair? impl-gas)
+;; 	(comment
+;; 	 "Implicit global assumptions possibly used (unproven rewrite rules): "
+;; 	 (map car impl-gas))
+;; 	(comment
+;; 	 "No implicit global assumptions (unproven rewrite rules)."))
+;;     (if (pair? expl-gas)
+;; 	(comment "Explicit global assumptions used: "
+;; 		 (map aconst-to-name  expl-gas))
+;; 	(comment "No explicit global assumptions used.")))
+;;   *the-non-printing-object*)
+
+(define (check-proof-aux display-flag proof n ignore-deco-flag)
+  (cond
+   ((proof-in-avar-form? proof)
+    (let* ((fla (proof-to-formula proof))
+	   (new-ignore-deco-flag
+	    (or ignore-deco-flag (formula-of-nulltype? fla)))
+	   (avar (proof-in-avar-form-to-avar proof)))
+      (if (not (avar? avar)) (myerror "avar expected" avar))
+      (let ((avar-fla (avar-to-formula avar)))
+	(check-formula fla)
+	(check-formula avar-fla)
+	(if (not (classical-formula=? fla avar-fla new-ignore-deco-flag))
+	    (myerror "equal formulas expected" fla avar-fla))
+	(if display-flag
+	    (begin
+	      (display-comment (make-string n #\.))
+	      (dff fla) (display " by assumption ")
+	      (display (avar-to-string avar)) (newline))))))
+   ((proof-in-aconst-form? proof)
+    (let* ((fla (proof-to-formula proof))
+	   (new-ignore-deco-flag
+	    (or ignore-deco-flag (formula-of-nulltype? fla)))
+	   (aconst (proof-in-aconst-form-to-aconst proof)))
+      (check-aconst aconst ignore-deco-flag)
+      (let ((aconst-fla (aconst-to-formula aconst)))
+	(check-formula fla)
+	(check-formula aconst-fla)
+	(if (not (classical-formula=? fla aconst-fla new-ignore-deco-flag))
+	    (myerror "equal formulas expected" fla aconst-fla))
+	(if ;check for correct Elim in case of an n.c. idpc
+	 (string=? "Elim" (aconst-to-name aconst))
+	 (let* ((kernel (all-allnc-form-to-final-kernel aconst-fla))
+		(prems (imp-form-to-premises kernel))
+		(concl (imp-form-to-final-conclusion kernel))
+		(idpc-fla (if (pair? prems) (car prems)
+			      (myerror "imp premises expected in" kernel)))
+		(pred (if (predicate-form? idpc-fla)
+			  (predicate-form-to-predicate idpc-fla)
+			  (myerror "predicate formula expected" idpc-fla)))
+		(idpc-name (if (idpredconst-form? pred)
+			       (idpredconst-to-name pred)
+			       (myerror "idpredconst expected" pred)))
+		(clauses (idpredconst-name-to-clauses idpc-name)))
+	   (if (and (null? (idpredconst-name-to-opt-alg-name idpc-name))
 					;but not one of the special ones
 					;allowing arbitrary conclusions
-		     (not (member idpc-name '("EqD" "ExNc" "AndNc")))
+		    (not (member idpc-name '("EqD" "ExNc" "AndNc")))
 					;not a one-clause-nc idpc
-		     (not (= 1 (length clauses))) ;but with a c.r. conclusion
-		     (not (formula-of-nulltype? concl)))
-		(myerror "n.c. conclusion expected" concl
-			 "in the elimination axiom for an n.c. idpc formula"
-			 idpc-fla))))
-	 (if CDP-COMMENT-FLAG
-	     (begin
-	       (display-comment (make-string n #\.))
-	       (dff fla)
-	       (case (aconst-to-kind aconst)
-		 ((axiom) (display " by axiom "))
-		 ((theorem) (display " by theorem "))
-		 ((global-assumption) (display " by global assumption "))
-		 (else (myerror "kind of aconst expected"
-				(aconst-to-kind aconst))))
-	       (display (aconst-to-name aconst)) (newline))))))
-    ((proof-in-imp-intro-form? proof)
-     (let* ((fla (proof-to-formula proof))
-	    (new-ignore-deco-flag
-	     (or ignore-deco-flag (formula-of-nulltype? fla)))
-	    (avar (proof-in-imp-intro-form-to-avar proof))
-	    (kernel (proof-in-imp-intro-form-to-kernel proof)))
-       (check-and-display-proof-aux kernel (+ n 1) new-ignore-deco-flag)
-       (if (not (avar? avar)) (myerror "avar expected" avar))
-       (let ((avar-fla (avar-to-formula avar))
-	     (kernel-fla (proof-to-formula kernel)))
-	 (check-formula fla)
-	 (if (not (classical-formula=? (make-imp avar-fla kernel-fla)
-				       fla ignore-deco-flag))
-	     (myerror "equal formulas expected"
-		      (make-imp avar-fla kernel-fla) fla))
-	 (if CDP-COMMENT-FLAG
-	     (begin
-	       (display-comment (make-string n #\.))
-	       (dff fla) (display " by imp intro ")
-	       (display (avar-to-string avar)) (newline))))))
-    ((proof-in-imp-elim-form? proof)
-     (let* ((fla (proof-to-formula proof))
-	    (new-ignore-deco-flag
-	     (or ignore-deco-flag (formula-of-nulltype? fla)))
-	    (op (proof-in-imp-elim-form-to-op proof))
-	    (op-fla (proof-to-formula op))
-	    (arg (proof-in-imp-elim-form-to-arg proof))
-	    (arg-fla (proof-to-formula arg))
-	    (arg-ignore-deco-flag
-	     (or ignore-deco-flag (formula-of-nulltype? arg-fla))))
-       (check-and-display-proof-aux op (+ n 1) new-ignore-deco-flag)
-       (check-and-display-proof-aux arg (+ n 1) arg-ignore-deco-flag)
-       (check-formula fla)
-       (if (not (or (imp-form? op-fla)
-		    (and arg-ignore-deco-flag (impnc-form? op-fla))))
-	   (myerror "imp form or impnc form with n.c. premise expected"
-		    op-fla))
-       (if (not (classical-formula=?
-		 (imp-impnc-form-to-conclusion op-fla)
-		 fla new-ignore-deco-flag))
-	   (myerror "equal formulas expected"
-		    (imp-impnc-form-to-conclusion op-fla) fla))
-       (if (not (classical-formula=?
-		 (imp-impnc-form-to-premise op-fla)
-		 arg-fla arg-ignore-deco-flag))
-	   (myerror "equal formulas expected"
-		    (imp-impnc-form-to-premise op-fla) arg-fla))
-       (if CDP-COMMENT-FLAG
-	   (begin
-	     (display-comment (make-string n #\.))
-	     (dff fla) (display " by imp elim") (newline)))))
-    ((proof-in-impnc-intro-form? proof)
-     (let* ((fla (proof-to-formula proof))
-	    (new-ignore-deco-flag
-	     (or ignore-deco-flag (formula-of-nulltype? fla)))
-	    (avar (proof-in-impnc-intro-form-to-avar proof))
-	    (kernel (proof-in-impnc-intro-form-to-kernel proof))
-	    (cvars (proof-to-cvars kernel)))
-       (if (and (not (formula-of-nulltype? (proof-to-formula kernel)))
-		(member-wrt avar=? avar cvars))
-	   (begin (display-comment "warning: impnc-intro with cvar"
-				   (avar-to-string avar))
-		  (newline)))
-       (check-and-display-proof-aux kernel (+ n 1) new-ignore-deco-flag)
-       (if (not (avar? avar)) (myerror "avar expected" avar))
-       (let ((avar-fla (avar-to-formula avar))
-	     (kernel-fla (proof-to-formula kernel)))
-	 (check-formula fla)
-	 (if (not (classical-formula=? (make-impnc avar-fla kernel-fla)
-				       fla new-ignore-deco-flag))
-	     (myerror "equal formulas expected"
-		      (make-impnc avar-fla kernel-fla) fla))
-	 (if CDP-COMMENT-FLAG
-	     (begin
-	       (display-comment (make-string n #\.))
-	       (dff fla) (display " by impnc intro ")
-	       (display (avar-to-string avar)) (newline))))))
-    ((proof-in-impnc-elim-form? proof)
-     (let* ((fla (proof-to-formula proof))
-	    (new-ignore-deco-flag
-	     (or ignore-deco-flag (formula-of-nulltype? fla)))
-	    (op (proof-in-impnc-elim-form-to-op proof))
-	    (op-fla (proof-to-formula op))
-	    (arg (proof-in-impnc-elim-form-to-arg proof))
-	    (arg-fla (proof-to-formula arg))
-	    (arg-ignore-deco-flag
-	     (or ignore-deco-flag (formula-of-nulltype? arg-fla))))
-       (check-and-display-proof-aux op (+ n 1) new-ignore-deco-flag)
-       (check-and-display-proof-aux arg (+ n 1) #t)
-       (check-formula fla)
-       (if (not (or (impnc-form? op-fla)
-		    (and arg-ignore-deco-flag (imp-form? arg-fla))))
-	   (myerror "impnc form or imp form with n.c premise expected" op-fla))
-       (if (not (classical-formula=?
-		 (imp-impnc-form-to-conclusion op-fla) fla
-		 new-ignore-deco-flag))
-	   (myerror
-	    "equal formulas expected" (impnc-form-to-conclusion op-fla) fla))
-       (if (not (classical-formula=?
-		 (imp-impnc-form-to-premise op-fla) arg-fla
-		 arg-ignore-deco-flag))
-	   (myerror "equal formulas expected"
-		    (imp-impnc-form-to-premise op-fla) arg-fla))
-       (if CDP-COMMENT-FLAG
-	   (begin
-	     (display-comment (make-string n #\.))
-	     (dff fla) (display " by impnc elim") (newline)))))
-    ((proof-in-and-intro-form? proof)
-     (let* ((fla (proof-to-formula proof))
-	    (left (proof-in-and-intro-form-to-left proof))
-	    (right (proof-in-and-intro-form-to-right proof))
-	    (left-ignore-deco-flag
-	     (or ignore-deco-flag
-		 (formula-of-nulltype? (proof-to-formula left))))
-	    (right-ignore-deco-flag
-	     (or ignore-deco-flag
-		 (formula-of-nulltype? (proof-to-formula right)))))
-       (check-and-display-proof-aux left (+ n 1) left-ignore-deco-flag)
-       (check-and-display-proof-aux right (+ n 1) right-ignore-deco-flag)
-       (check-formula fla)
-       (let ((left-fla (proof-to-formula left))
-	     (right-fla (proof-to-formula right)))
-	 (if (not (and-form? fla))
-	     (myerror "and form expected" fla))
-	 (if (not (classical-formula=?
-		   left-fla (and-form-to-left fla) left-ignore-deco-flag))
-	     (myerror
-	      "equal formulas expected" left-fla (and-form-to-left fla)))
-	 (if (not (classical-formula=?
-		   right-fla (and-form-to-right fla) right-ignore-deco-flag))
-	     (myerror
-	      "equal formulas expected" right-fla (and-form-to-right fla)))
-	 (if CDP-COMMENT-FLAG
-	     (begin
-	       (display-comment (make-string n #\.))
-	       (dff fla) (display " by and intro") (newline))))))
-    ((proof-in-and-elim-left-form? proof)
-     (let* ((fla (proof-to-formula proof))
-	    (new-ignore-deco-flag
-	     (or ignore-deco-flag (formula-of-nulltype? fla)))
-	    (kernel (proof-in-and-elim-left-form-to-kernel proof)))
-       (check-and-display-proof-aux kernel (+ n 1) new-ignore-deco-flag)
-       (check-formula fla)
-       (let ((kernel-fla (proof-to-formula kernel)))
-	 (if (not (and-form? kernel-fla))
-	     (myerror "in and-elim and-form expected" kernel-fla))
-	 (if (not (classical-formula=?
-		   (and-form-to-left kernel-fla) fla new-ignore-deco-flag))
-	     (myerror "in and-elim formulas do not fit"
-		      (and-form-to-left kernel-fla) fla))
-	 (if CDP-COMMENT-FLAG
-	     (begin
-	       (display-comment (make-string n #\.))
-	       (dff fla) (display " by and elim left") (newline))))))
-    ((proof-in-and-elim-right-form? proof)
-     (let* ((fla (proof-to-formula proof))
-	    (new-ignore-deco-flag
-	     (or ignore-deco-flag (formula-of-nulltype? fla)))
-	    (kernel (proof-in-and-elim-right-form-to-kernel proof)))
-       (check-and-display-proof-aux kernel (+ n 1) new-ignore-deco-flag)
-       (check-formula fla)
-       (let ((kernel-fla (proof-to-formula kernel)))
-	 (if (not (and-form? kernel-fla))
-	     (myerror "in and-elim and-form expected" kernel-fla))
-	 (if (not (classical-formula=?
-		   (and-form-to-right kernel-fla) fla new-ignore-deco-flag))
-	     (myerror "in and-elim formulas do not fit"
-		      (and-form-to-right kernel-fla) fla))
-	 (if CDP-COMMENT-FLAG
-	     (begin
-	       (display-comment (make-string n #\.))
-	       (dff fla) (display " by and elim right") (newline))))))
-    ((proof-in-all-intro-form? proof)
-     (let* ((fla (proof-to-formula proof))
-	    (new-ignore-deco-flag
-	     (or ignore-deco-flag (formula-of-nulltype? fla)))
-	    (var (proof-in-all-intro-form-to-var proof))
-	    (kernel (proof-in-all-intro-form-to-kernel proof)))
-       (check-and-display-proof-aux kernel (+ n 1) new-ignore-deco-flag)
-       (check-formula fla)
-       (let* ((context (proof-to-context kernel))
-	      (avars (context-to-avars context))
-	      (formulas (map avar-to-formula avars)))
-	 (if
-	  (and
-	   (member var (apply union (map formula-to-free formulas)))
-	   (member var (apply union (map formula-to-free
-					 (map normalize-formula formulas)))))
-	  (myerror "variable condition fails for" var)))
-       (if (and (not new-ignore-deco-flag) (not (all-form? fla)))
-	   (myerror "at all-intro: all form expected" fla))
-       (if (and new-ignore-deco-flag (not (all-allnc-form? fla)))
-	   (myerror "all or allnc form expected" fla))
-       ;; (if (not (all-form? fla))
-       ;; 	   (myerror "all form expected" fla))
-       (let ((kernel-fla (proof-to-formula kernel)))
-	 (if (not (classical-formula=?
-		   (make-all var kernel-fla) fla new-ignore-deco-flag))
-	     (myerror "equal formulas expected"
-		      (make-all var kernel-fla) fla)))
-       (if CDP-COMMENT-FLAG
-	   (begin
-	     (display-comment (make-string n #\.))
-	     (dff fla) (display " by all intro") (newline)))))
-    ((proof-in-all-elim-form? proof)
-     (let* ((fla (proof-to-formula proof))
-	    (new-ignore-deco-flag
-	     (or ignore-deco-flag (formula-of-nulltype? fla)))
-	    (op (proof-in-all-elim-form-to-op proof))
-	    (arg (proof-in-all-elim-form-to-arg proof)))
-       (check-and-display-proof-aux op (+ n 1) new-ignore-deco-flag)
-       (check-formula fla)
-       (check-term arg)
-       (let ((op-fla (proof-to-formula op)))
-	 (if (and (not new-ignore-deco-flag) (not (all-form? op-fla)))
-	     (myerror "at all-elim: all form expected" op-fla))
-	 (if (and new-ignore-deco-flag (not (all-allnc-form? op-fla)))
-	     (myerror "at all-elim: all or allnc form expected" op-fla))
-	 ;; (if (not (all-form? op-fla))
-	 ;;     (myerror "at all-elim: all form expected" op-fla))
-	 (if (not (equal? (var-to-type (all-form-to-var op-fla))
-			  (term-to-type arg)))
-	     (myerror "equal types expected of variable"
-		      (all-form-to-var op-fla) "and term" arg))
-	 (if (and (t-deg-one? (var-to-t-deg (all-form-to-var op-fla)))
-		  (not (synt-total? arg)))
-	     (myerror "degrees of totality do not fit for variable"
-		      (all-form-to-var op-fla) "and term" arg))
-	 (let ((var (all-form-to-var op-fla))
-	       (kernel (all-form-to-kernel op-fla)))
-	   (if (and (term-in-var-form? arg)
-		    (equal? var (term-in-var-form-to-var arg)))
-	       (if (not (classical-formula=? fla kernel new-ignore-deco-flag))
-		   (myerror "equal formulas expected" fla kernel))
-	       (if (not (classical-formula=?
-			 fla (formula-subst kernel var arg)
-			 new-ignore-deco-flag))
-		   (myerror "equal formulas expected"
-			    fla (formula-subst kernel var arg)))))
-	 (if CDP-COMMENT-FLAG
-	     (begin
-	       (display-comment (make-string (+ n 1) #\.))
-	       (display-term arg) (newline)
-	       (display-comment (make-string n #\.))
-	       (dff fla) (display " by all elim") (newline))))))
-    ((proof-in-allnc-intro-form? proof)
-     (let* ((fla (proof-to-formula proof))
-	    (new-ignore-deco-flag
-	     (or ignore-deco-flag (formula-of-nulltype? fla)))
-	    (var (proof-in-allnc-intro-form-to-var proof))
-	    (kernel (proof-in-allnc-intro-form-to-kernel proof))
-	    (context (proof-to-context kernel))
-	    (cvars (proof-to-cvars kernel))
-	    (avars (context-to-avars context))
-	    (formulas (map avar-to-formula avars))
-	    (free (apply union (map formula-to-free formulas))))
-       (if
-	(or (and
-	     (member var (apply union (map formula-to-free formulas)))
-	     (member var (apply union (map formula-to-free
-					   (map normalize-formula formulas)))))
-	    (and (not (formula-of-nulltype? (proof-to-formula kernel)))
-		 (member var cvars)))
-	(begin (display-comment "warning: allnc-intro with cvar"
-				(var-to-string var))
-	       (newline)))
-       (check-and-display-proof-aux kernel (+ n 1) new-ignore-deco-flag)
-       (check-formula fla)
-       (if (and (not new-ignore-deco-flag) (not (allnc-form? fla)))
-	   (myerror "at allnc-intro: allnc form expected" fla))
-       (if (and new-ignore-deco-flag (not (all-allnc-form? fla)))
-	   (myerror "all or allnc form expected" fla))
-       ;; (if (not (allnc-form? fla))
-       ;; 	   (myerror "allnc form expected" fla))
-       (let ((kernel-fla (proof-to-formula kernel)))
-	 (if (not (classical-formula=?
-		   (make-allnc var kernel-fla) fla new-ignore-deco-flag))
-	     (myerror "equal formulas expected"
-		      (make-allnc var kernel-fla) fla)))
-       (if CDP-COMMENT-FLAG
-	   (begin
-	     (display-comment (make-string n #\.))
-	     (dff fla) (display " by allnc intro") (newline)))))
-    ((proof-in-allnc-elim-form? proof)
-     (let* ((fla (proof-to-formula proof))
-	    (new-ignore-deco-flag
-	     (or ignore-deco-flag (formula-of-nulltype? fla)))
-	    (op (proof-in-allnc-elim-form-to-op proof))
-	    (arg (proof-in-allnc-elim-form-to-arg proof)))
-       (check-and-display-proof-aux op (+ n 1) new-ignore-deco-flag)
-       (check-formula fla)
-       (check-term arg)
-       (let ((op-fla (proof-to-formula op)))
-	 (if (and (not new-ignore-deco-flag) (not (allnc-form? op-fla)))
-	     (myerror "at allnc-elim: allnc form expected" op-fla))
-	 (if (and new-ignore-deco-flag (not (all-allnc-form? op-fla)))
-	     (myerror "at allnc-elim: all or allnc form expected" op-fla))
-	 ;; (if (not (allnc-form? op-fla))
-	 ;;     (myerror "allnc form expected" op-fla))
-	 (if (not (equal? (var-to-type (allnc-form-to-var op-fla))
-			  (term-to-type arg)))
-	     (myerror "equal types expected of variable"
-		      (allnc-form-to-var op-fla) "and term" arg))
-	 (if (and (t-deg-one? (var-to-t-deg (allnc-form-to-var op-fla)))
-		  (not (synt-total? arg)))
-	     (myerror "degrees of totality do not fit for variable"
-		      (allnc-form-to-var op-fla) "and term" arg))
-	 (let ((op-var (allnc-form-to-var op-fla))
-	       (op-kernel (allnc-form-to-kernel op-fla)))
-	   (if (and (term-in-var-form? arg)
-		    (equal? op-var (term-in-var-form-to-var arg)))
-	       (if (not (classical-formula=? fla op-kernel
-					     new-ignore-deco-flag))
-		   (myerror "equal formulas expected" fla op-kernel))
-	       (if (not (classical-formula=?
-			 fla (formula-subst op-kernel op-var arg)
-			 new-ignore-deco-flag))
-		   (myerror "equal formulas expected"
-			    fla (formula-subst op-kernel op-var arg)))))
-	 (if CDP-COMMENT-FLAG
-	     (begin
-	       (display-comment (make-string (+ n 1) #\.))
-	       (display-term arg) (newline)
-	       (display-comment (make-string n #\.))
-	       (dff fla) (display " by allnc elim") (newline))))))
-    (else (myerror "proof tag expected"
-		   (tag proof))))))
+		    (not (= 1 (length clauses))) ;but with a c.r. conclusion
+		    (not (formula-of-nulltype? concl)))
+	       (myerror "n.c. conclusion expected" concl
+			"in the elimination axiom for an n.c. idpc formula"
+			idpc-fla))))
+	(if display-flag
+	    (begin
+	      (display-comment (make-string n #\.))
+	      (dff fla)
+	      (case (aconst-to-kind aconst)
+		((axiom) (display " by axiom "))
+		((theorem) (display " by theorem "))
+		((global-assumption) (display " by global assumption "))
+		(else (myerror "kind of aconst expected"
+			       (aconst-to-kind aconst))))
+	      (display (aconst-to-name aconst)) (newline))))))
+   ((proof-in-imp-intro-form? proof)
+    (let* ((fla (proof-to-formula proof))
+	   (new-ignore-deco-flag
+	    (or ignore-deco-flag (formula-of-nulltype? fla)))
+	   (avar (proof-in-imp-intro-form-to-avar proof))
+	   (kernel (proof-in-imp-intro-form-to-kernel proof)))
+      (check-proof-aux display-flag kernel (+ n 1) new-ignore-deco-flag)
+      (if (not (avar? avar)) (myerror "avar expected" avar))
+      (let ((avar-fla (avar-to-formula avar))
+	    (kernel-fla (proof-to-formula kernel)))
+	(check-formula fla)
+	(if (not (classical-formula=? (make-imp avar-fla kernel-fla)
+				      fla ignore-deco-flag))
+	    (myerror "equal formulas expected"
+		     (make-imp avar-fla kernel-fla) fla))
+	(if display-flag
+	    (begin
+	      (display-comment (make-string n #\.))
+	      (dff fla) (display " by imp intro ")
+	      (display (avar-to-string avar)) (newline))))))
+   ((proof-in-imp-elim-form? proof)
+    (let* ((fla (proof-to-formula proof))
+	   (new-ignore-deco-flag
+	    (or ignore-deco-flag (formula-of-nulltype? fla)))
+	   (op (proof-in-imp-elim-form-to-op proof))
+	   (op-fla (proof-to-formula op))
+	   (arg (proof-in-imp-elim-form-to-arg proof))
+	   (arg-fla (proof-to-formula arg))
+	   (arg-ignore-deco-flag
+	    (or ignore-deco-flag (formula-of-nulltype? arg-fla))))
+      (check-proof-aux display-flag op (+ n 1) new-ignore-deco-flag)
+      (check-proof-aux display-flag arg (+ n 1) arg-ignore-deco-flag)
+      (check-formula fla)
+      (if (not (or (imp-form? op-fla)
+		   (and arg-ignore-deco-flag (impnc-form? op-fla))))
+	  (myerror "imp form or impnc form with n.c. premise expected"
+		   op-fla))
+      (if (not (classical-formula=?
+		(imp-impnc-form-to-conclusion op-fla)
+		fla new-ignore-deco-flag))
+	  (myerror "equal formulas expected"
+		   (imp-impnc-form-to-conclusion op-fla) fla))
+      (if (not (classical-formula=?
+		(imp-impnc-form-to-premise op-fla)
+		arg-fla arg-ignore-deco-flag))
+	  (myerror "equal formulas expected"
+		   (imp-impnc-form-to-premise op-fla) arg-fla))
+      (if display-flag
+	  (begin
+	    (display-comment (make-string n #\.))
+	    (dff fla) (display " by imp elim") (newline)))))
+   ((proof-in-impnc-intro-form? proof)
+    (let* ((fla (proof-to-formula proof))
+	   (new-ignore-deco-flag
+	    (or ignore-deco-flag (formula-of-nulltype? fla)))
+	   (avar (proof-in-impnc-intro-form-to-avar proof))
+	   (kernel (proof-in-impnc-intro-form-to-kernel proof))
+	   (cvars (proof-to-cvars kernel)))
+      (if (and (not (formula-of-nulltype? (proof-to-formula kernel)))
+	       (member-wrt avar=? avar cvars))
+	  (begin (display-comment "warning: impnc-intro with cvar"
+				  (avar-to-string avar))
+		 (newline)))
+      (check-proof-aux display-flag kernel (+ n 1) new-ignore-deco-flag)
+      (if (not (avar? avar)) (myerror "avar expected" avar))
+      (let ((avar-fla (avar-to-formula avar))
+	    (kernel-fla (proof-to-formula kernel)))
+	(check-formula fla)
+	(if (not (classical-formula=? (make-impnc avar-fla kernel-fla)
+				      fla new-ignore-deco-flag))
+	    (myerror "equal formulas expected"
+		     (make-impnc avar-fla kernel-fla) fla))
+	(if display-flag
+	    (begin
+	      (display-comment (make-string n #\.))
+	      (dff fla) (display " by impnc intro ")
+	      (display (avar-to-string avar)) (newline))))))
+   ((proof-in-impnc-elim-form? proof)
+    (let* ((fla (proof-to-formula proof))
+	   (new-ignore-deco-flag
+	    (or ignore-deco-flag (formula-of-nulltype? fla)))
+	   (op (proof-in-impnc-elim-form-to-op proof))
+	   (op-fla (proof-to-formula op))
+	   (arg (proof-in-impnc-elim-form-to-arg proof))
+	   (arg-fla (proof-to-formula arg))
+	   (arg-ignore-deco-flag
+	    (or ignore-deco-flag (formula-of-nulltype? arg-fla))))
+      (check-proof-aux display-flag op (+ n 1) new-ignore-deco-flag)
+      (check-proof-aux display-flag arg (+ n 1) #t)
+      (check-formula fla)
+      (if (not (or (impnc-form? op-fla)
+		   (and arg-ignore-deco-flag (imp-form? arg-fla))))
+	  (myerror "impnc form or imp form with n.c premise expected" op-fla))
+      (if (not (classical-formula=?
+		(imp-impnc-form-to-conclusion op-fla) fla
+		new-ignore-deco-flag))
+	  (myerror
+	   "equal formulas expected" (impnc-form-to-conclusion op-fla) fla))
+      (if (not (classical-formula=?
+		(imp-impnc-form-to-premise op-fla) arg-fla
+		arg-ignore-deco-flag))
+	  (myerror "equal formulas expected"
+		   (imp-impnc-form-to-premise op-fla) arg-fla))
+      (if display-flag
+	  (begin
+	    (display-comment (make-string n #\.))
+	    (dff fla) (display " by impnc elim") (newline)))))
+   ((proof-in-and-intro-form? proof)
+    (let* ((fla (proof-to-formula proof))
+	   (left (proof-in-and-intro-form-to-left proof))
+	   (right (proof-in-and-intro-form-to-right proof))
+	   (left-ignore-deco-flag
+	    (or ignore-deco-flag
+		(formula-of-nulltype? (proof-to-formula left))))
+	   (right-ignore-deco-flag
+	    (or ignore-deco-flag
+		(formula-of-nulltype? (proof-to-formula right)))))
+      (check-proof-aux display-flag left (+ n 1) left-ignore-deco-flag)
+      (check-proof-aux display-flag right (+ n 1) right-ignore-deco-flag)
+      (check-formula fla)
+      (let ((left-fla (proof-to-formula left))
+	    (right-fla (proof-to-formula right)))
+	(if (not (and-form? fla))
+	    (myerror "and form expected" fla))
+	(if (not (classical-formula=?
+		  left-fla (and-form-to-left fla) left-ignore-deco-flag))
+	    (myerror
+	     "equal formulas expected" left-fla (and-form-to-left fla)))
+	(if (not (classical-formula=?
+		  right-fla (and-form-to-right fla) right-ignore-deco-flag))
+	    (myerror
+	     "equal formulas expected" right-fla (and-form-to-right fla)))
+	(if display-flag
+	    (begin
+	      (display-comment (make-string n #\.))
+	      (dff fla) (display " by and intro") (newline))))))
+   ((proof-in-and-elim-left-form? proof)
+    (let* ((fla (proof-to-formula proof))
+	   (new-ignore-deco-flag
+	    (or ignore-deco-flag (formula-of-nulltype? fla)))
+	   (kernel (proof-in-and-elim-left-form-to-kernel proof)))
+      (check-proof-aux display-flag kernel (+ n 1) new-ignore-deco-flag)
+      (check-formula fla)
+      (let ((kernel-fla (proof-to-formula kernel)))
+	(if (not (and-form? kernel-fla))
+	    (myerror "in and-elim and-form expected" kernel-fla))
+	(if (not (classical-formula=?
+		  (and-form-to-left kernel-fla) fla new-ignore-deco-flag))
+	    (myerror "in and-elim formulas do not fit"
+		     (and-form-to-left kernel-fla) fla))
+	(if display-flag
+	    (begin
+	      (display-comment (make-string n #\.))
+	      (dff fla) (display " by and elim left") (newline))))))
+   ((proof-in-and-elim-right-form? proof)
+    (let* ((fla (proof-to-formula proof))
+	   (new-ignore-deco-flag
+	    (or ignore-deco-flag (formula-of-nulltype? fla)))
+	   (kernel (proof-in-and-elim-right-form-to-kernel proof)))
+      (check-proof-aux display-flag kernel (+ n 1) new-ignore-deco-flag)
+      (check-formula fla)
+      (let ((kernel-fla (proof-to-formula kernel)))
+	(if (not (and-form? kernel-fla))
+	    (myerror "in and-elim and-form expected" kernel-fla))
+	(if (not (classical-formula=?
+		  (and-form-to-right kernel-fla) fla new-ignore-deco-flag))
+	    (myerror "in and-elim formulas do not fit"
+		     (and-form-to-right kernel-fla) fla))
+	(if display-flag
+	    (begin
+	      (display-comment (make-string n #\.))
+	      (dff fla) (display " by and elim right") (newline))))))
+   ((proof-in-all-intro-form? proof)
+    (let* ((fla (proof-to-formula proof))
+	   (new-ignore-deco-flag
+	    (or ignore-deco-flag (formula-of-nulltype? fla)))
+	   (var (proof-in-all-intro-form-to-var proof))
+	   (kernel (proof-in-all-intro-form-to-kernel proof)))
+      (check-proof-aux display-flag kernel (+ n 1) new-ignore-deco-flag)
+      (check-formula fla)
+      (let* ((context (proof-to-context kernel))
+	     (avars (context-to-avars context))
+	     (formulas (map avar-to-formula avars)))
+	(if
+	 (and
+	  (member var (apply union (map formula-to-free formulas)))
+	  (member var (apply union (map formula-to-free
+					(map normalize-formula formulas)))))
+	 (myerror "variable condition fails for" var)))
+      (if (and (not new-ignore-deco-flag) (not (all-form? fla)))
+	  (myerror "at all-intro: all form expected" fla))
+      (if (and new-ignore-deco-flag (not (all-allnc-form? fla)))
+	  (myerror "all or allnc form expected" fla))
+      ;; (if (not (all-form? fla))
+      ;; 	   (myerror "all form expected" fla))
+      (let ((kernel-fla (proof-to-formula kernel)))
+	(if (not (classical-formula=?
+		  (make-all var kernel-fla) fla new-ignore-deco-flag))
+	    (myerror "equal formulas expected"
+		     (make-all var kernel-fla) fla)))
+      (if display-flag
+	  (begin
+	    (display-comment (make-string n #\.))
+	    (dff fla) (display " by all intro") (newline)))))
+   ((proof-in-all-elim-form? proof)
+    (let* ((fla (proof-to-formula proof))
+	   (new-ignore-deco-flag
+	    (or ignore-deco-flag (formula-of-nulltype? fla)))
+	   (op (proof-in-all-elim-form-to-op proof))
+	   (arg (proof-in-all-elim-form-to-arg proof)))
+      (check-proof-aux display-flag op (+ n 1) new-ignore-deco-flag)
+      (check-formula fla)
+      (check-term arg)
+      (let ((op-fla (proof-to-formula op)))
+	(if (and (not new-ignore-deco-flag) (not (all-form? op-fla)))
+	    (myerror "at all-elim: all form expected" op-fla))
+	(if (and new-ignore-deco-flag (not (all-allnc-form? op-fla)))
+	    (myerror "at all-elim: all or allnc form expected" op-fla))
+	;; (if (not (all-form? op-fla))
+	;;     (myerror "at all-elim: all form expected" op-fla))
+	(if (not (equal? (var-to-type (all-form-to-var op-fla))
+			 (term-to-type arg)))
+	    (myerror "equal types expected of variable"
+		     (all-form-to-var op-fla) "and term" arg))
+	(if (and (t-deg-one? (var-to-t-deg (all-form-to-var op-fla)))
+		 (not (synt-total? arg)))
+	    (myerror "degrees of totality do not fit for variable"
+		     (all-form-to-var op-fla) "and term" arg))
+	(let ((var (all-form-to-var op-fla))
+	      (kernel (all-form-to-kernel op-fla)))
+	  (if (and (term-in-var-form? arg)
+		   (equal? var (term-in-var-form-to-var arg)))
+	      (if (not (classical-formula=? fla kernel new-ignore-deco-flag))
+		  (myerror "equal formulas expected" fla kernel))
+	      (if (not (classical-formula=?
+			fla (formula-subst kernel var arg)
+			new-ignore-deco-flag))
+		  (myerror "equal formulas expected"
+			   fla (formula-subst kernel var arg)))))
+	(if display-flag
+	    (begin
+	      (display-comment (make-string (+ n 1) #\.))
+	      (display-term arg) (newline)
+	      (display-comment (make-string n #\.))
+	      (dff fla) (display " by all elim") (newline))))))
+   ((proof-in-allnc-intro-form? proof)
+    (let* ((fla (proof-to-formula proof))
+	   (new-ignore-deco-flag
+	    (or ignore-deco-flag (formula-of-nulltype? fla)))
+	   (var (proof-in-allnc-intro-form-to-var proof))
+	   (kernel (proof-in-allnc-intro-form-to-kernel proof))
+	   (context (proof-to-context kernel))
+	   (cvars (proof-to-cvars kernel))
+	   (avars (context-to-avars context))
+	   (formulas (map avar-to-formula avars))
+	   (free (apply union (map formula-to-free formulas))))
+      (if
+       (or (and
+	    (member var (apply union (map formula-to-free formulas)))
+	    (member var (apply union (map formula-to-free
+					  (map normalize-formula formulas)))))
+	   (and (not (formula-of-nulltype? (proof-to-formula kernel)))
+		(member var cvars)))
+       (begin (display-comment "warning: allnc-intro with cvar"
+			       (var-to-string var))
+	      (newline)))
+      (check-proof-aux display-flag kernel (+ n 1) new-ignore-deco-flag)
+      (check-formula fla)
+      (if (and (not new-ignore-deco-flag) (not (allnc-form? fla)))
+	  (myerror "at allnc-intro: allnc form expected" fla))
+      (if (and new-ignore-deco-flag (not (all-allnc-form? fla)))
+	  (myerror "all or allnc form expected" fla))
+      ;; (if (not (allnc-form? fla))
+      ;; 	   (myerror "allnc form expected" fla))
+      (let ((kernel-fla (proof-to-formula kernel)))
+	(if (not (classical-formula=?
+		  (make-allnc var kernel-fla) fla new-ignore-deco-flag))
+	    (myerror "equal formulas expected"
+		     (make-allnc var kernel-fla) fla)))
+      (if display-flag
+	  (begin
+	    (display-comment (make-string n #\.))
+	    (dff fla) (display " by allnc intro") (newline)))))
+   ((proof-in-allnc-elim-form? proof)
+    (let* ((fla (proof-to-formula proof))
+	   (new-ignore-deco-flag
+	    (or ignore-deco-flag (formula-of-nulltype? fla)))
+	   (op (proof-in-allnc-elim-form-to-op proof))
+	   (arg (proof-in-allnc-elim-form-to-arg proof)))
+      (check-proof-aux display-flag op (+ n 1) new-ignore-deco-flag)
+      (check-formula fla)
+      (check-term arg)
+      (let ((op-fla (proof-to-formula op)))
+	(if (and (not new-ignore-deco-flag) (not (allnc-form? op-fla)))
+	    (myerror "at allnc-elim: allnc form expected" op-fla))
+	(if (and new-ignore-deco-flag (not (all-allnc-form? op-fla)))
+	    (myerror "at allnc-elim: all or allnc form expected" op-fla))
+	;; (if (not (allnc-form? op-fla))
+	;;     (myerror "allnc form expected" op-fla))
+	(if (not (equal? (var-to-type (allnc-form-to-var op-fla))
+			 (term-to-type arg)))
+	    (myerror "equal types expected of variable"
+		     (allnc-form-to-var op-fla) "and term" arg))
+	(if (and (t-deg-one? (var-to-t-deg (allnc-form-to-var op-fla)))
+		 (not (synt-total? arg)))
+	    (myerror "degrees of totality do not fit for variable"
+		     (allnc-form-to-var op-fla) "and term" arg))
+	(let ((op-var (allnc-form-to-var op-fla))
+	      (op-kernel (allnc-form-to-kernel op-fla)))
+	  (if (and (term-in-var-form? arg)
+		   (equal? op-var (term-in-var-form-to-var arg)))
+	      (if (not (classical-formula=? fla op-kernel
+					    new-ignore-deco-flag))
+		  (myerror "equal formulas expected" fla op-kernel))
+	      (if (not (classical-formula=?
+			fla (formula-subst op-kernel op-var arg)
+			new-ignore-deco-flag))
+		  (myerror "equal formulas expected"
+			   fla (formula-subst op-kernel op-var arg)))))
+	(if display-flag
+	    (begin
+	      (display-comment (make-string (+ n 1) #\.))
+	      (display-term arg) (newline)
+	      (display-comment (make-string n #\.))
+	      (dff fla) (display " by allnc elim") (newline))))))
+   (else (myerror "proof tag expected"
+		  (tag proof)))))
 
-(define cdp check-and-display-proof)
+(define (cdp . opt-proof-or-thm-name-and-ignore-deco-flag)
+  (apply check-proof #t opt-proof-or-thm-name-and-ignore-deco-flag))
 
-(define (check-proof . opt-proof-or-thm-name-and-ignore-deco-flag)
-  (if COMMENT-FLAG
-      (begin 
-	(set! COMMENT-FLAG #f)
-	(apply check-and-display-proof
-	       opt-proof-or-thm-name-and-ignore-deco-flag)
-	(set! COMMENT-FLAG #t)
-	(comment "ok, proof is correct."))
-      (begin
-	(apply check-and-display-proof
-	       opt-proof-or-thm-name-and-ignore-deco-flag)
-	(set! COMMENT-FLAG #t)
-	(comment "ok, proof is correct.")
-	(set! COMMENT-FLAG #f))))
+(define (cp . opt-proof-or-thm-name-and-ignore-deco-flag)
+  (apply check-proof #f opt-proof-or-thm-name-and-ignore-deco-flag))
 
-(define cp check-proof)
+;; Code discarded 2021-10-18
+;; (define (check-and-display-proof . opt-proof-or-thm-name-and-ignore-deco-flag)
+;;   (let* ((proof-and-ignore-deco-flag
+;; 	  (cond
+;; 	   ((null? opt-proof-or-thm-name-and-ignore-deco-flag)
+;; 	    (list (current-proof) #f))
+;; 	   ((= 1 (length opt-proof-or-thm-name-and-ignore-deco-flag))
+;; 	    (let ((first (car opt-proof-or-thm-name-and-ignore-deco-flag)))
+;; 	      (cond ((proof-form? first) (list first #f))
+;; 		    ((string? first)
+;; 		     (list (theorem-name-to-proof first) #f))
+;; 		    ((boolean? first) (list (current-proof) first))
+;; 		    (else (myerror "check-and-display-proof"
+;; 				   "proof or theorem name or boolean expected"
+;; 				   first)))))
+;; 	   ((= 2 (length opt-proof-or-thm-name-and-ignore-deco-flag)
+;; 	       (let ((first (car opt-proof-or-thm-name-and-ignore-deco-flag))
+;; 		     (second
+;; 		      (cadr opt-proof-or-thm-name-and-ignore-deco-flag)))
+;; 		 (cond ((and (proof-form? first) (boolean? second))
+;; 			(list first second))
+;; 		       ((and (string? first) (boolean? second))
+;; 			(list (theorem-name-to-proof first) second))
+;; 		       (else (myerror
+;; 			      "check-and-display-proof"
+;; 			      "proof or theorem name and boolean expected"
+;; 			      first second))))))
+;; 	   (else (myerror "check-and-display-proof"
+;; 			  "list of length <=2 expected"
+;; 			  opt-proof-or-thm-name-and-ignore-deco-flag))))
+;; 	 (proof (car proof-and-ignore-deco-flag))
+;; 	 (ignore-deco-flag (cadr proof-and-ignore-deco-flag))
+;; 	 (nc-viols (nc-violations proof))
+;; 	 (h-deg-viols (h-deg-violations proof))
+;; 	 (avar-convention-viols
+;; 	  (avar-convention-violations proof ignore-deco-flag)))
+;;     (check-and-display-proof-aux proof 0 ignore-deco-flag)
+;;     (if (pair? nc-viols)
+;; 	(begin
+;; 	  (comment
+;; 	   "Incorrect proof: nc-intro with computational variable(s)")
+;; 	  (for-each comment (map (lambda (x)
+;; 				   (if (var-form? x)
+;; 				       (var-to-string x)
+;; 				       (avar-to-string x)))
+;; 				 nc-viols))))
+;;     (if
+;;      (pair? h-deg-viols)
+;;      (begin
+;;        (comment
+;; 	"Proof not suitable for extraction.  h-deg violations at aconst(s)")
+;;        (for-each comment h-deg-viols)))
+;;     (if (pair? avar-convention-viols)
+;; 	(begin
+;; 	  (comment
+;; 	   "Proof does not respect the avar convention.")
+;; 	  (do ((l avar-convention-viols (cdr l)))
+;; 	      ((null? l))
+;; 	    (let* ((pair (car l))
+;; 		   (flagged-avar1 (car pair))
+;; 		   (flagged-avar2 (cadr pair))
+;; 		   (avar1 (cadr flagged-avar1))
+;; 		   (avar2 (cadr flagged-avar2)))
+;; 	      (comment "The same avar with name "
+;; 		       (let ((name (avar-to-name avar1)))
+;; 			 (if (string=? "" name)
+;; 			     DEFAULT-AVAR-NAME
+;; 			     name)		       )
+;; 		       " and index "
+;; 		       (avar-to-index avar1)
+;; 		       " carries the two different formulas")
+;; 	      (pp (avar-to-formula avar1))
+;; 	      (comment "and")
+;; 	      (pp (avar-to-formula avar2))))))
+;;     *the-non-printing-object*))
+
+;; (define (check-and-display-proof-aux proof n ignore-deco-flag)
+;;   (if
+;;    COMMENT-FLAG
+;;    (cond
+;;     ((proof-in-avar-form? proof)
+;;      (let* ((fla (proof-to-formula proof))
+;; 	    (new-ignore-deco-flag
+;; 	     (or ignore-deco-flag (formula-of-nulltype? fla)))
+;; 	    (avar (proof-in-avar-form-to-avar proof)))
+;;        (if (not (avar? avar)) (myerror "avar expected" avar))
+;;        (let ((avar-fla (avar-to-formula avar)))
+;; 	 (check-formula fla)
+;; 	 (check-formula avar-fla)
+;; 	 (if (not (classical-formula=? fla avar-fla new-ignore-deco-flag))
+;; 	     (myerror "equal formulas expected" fla avar-fla))
+;; 	 (if CDP-COMMENT-FLAG
+;; 	     (begin
+;; 	       (display-comment (make-string n #\.))
+;; 	       (dff fla) (display " by assumption ")
+;; 	       (display (avar-to-string avar)) (newline))))))
+;;     ((proof-in-aconst-form? proof)
+;;      (let* ((fla (proof-to-formula proof))
+;; 	    (new-ignore-deco-flag
+;; 	     (or ignore-deco-flag (formula-of-nulltype? fla)))
+;; 	    (aconst (proof-in-aconst-form-to-aconst proof)))
+;;        (check-aconst aconst ignore-deco-flag)
+;;        (let ((aconst-fla (aconst-to-formula aconst)))
+;; 	 (check-formula fla)
+;; 	 (check-formula aconst-fla)
+;; 	 (if (not (classical-formula=? fla aconst-fla new-ignore-deco-flag))
+;; 	     (myerror "equal formulas expected" fla aconst-fla))
+;; 	 (if ;check for correct Elim in case of an n.c. idpc
+;; 	  (string=? "Elim" (aconst-to-name aconst))
+;; 	  (let* ((kernel (all-allnc-form-to-final-kernel aconst-fla))
+;; 		 (prems (imp-form-to-premises kernel))
+;; 		 (concl (imp-form-to-final-conclusion kernel))
+;; 		 (idpc-fla (if (pair? prems) (car prems)
+;; 			       (myerror "imp premises expected in" kernel)))
+;; 		 (pred (if (predicate-form? idpc-fla)
+;; 			   (predicate-form-to-predicate idpc-fla)
+;; 			   (myerror "predicate formula expected" idpc-fla)))
+;; 		 (idpc-name (if (idpredconst-form? pred)
+;; 				(idpredconst-to-name pred)
+;; 				(myerror "idpredconst expected" pred)))
+;; 		 (clauses (idpredconst-name-to-clauses idpc-name)))
+;; 	    (if (and (null? (idpredconst-name-to-opt-alg-name idpc-name))
+;; 					;but not one of the special ones
+;; 					;allowing arbitrary conclusions
+;; 		     (not (member idpc-name '("EqD" "ExNc" "AndNc")))
+;; 					;not a one-clause-nc idpc
+;; 		     (not (= 1 (length clauses))) ;but with a c.r. conclusion
+;; 		     (not (formula-of-nulltype? concl)))
+;; 		(myerror "n.c. conclusion expected" concl
+;; 			 "in the elimination axiom for an n.c. idpc formula"
+;; 			 idpc-fla))))
+;; 	 (if CDP-COMMENT-FLAG
+;; 	     (begin
+;; 	       (display-comment (make-string n #\.))
+;; 	       (dff fla)
+;; 	       (case (aconst-to-kind aconst)
+;; 		 ((axiom) (display " by axiom "))
+;; 		 ((theorem) (display " by theorem "))
+;; 		 ((global-assumption) (display " by global assumption "))
+;; 		 (else (myerror "kind of aconst expected"
+;; 				(aconst-to-kind aconst))))
+;; 	       (display (aconst-to-name aconst)) (newline))))))
+;;     ((proof-in-imp-intro-form? proof)
+;;      (let* ((fla (proof-to-formula proof))
+;; 	    (new-ignore-deco-flag
+;; 	     (or ignore-deco-flag (formula-of-nulltype? fla)))
+;; 	    (avar (proof-in-imp-intro-form-to-avar proof))
+;; 	    (kernel (proof-in-imp-intro-form-to-kernel proof)))
+;;        (check-and-display-proof-aux kernel (+ n 1) new-ignore-deco-flag)
+;;        (if (not (avar? avar)) (myerror "avar expected" avar))
+;;        (let ((avar-fla (avar-to-formula avar))
+;; 	     (kernel-fla (proof-to-formula kernel)))
+;; 	 (check-formula fla)
+;; 	 (if (not (classical-formula=? (make-imp avar-fla kernel-fla)
+;; 				       fla ignore-deco-flag))
+;; 	     (myerror "equal formulas expected"
+;; 		      (make-imp avar-fla kernel-fla) fla))
+;; 	 (if CDP-COMMENT-FLAG
+;; 	     (begin
+;; 	       (display-comment (make-string n #\.))
+;; 	       (dff fla) (display " by imp intro ")
+;; 	       (display (avar-to-string avar)) (newline))))))
+;;     ((proof-in-imp-elim-form? proof)
+;;      (let* ((fla (proof-to-formula proof))
+;; 	    (new-ignore-deco-flag
+;; 	     (or ignore-deco-flag (formula-of-nulltype? fla)))
+;; 	    (op (proof-in-imp-elim-form-to-op proof))
+;; 	    (op-fla (proof-to-formula op))
+;; 	    (arg (proof-in-imp-elim-form-to-arg proof))
+;; 	    (arg-fla (proof-to-formula arg))
+;; 	    (arg-ignore-deco-flag
+;; 	     (or ignore-deco-flag (formula-of-nulltype? arg-fla))))
+;;        (check-and-display-proof-aux op (+ n 1) new-ignore-deco-flag)
+;;        (check-and-display-proof-aux arg (+ n 1) arg-ignore-deco-flag)
+;;        (check-formula fla)
+;;        (if (not (or (imp-form? op-fla)
+;; 		    (and arg-ignore-deco-flag (impnc-form? op-fla))))
+;; 	   (myerror "imp form or impnc form with n.c. premise expected"
+;; 		    op-fla))
+;;        (if (not (classical-formula=?
+;; 		 (imp-impnc-form-to-conclusion op-fla)
+;; 		 fla new-ignore-deco-flag))
+;; 	   (myerror "equal formulas expected"
+;; 		    (imp-impnc-form-to-conclusion op-fla) fla))
+;;        (if (not (classical-formula=?
+;; 		 (imp-impnc-form-to-premise op-fla)
+;; 		 arg-fla arg-ignore-deco-flag))
+;; 	   (myerror "equal formulas expected"
+;; 		    (imp-impnc-form-to-premise op-fla) arg-fla))
+;;        (if CDP-COMMENT-FLAG
+;; 	   (begin
+;; 	     (display-comment (make-string n #\.))
+;; 	     (dff fla) (display " by imp elim") (newline)))))
+;;     ((proof-in-impnc-intro-form? proof)
+;;      (let* ((fla (proof-to-formula proof))
+;; 	    (new-ignore-deco-flag
+;; 	     (or ignore-deco-flag (formula-of-nulltype? fla)))
+;; 	    (avar (proof-in-impnc-intro-form-to-avar proof))
+;; 	    (kernel (proof-in-impnc-intro-form-to-kernel proof))
+;; 	    (cvars (proof-to-cvars kernel)))
+;;        (if (and (not (formula-of-nulltype? (proof-to-formula kernel)))
+;; 		(member-wrt avar=? avar cvars))
+;; 	   (begin (display-comment "warning: impnc-intro with cvar"
+;; 				   (avar-to-string avar))
+;; 		  (newline)))
+;;        (check-and-display-proof-aux kernel (+ n 1) new-ignore-deco-flag)
+;;        (if (not (avar? avar)) (myerror "avar expected" avar))
+;;        (let ((avar-fla (avar-to-formula avar))
+;; 	     (kernel-fla (proof-to-formula kernel)))
+;; 	 (check-formula fla)
+;; 	 (if (not (classical-formula=? (make-impnc avar-fla kernel-fla)
+;; 				       fla new-ignore-deco-flag))
+;; 	     (myerror "equal formulas expected"
+;; 		      (make-impnc avar-fla kernel-fla) fla))
+;; 	 (if CDP-COMMENT-FLAG
+;; 	     (begin
+;; 	       (display-comment (make-string n #\.))
+;; 	       (dff fla) (display " by impnc intro ")
+;; 	       (display (avar-to-string avar)) (newline))))))
+;;     ((proof-in-impnc-elim-form? proof)
+;;      (let* ((fla (proof-to-formula proof))
+;; 	    (new-ignore-deco-flag
+;; 	     (or ignore-deco-flag (formula-of-nulltype? fla)))
+;; 	    (op (proof-in-impnc-elim-form-to-op proof))
+;; 	    (op-fla (proof-to-formula op))
+;; 	    (arg (proof-in-impnc-elim-form-to-arg proof))
+;; 	    (arg-fla (proof-to-formula arg))
+;; 	    (arg-ignore-deco-flag
+;; 	     (or ignore-deco-flag (formula-of-nulltype? arg-fla))))
+;;        (check-and-display-proof-aux op (+ n 1) new-ignore-deco-flag)
+;;        (check-and-display-proof-aux arg (+ n 1) #t)
+;;        (check-formula fla)
+;;        (if (not (or (impnc-form? op-fla)
+;; 		    (and arg-ignore-deco-flag (imp-form? arg-fla))))
+;; 	   (myerror "impnc form or imp form with n.c premise expected" op-fla))
+;;        (if (not (classical-formula=?
+;; 		 (imp-impnc-form-to-conclusion op-fla) fla
+;; 		 new-ignore-deco-flag))
+;; 	   (myerror
+;; 	    "equal formulas expected" (impnc-form-to-conclusion op-fla) fla))
+;;        (if (not (classical-formula=?
+;; 		 (imp-impnc-form-to-premise op-fla) arg-fla
+;; 		 arg-ignore-deco-flag))
+;; 	   (myerror "equal formulas expected"
+;; 		    (imp-impnc-form-to-premise op-fla) arg-fla))
+;;        (if CDP-COMMENT-FLAG
+;; 	   (begin
+;; 	     (display-comment (make-string n #\.))
+;; 	     (dff fla) (display " by impnc elim") (newline)))))
+;;     ((proof-in-and-intro-form? proof)
+;;      (let* ((fla (proof-to-formula proof))
+;; 	    (left (proof-in-and-intro-form-to-left proof))
+;; 	    (right (proof-in-and-intro-form-to-right proof))
+;; 	    (left-ignore-deco-flag
+;; 	     (or ignore-deco-flag
+;; 		 (formula-of-nulltype? (proof-to-formula left))))
+;; 	    (right-ignore-deco-flag
+;; 	     (or ignore-deco-flag
+;; 		 (formula-of-nulltype? (proof-to-formula right)))))
+;;        (check-and-display-proof-aux left (+ n 1) left-ignore-deco-flag)
+;;        (check-and-display-proof-aux right (+ n 1) right-ignore-deco-flag)
+;;        (check-formula fla)
+;;        (let ((left-fla (proof-to-formula left))
+;; 	     (right-fla (proof-to-formula right)))
+;; 	 (if (not (and-form? fla))
+;; 	     (myerror "and form expected" fla))
+;; 	 (if (not (classical-formula=?
+;; 		   left-fla (and-form-to-left fla) left-ignore-deco-flag))
+;; 	     (myerror
+;; 	      "equal formulas expected" left-fla (and-form-to-left fla)))
+;; 	 (if (not (classical-formula=?
+;; 		   right-fla (and-form-to-right fla) right-ignore-deco-flag))
+;; 	     (myerror
+;; 	      "equal formulas expected" right-fla (and-form-to-right fla)))
+;; 	 (if CDP-COMMENT-FLAG
+;; 	     (begin
+;; 	       (display-comment (make-string n #\.))
+;; 	       (dff fla) (display " by and intro") (newline))))))
+;;     ((proof-in-and-elim-left-form? proof)
+;;      (let* ((fla (proof-to-formula proof))
+;; 	    (new-ignore-deco-flag
+;; 	     (or ignore-deco-flag (formula-of-nulltype? fla)))
+;; 	    (kernel (proof-in-and-elim-left-form-to-kernel proof)))
+;;        (check-and-display-proof-aux kernel (+ n 1) new-ignore-deco-flag)
+;;        (check-formula fla)
+;;        (let ((kernel-fla (proof-to-formula kernel)))
+;; 	 (if (not (and-form? kernel-fla))
+;; 	     (myerror "in and-elim and-form expected" kernel-fla))
+;; 	 (if (not (classical-formula=?
+;; 		   (and-form-to-left kernel-fla) fla new-ignore-deco-flag))
+;; 	     (myerror "in and-elim formulas do not fit"
+;; 		      (and-form-to-left kernel-fla) fla))
+;; 	 (if CDP-COMMENT-FLAG
+;; 	     (begin
+;; 	       (display-comment (make-string n #\.))
+;; 	       (dff fla) (display " by and elim left") (newline))))))
+;;     ((proof-in-and-elim-right-form? proof)
+;;      (let* ((fla (proof-to-formula proof))
+;; 	    (new-ignore-deco-flag
+;; 	     (or ignore-deco-flag (formula-of-nulltype? fla)))
+;; 	    (kernel (proof-in-and-elim-right-form-to-kernel proof)))
+;;        (check-and-display-proof-aux kernel (+ n 1) new-ignore-deco-flag)
+;;        (check-formula fla)
+;;        (let ((kernel-fla (proof-to-formula kernel)))
+;; 	 (if (not (and-form? kernel-fla))
+;; 	     (myerror "in and-elim and-form expected" kernel-fla))
+;; 	 (if (not (classical-formula=?
+;; 		   (and-form-to-right kernel-fla) fla new-ignore-deco-flag))
+;; 	     (myerror "in and-elim formulas do not fit"
+;; 		      (and-form-to-right kernel-fla) fla))
+;; 	 (if CDP-COMMENT-FLAG
+;; 	     (begin
+;; 	       (display-comment (make-string n #\.))
+;; 	       (dff fla) (display " by and elim right") (newline))))))
+;;     ((proof-in-all-intro-form? proof)
+;;      (let* ((fla (proof-to-formula proof))
+;; 	    (new-ignore-deco-flag
+;; 	     (or ignore-deco-flag (formula-of-nulltype? fla)))
+;; 	    (var (proof-in-all-intro-form-to-var proof))
+;; 	    (kernel (proof-in-all-intro-form-to-kernel proof)))
+;;        (check-and-display-proof-aux kernel (+ n 1) new-ignore-deco-flag)
+;;        (check-formula fla)
+;;        (let* ((context (proof-to-context kernel))
+;; 	      (avars (context-to-avars context))
+;; 	      (formulas (map avar-to-formula avars)))
+;; 	 (if
+;; 	  (and
+;; 	   (member var (apply union (map formula-to-free formulas)))
+;; 	   (member var (apply union (map formula-to-free
+;; 					 (map normalize-formula formulas)))))
+;; 	  (myerror "variable condition fails for" var)))
+;;        (if (and (not new-ignore-deco-flag) (not (all-form? fla)))
+;; 	   (myerror "at all-intro: all form expected" fla))
+;;        (if (and new-ignore-deco-flag (not (all-allnc-form? fla)))
+;; 	   (myerror "all or allnc form expected" fla))
+;;        ;; (if (not (all-form? fla))
+;;        ;; 	   (myerror "all form expected" fla))
+;;        (let ((kernel-fla (proof-to-formula kernel)))
+;; 	 (if (not (classical-formula=?
+;; 		   (make-all var kernel-fla) fla new-ignore-deco-flag))
+;; 	     (myerror "equal formulas expected"
+;; 		      (make-all var kernel-fla) fla)))
+;;        (if CDP-COMMENT-FLAG
+;; 	   (begin
+;; 	     (display-comment (make-string n #\.))
+;; 	     (dff fla) (display " by all intro") (newline)))))
+;;     ((proof-in-all-elim-form? proof)
+;;      (let* ((fla (proof-to-formula proof))
+;; 	    (new-ignore-deco-flag
+;; 	     (or ignore-deco-flag (formula-of-nulltype? fla)))
+;; 	    (op (proof-in-all-elim-form-to-op proof))
+;; 	    (arg (proof-in-all-elim-form-to-arg proof)))
+;;        (check-and-display-proof-aux op (+ n 1) new-ignore-deco-flag)
+;;        (check-formula fla)
+;;        (check-term arg)
+;;        (let ((op-fla (proof-to-formula op)))
+;; 	 (if (and (not new-ignore-deco-flag) (not (all-form? op-fla)))
+;; 	     (myerror "at all-elim: all form expected" op-fla))
+;; 	 (if (and new-ignore-deco-flag (not (all-allnc-form? op-fla)))
+;; 	     (myerror "at all-elim: all or allnc form expected" op-fla))
+;; 	 ;; (if (not (all-form? op-fla))
+;; 	 ;;     (myerror "at all-elim: all form expected" op-fla))
+;; 	 (if (not (equal? (var-to-type (all-form-to-var op-fla))
+;; 			  (term-to-type arg)))
+;; 	     (myerror "equal types expected of variable"
+;; 		      (all-form-to-var op-fla) "and term" arg))
+;; 	 (if (and (t-deg-one? (var-to-t-deg (all-form-to-var op-fla)))
+;; 		  (not (synt-total? arg)))
+;; 	     (myerror "degrees of totality do not fit for variable"
+;; 		      (all-form-to-var op-fla) "and term" arg))
+;; 	 (let ((var (all-form-to-var op-fla))
+;; 	       (kernel (all-form-to-kernel op-fla)))
+;; 	   (if (and (term-in-var-form? arg)
+;; 		    (equal? var (term-in-var-form-to-var arg)))
+;; 	       (if (not (classical-formula=? fla kernel new-ignore-deco-flag))
+;; 		   (myerror "equal formulas expected" fla kernel))
+;; 	       (if (not (classical-formula=?
+;; 			 fla (formula-subst kernel var arg)
+;; 			 new-ignore-deco-flag))
+;; 		   (myerror "equal formulas expected"
+;; 			    fla (formula-subst kernel var arg)))))
+;; 	 (if CDP-COMMENT-FLAG
+;; 	     (begin
+;; 	       (display-comment (make-string (+ n 1) #\.))
+;; 	       (display-term arg) (newline)
+;; 	       (display-comment (make-string n #\.))
+;; 	       (dff fla) (display " by all elim") (newline))))))
+;;     ((proof-in-allnc-intro-form? proof)
+;;      (let* ((fla (proof-to-formula proof))
+;; 	    (new-ignore-deco-flag
+;; 	     (or ignore-deco-flag (formula-of-nulltype? fla)))
+;; 	    (var (proof-in-allnc-intro-form-to-var proof))
+;; 	    (kernel (proof-in-allnc-intro-form-to-kernel proof))
+;; 	    (context (proof-to-context kernel))
+;; 	    (cvars (proof-to-cvars kernel))
+;; 	    (avars (context-to-avars context))
+;; 	    (formulas (map avar-to-formula avars))
+;; 	    (free (apply union (map formula-to-free formulas))))
+;;        (if
+;; 	(or (and
+;; 	     (member var (apply union (map formula-to-free formulas)))
+;; 	     (member var (apply union (map formula-to-free
+;; 					   (map normalize-formula formulas)))))
+;; 	    (and (not (formula-of-nulltype? (proof-to-formula kernel)))
+;; 		 (member var cvars)))
+;; 	(begin (display-comment "warning: allnc-intro with cvar"
+;; 				(var-to-string var))
+;; 	       (newline)))
+;;        (check-and-display-proof-aux kernel (+ n 1) new-ignore-deco-flag)
+;;        (check-formula fla)
+;;        (if (and (not new-ignore-deco-flag) (not (allnc-form? fla)))
+;; 	   (myerror "at allnc-intro: allnc form expected" fla))
+;;        (if (and new-ignore-deco-flag (not (all-allnc-form? fla)))
+;; 	   (myerror "all or allnc form expected" fla))
+;;        ;; (if (not (allnc-form? fla))
+;;        ;; 	   (myerror "allnc form expected" fla))
+;;        (let ((kernel-fla (proof-to-formula kernel)))
+;; 	 (if (not (classical-formula=?
+;; 		   (make-allnc var kernel-fla) fla new-ignore-deco-flag))
+;; 	     (myerror "equal formulas expected"
+;; 		      (make-allnc var kernel-fla) fla)))
+;;        (if CDP-COMMENT-FLAG
+;; 	   (begin
+;; 	     (display-comment (make-string n #\.))
+;; 	     (dff fla) (display " by allnc intro") (newline)))))
+;;     ((proof-in-allnc-elim-form? proof)
+;;      (let* ((fla (proof-to-formula proof))
+;; 	    (new-ignore-deco-flag
+;; 	     (or ignore-deco-flag (formula-of-nulltype? fla)))
+;; 	    (op (proof-in-allnc-elim-form-to-op proof))
+;; 	    (arg (proof-in-allnc-elim-form-to-arg proof)))
+;;        (check-and-display-proof-aux op (+ n 1) new-ignore-deco-flag)
+;;        (check-formula fla)
+;;        (check-term arg)
+;;        (let ((op-fla (proof-to-formula op)))
+;; 	 (if (and (not new-ignore-deco-flag) (not (allnc-form? op-fla)))
+;; 	     (myerror "at allnc-elim: allnc form expected" op-fla))
+;; 	 (if (and new-ignore-deco-flag (not (all-allnc-form? op-fla)))
+;; 	     (myerror "at allnc-elim: all or allnc form expected" op-fla))
+;; 	 ;; (if (not (allnc-form? op-fla))
+;; 	 ;;     (myerror "allnc form expected" op-fla))
+;; 	 (if (not (equal? (var-to-type (allnc-form-to-var op-fla))
+;; 			  (term-to-type arg)))
+;; 	     (myerror "equal types expected of variable"
+;; 		      (allnc-form-to-var op-fla) "and term" arg))
+;; 	 (if (and (t-deg-one? (var-to-t-deg (allnc-form-to-var op-fla)))
+;; 		  (not (synt-total? arg)))
+;; 	     (myerror "degrees of totality do not fit for variable"
+;; 		      (allnc-form-to-var op-fla) "and term" arg))
+;; 	 (let ((op-var (allnc-form-to-var op-fla))
+;; 	       (op-kernel (allnc-form-to-kernel op-fla)))
+;; 	   (if (and (term-in-var-form? arg)
+;; 		    (equal? op-var (term-in-var-form-to-var arg)))
+;; 	       (if (not (classical-formula=? fla op-kernel
+;; 					     new-ignore-deco-flag))
+;; 		   (myerror "equal formulas expected" fla op-kernel))
+;; 	       (if (not (classical-formula=?
+;; 			 fla (formula-subst op-kernel op-var arg)
+;; 			 new-ignore-deco-flag))
+;; 		   (myerror "equal formulas expected"
+;; 			    fla (formula-subst op-kernel op-var arg)))))
+;; 	 (if CDP-COMMENT-FLAG
+;; 	     (begin
+;; 	       (display-comment (make-string (+ n 1) #\.))
+;; 	       (display-term arg) (newline)
+;; 	       (display-comment (make-string n #\.))
+;; 	       (dff fla) (display " by allnc elim") (newline))))))
+;;     (else (myerror "proof tag expected"
+;; 		   (tag proof))))))
+
+;; (define cdp check-and-display-proof)
+
+;; (define (check-proof . opt-proof-or-thm-name-and-ignore-deco-flag)
+;;   (if COMMENT-FLAG
+;;       (begin 
+;; 	(set! COMMENT-FLAG #f)
+;; 	(apply check-and-display-proof
+;; 	       opt-proof-or-thm-name-and-ignore-deco-flag)
+;; 	(set! COMMENT-FLAG #t)
+;; 	(comment "ok, proof is correct."))
+;;       (begin
+;; 	(apply check-and-display-proof
+;; 	       opt-proof-or-thm-name-and-ignore-deco-flag)
+;; 	(set! COMMENT-FLAG #t)
+;; 	(comment "ok, proof is correct.")
+;; 	(set! COMMENT-FLAG #f))))
+
+;; (define cp check-proof)
 
 ;; A flagged avar is a list (#t avar) or (#f avar).  The entries #t or
 ;; #f indicate whether this occurrence of an avar is above a c.i.
@@ -8309,7 +8893,7 @@
 	  (proof-to-flagged-free-and-bound-avars proof ignore-deco-flag)))
     (duplicates-wrt flagged-avar-full=? flagged-free-and-bound-avars)))
 
-(define CDP-COMMENT-FLAG #t)
+;; (define CDP-COMMENT-FLAG #t)
 
 ;; 10-6. Classical logic
 ;; =====================
