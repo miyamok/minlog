@@ -1,4 +1,4 @@
-;; 2020-07-10.  psym.scm
+;; 2021-10-16.  psym.scm
 ;; 5. Predicates
 ;; =============
 
@@ -5451,7 +5451,7 @@
 		(prev (clause-to-exand-formula
 		       kernel eq-names-list vars pvar
 		       prim-prod? nc-idpc?)))
-	   (cond (nc-idpc? (mk-exnc var prev))
+	   (cond ((or nc-idpc? (formula-of-nulltype? prev)) (mk-exnc var prev))
 		 ((allnc-form? fla) (mk-exr var prev))
 		 (else ((if prim-prod? mk-ex mk-exd) var prev)))))
 	(else (myerror "clause-to-exand-formula" "unexpected formula" fla))))
