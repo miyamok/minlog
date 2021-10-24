@@ -1,4 +1,4 @@
-;; 2021-02-24.  int.scm
+;; 2021-10-21.  int.scm
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -1215,6 +1215,35 @@
 (use "NatLt0Pos")
 ;; Proof finished.
 (save "PosToNatToIntId")
+
+;; Added 2021-10-19
+
+;; IntPlusCompat
+(set-goal "all k,j,i,i0(k=j -> i=i0 -> k+i=j+i0)")
+(assume "k" "j" "i" "i0" "k=j" "i=i0")
+(simp "k=j")
+(simp "i=i0")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "IntPlusCompat")
+
+(add-program-constant "IntToPos" (py "int=>pos"))
+(add-computation-rules
+ "IntToPos 0" "1"
+ "IntToPos p" "p"
+ "IntToPos IntN p" "p")
+
+(set-totality-goal "IntToPos")
+(fold-alltotal)
+(cases)
+(assume "p")
+(use "TotalVar")
+(use "TotalVar")
+(use "TotalVar")
+;; Proof finished.
+;; (cdp)
+(save-totality)
 
 ;; The following is not used any more:
 ;; NatToIntDouble
@@ -5411,6 +5440,627 @@
 ;; Proof finished.
 ;; (cdp)
 (save "NatLeToIntLe")
+
+;; Added 2021-10-19
+
+;; Properties of IntMax
+
+(set-goal "all k k max k=k")
+(ind)
+;; 2-4
+(assume "p")
+(use "Truth")
+;; 3
+(use "Truth")
+;; 4
+(assume "p")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(add-rewrite-rule "k max k" "k")
+
+;; IntMaxUB1
+(set-goal "all k,j k<=k max j")
+(cases)
+;; 2-4
+(assume "p")
+(cases)
+;; 6-8
+(assume "q")
+(use "PosMaxUB1")
+;; 7
+(use "Truth")
+;; 8
+(assume "q")
+(use "Truth")
+;; 3
+(cases)
+;; 11-13
+(assume "q")
+(use "Truth")
+;; 12
+(use "Truth")
+;; 13
+(assume "q")
+(use "Truth")
+;; 4
+(assume "p")
+(cases)
+;; 17-19
+(assume "q")
+(use "Truth")
+;; 18
+(use "Truth")
+;; 19
+(assume "q")
+(use "PosMinLB1")
+;; Proof finished.
+;; (cdp)
+(save "IntMaxUB1")
+
+;; IntMaxUB2
+(set-goal "all k,j j<=k max j")
+(cases)
+;; 2-4
+(assume "p")
+(cases)
+;; 6-8
+(assume "q")
+(use "PosMaxUB2")
+;; 7
+(use "Truth")
+;; 8
+(assume "q")
+(use "Truth")
+;; 3
+(cases)
+;; 11-13
+(assume "q")
+(use "Truth")
+;; 12
+(use "Truth")
+;; 13
+(assume "q")
+(use "Truth")
+;; 4
+(assume "p")
+(cases)
+;; 17-19
+(assume "q")
+(use "Truth")
+;; 18
+(use "Truth")
+;; 19
+(assume "q")
+(use "PosMinLB2")
+;; Proof finished.
+;; (cdp)
+(save "IntMaxUB2")
+
+;; IntMaxLUB
+(set-goal "all k,j,i(k<=i -> j<=i -> k max j<=i)")
+(cases)
+;; 2-4
+(assume "p")
+(cases)
+;; 6-8
+(assume "q")
+(cases)
+;; 10-12
+(use "PosMaxLUB")
+;; 11
+(assume "Absurd" "Useless")
+(use "EfAtom")
+(use "Absurd")
+;; 12
+(assume "r" "Absurd" "Useless")
+(use "EfAtom")
+(use "Absurd")
+;; 7
+(assume "i" "p<=i" "Useless")
+(use "p<=i")
+;; 8
+(assume "q" "i" "p<=i" "Useless")
+(use "p<=i")
+;; 3
+(cases)
+;; 19-21
+(assume "p" "i" "Useless" "p<=i")
+(use "p<=i")
+;; 20
+(assume "i" "0<=i" "Useless")
+(use "0<=i")
+;; 21
+(assume "q" "i" "0<=i" "Useless")
+(use "0<=i")
+;; 4
+(assume "p")
+(cases)
+;; 26-28
+(assume "q" "i" "Useless" "q<=i")
+(use "q<=i")
+;; 27
+(assume "i" "Useless" "0<=i")
+(use "0<=i")
+;; 28
+(assume "q")
+(cases)
+;; 32-34
+(assume "r" "Useless1" "Useless2")
+(use "Truth")
+;; 33
+(assume "Useless1" "Useless2")
+(use "Truth")
+;; 34
+(use "PosMinGLB")
+;; Proof finished.
+;; (cdp)
+(save "IntMaxLUB")
+
+;; IntLeMonMax
+(set-goal "all k,j,i,i1(k<=j -> i<=i1 -> k max i<=j max i1)")
+(assert "all k,j,i(k<=j -> k max i<=j max i)")
+ (assume "k" "j" "i" "k<=j")
+ (use "IntMaxLUB")
+ (use "IntLeTrans" (pt "j"))
+ (use "k<=j")
+ (use "IntMaxUB1")
+ (use "IntMaxUB2")
+;; Assertion proved
+(assume "Assertion1")
+(assert "all k,j,i(j<=i -> k max j<=k max i)")
+ (assume "k" "j" "i" "j<=i")
+ (use "IntMaxLUB")
+ (use "IntMaxUB1")
+ (use "IntLeTrans" (pt "i"))
+ (use "j<=i")
+ (use "IntMaxUB2")
+;; Assertion proved
+(assume "Assertion2" "k" "j" "i" "i1" "k<=j" "i<=i1")
+(use "IntLeTrans" (pt "j max i"))
+(use "Assertion1")
+(use "k<=j")
+(use "Assertion2")
+(use "i<=i1")
+;; Proof finished.
+;; (cdp)
+(save "IntLeMonMax")
+
+;; IntMaxComm
+(set-goal "all k,j k max j=j max k")
+(assume "k" "j")
+(use "IntLeAntiSym")
+(use "IntMaxLUB")
+(use "IntMaxUB2")
+(use "IntMaxUB1")
+(use "IntMaxLUB")
+(use "IntMaxUB2")
+(use "IntMaxUB1")
+;; Proof finished.
+;; (cdp)
+(save "IntMaxComm")
+
+;; IntMaxAssoc
+(set-goal "all k,j,i k max(j max i)=k max j max i")
+(assume "k" "j" "i")
+(use "IntLeAntiSym")
+;; 3,4
+(use "IntMaxLUB")
+(use "IntLeTrans" (pt "k max j"))
+(use "IntMaxUB1")
+(use "IntMaxUB1")
+(use "IntLeMonMax")
+(use "IntMaxUB2")
+(use "Truth")
+;; 4
+(use "IntMaxLUB")
+(use "IntLeMonMax")
+(use "Truth")
+(use "IntMaxUB1")
+(use "IntLeTrans" (pt "j max i"))
+(use "IntMaxUB2")
+(use "IntMaxUB2")
+;; Proof finished.
+;; (cdp)
+(save "IntMaxAssoc")
+(add-rewrite-rule "k max(j max i)" "k max j max i")
+
+;; IntMaxEq1
+(set-goal "all k,j(j<=k -> k max j=k)")
+(assume "k" "j" "j<=k")
+(use "IntLeAntiSym")
+(use "IntMaxLUB")
+(use "Truth")
+(use "j<=k")
+(use "IntMaxUB1")
+;; Proof finished.
+;; (cdp)
+(save "IntMaxEq1")
+
+;; IntMaxEq2
+(set-goal "all k,j(k<=j -> k max j=j)")
+(assume "k" "j" "k<=j")
+(use "IntLeAntiSym")
+(use "IntMaxLUB")
+(use "k<=j")
+(use "Truth")
+(use "IntMaxUB2")
+;; Proof finished.
+;; (cdp)
+(save "IntMaxEq2")
+
+;; IntMaxEq1Rev
+(set-goal "all k,j(k max j=k -> j<=k)")
+(assume "k" "j" "EqH")
+(simp "<-" "EqH")
+(use "IntMaxUB2")
+;; Proof finished.
+;; (cdp)
+(save "IntMaxEq1Rev")
+
+;; IntMaxEq2Rev
+(set-goal "all k,j(k max j=j -> k<=j)")
+(assume "k" "j" "EqH")
+(simp "<-" "EqH")
+(use "IntMaxUB1")
+;; Proof finished.
+;; (cdp)
+(save "IntMaxEq2Rev")
+
+;; Properties of IntMin
+
+(set-goal "all k k min k=k")
+(ind)
+;; 2-4
+(assume "p")
+(use "Truth")
+;; 3
+(use "Truth")
+;; 4
+(assume "p")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(add-rewrite-rule "k min k" "k")
+
+;; IntMinLB1
+(set-goal "all k,j k min j<=k")
+(cases)
+;; 2-4
+(assume "p")
+(cases)
+;; 6-8
+(assume "q")
+(use "PosMinLB1")
+;; 7
+(use "Truth")
+;; 8
+(assume "q")
+(use "Truth")
+;; 3
+(cases)
+;; 11-13
+(assume "q")
+(use "Truth")
+;; 12
+(use "Truth")
+;; 13
+(assume "q")
+(use "Truth")
+;; 4
+(assume "p")
+(cases)
+;; 17-19
+(assume "q")
+(use "Truth")
+;; 18
+(use "Truth")
+;; 19
+(assume "q")
+(use "PosMaxUB1")
+;; Proof finished.
+;; (cdp)
+(save "IntMinLB1")
+
+;; IntMinLB2
+(set-goal "all k,j k min j<=j")
+(cases)
+;; 2-4
+(assume "p")
+(cases)
+;; 6-8
+(assume "q")
+(use "PosMinLB2")
+;; 7
+(use "Truth")
+;; 8
+(assume "q")
+(use "Truth")
+;; 3
+(cases)
+;; 11-13
+(assume "q")
+(use "Truth")
+;; 12
+(use "Truth")
+;; 13
+(assume "q")
+(use "Truth")
+;; 4
+(assume "p")
+(cases)
+;; 17-19
+(assume "q")
+(use "Truth")
+;; 18
+(use "Truth")
+;; 19
+(assume "q")
+(use "PosMaxUB2")
+;; Proof finished.
+;; (cdp)
+(save "IntMinLB2")
+
+;; IntMinGLB
+(set-goal "all k,j,i(i<=k -> i<=j -> i<=k min j)")
+(cases)
+;; 2-4
+(assume "p")
+(cases)
+;; 6-8
+(assume "q")
+(cases)
+;; 10-12
+(ng)
+(use "PosMinGLB")
+;; 11
+(ng)
+(assume "Useless1" "Useless2")
+(use "Truth")
+;; 12
+(ng)
+(assume "r" "Useless1" "Useless2")
+(use "Truth")
+;; 7
+(ng)
+(assume "i" "Useless" "i<=0")
+(use "i<=0")
+;; 8
+(ng)
+(assume "q" "i" "Useless" "i<=Nq")
+(use "i<=Nq")
+;; 3
+(cases)
+;; 22-24
+(ng)
+(assume "p" "i" "i<=0" "Useless")
+(use "i<=0")
+;; 23
+(ng)
+(assume "i" "Useless" "i<=0")
+(use "i<=0")
+;; 24
+(ng)
+(assume "p" "i" "Useless" "i<=Np")
+(use "i<=Np")
+;; 4
+(assume "p")
+(cases)
+;; 32-34
+(ng)
+(assume "q" "i" "i<=Np" "Useless")
+(use "i<=Np")
+;; 33
+(ng)
+(assume "i" "i<=Np" "Useless")
+(use "i<=Np")
+;; 34
+(assume "q")
+(cases)
+;; 40-42
+(ng)
+(assume "r" "Useless" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 41
+(ng)
+(assume "Useless" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 42
+(ng)
+(use "PosMaxLUB")
+;; Proof finished.
+;; (cdp)
+(save "IntMinGLB")
+
+;; IntLeMonMin
+(set-goal "all k,j,i,i1(k<=j -> i<=i1 -> k min i<=j min i1)")
+(assert "all k,j,i(k<=j -> k min i<=j min i)")
+ (assume "k" "j" "i" "k<=j")
+ (use "IntMinGLB")
+(use "IntLeTrans" (pt "k"))
+(use "IntMinLB1")
+(use "k<=j")
+(use "IntMinLB2")
+;; Assertion proved
+(assume "Assertion1")
+(assert "all k,j,i(j<=i -> k min j<=k min i)")
+(assume "k" "j" "i" "j<=i")
+(use "IntMinGLB")
+(use "IntMinLB1")
+(use "IntLeTrans" (pt "j"))
+(use "IntMinLB2")
+(use "j<=i")
+;; Assertion proved
+(assume "Assertion2" "k" "j" "i" "i1" "k<=j" "i<=i1")
+(use "IntLeTrans" (pt "j min i"))
+(use "Assertion1")
+(use "k<=j")
+(use "Assertion2")
+(use "i<=i1")
+;; Proof finished.
+;; (cdp)
+(save "IntLeMonMin")
+
+;; IntMinComm
+(set-goal "all k,j k min j=j min k")
+(assume "k" "j")
+(use "IntLeAntiSym")
+(use "IntMinGLB")
+(use "IntMinLB2")
+(use "IntMinLB1")
+(use "IntMinGLB")
+(use "IntMinLB2")
+(use "IntMinLB1")
+;; Proof finished.
+;; (cdp)
+(save "IntMinComm")
+
+(set-goal "all k k min k=k")
+(assume "k")
+(use "IntLeAntiSym")
+(use "Truth")
+(use "IntMinGLB")
+(use "Truth")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(add-rewrite-rule "k min k" "k")
+
+;; IntMinAssoc
+(set-goal "all k,j,i k min(j min i)=k min j min i")
+(assume "k" "j" "i")
+(use "IntLeAntiSym")
+;; 3,4
+(use "IntMinGLB")
+(use "IntLeMonMin")
+(use "Truth")
+(use "IntMinLB1")
+(use "IntLeTrans" (pt "j min i"))
+(use "IntMinLB2")
+(use "IntMinLB2")
+;; 4
+(use "IntMinGLB")
+(use "IntLeTrans" (pt "k min j"))
+(use "IntMinLB1")
+(use "IntMinLB1")
+(use "IntLeMonMin")
+(use "IntMinLB2")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "IntMinAssoc")
+(add-rewrite-rule "k min(j min i)" "k min j min i")
+
+;; IntMinEq1
+(set-goal "all k,j(k<=j -> k min j=k)")
+(assume "k" "j" "k<=j")
+(use "IntLeAntiSym")
+(use "IntMinLB1")
+(use "IntMinGLB")
+(use "Truth")
+(use "k<=j")
+;; Proof finished.
+;; (cdp)
+(save "IntMinEq1")
+
+;; IntMinEq2
+(set-goal "all k,j(j<=k -> k min j=j)")
+(assume "k" "j" "j<=k")
+(use "IntLeAntiSym")
+(use "IntMinLB2")
+(use "IntMinGLB")
+(use "j<=k")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "IntMinEq2")
+
+;; IntMinEq1Rev
+(set-goal "all k,j(k min j=k -> k<=j)")
+(assume "k" "j" "EqH")
+(simp "<-" "EqH")
+(use "IntMinLB2")
+;; Proof finished.
+;; (cdp)
+(save "IntMinEq1Rev")
+
+;; IntMinEq2Rev
+(set-goal "all k,j(k min j=j -> j<=k)")
+(assume "k" "j" "EqH")
+(simp "<-" "EqH")
+(use "IntMinLB1")
+;; Proof finished.
+;; (cdp)
+(save "IntMinEq2Rev")
+
+;; IntTimesMaxDistr
+(set-goal "all k,j,i(0<=k -> k*(j max i)=k*j max(k*i))")
+(cases)
+;; 2-4
+(assert "all p,j,i p*(j max i)=p*j max(p*i)")
+(ind)
+;; 7-9
+(assume "j" "i")
+(use "Truth")
+;; 8
+(assume "p" "IH" "j" "i")
+(use "IntLeLtCases" (pt "j") (pt "i"))
+;; 12,13
+(assume "j<=i")
+(simp (pf "j max i=i"))
+(simp (pf "SZero p*j max(SZero p*i)=SZero p*i"))
+(use "Truth")
+(use "IntMaxEq2")
+(use "j<=i")
+(use "IntMaxEq2")
+(use "j<=i")
+;; 13
+(assume "i<j")
+(inst-with-to "IntLtToLe" (pt "i") (pt "j") "i<j" "i<=j")
+(simp (pf "j max i=j"))
+(simp (pf "SZero p*j max(SZero p*i)=SZero p*j"))
+(use "Truth")
+(use "IntMaxEq1")
+(use "i<=j")
+(use "IntMaxEq1")
+(use "i<=j")
+;; 9
+(assume "p" "IH" "j" "i")
+(use "IntLeLtCases" (pt "j") (pt "i"))
+;; 31,32
+(assume "j<=i")
+(simp (pf "j max i=i"))
+(simp (pf "SOne p*j max(SOne p*i)=SOne p*i"))
+(use "Truth")
+(use "IntMaxEq2")
+(use "j<=i")
+(use "IntMaxEq2")
+(use "j<=i")
+;; 32
+(assume "i<j")
+(inst-with-to "IntLtToLe" (pt "i") (pt "j") "i<j" "i<=j")
+(simp (pf "j max i=j"))
+(simp (pf "SOne p*j max(SOne p*i)=SOne p*j"))
+(use "Truth")
+(use "IntMaxEq1")
+(use "i<=j")
+(use "IntMaxEq1")
+(use "i<=j")
+;; Assertion proved.
+(assume "Assertion" "p" "j" "i" "Useless")
+(use "Assertion")
+;; 3
+(assume "j" "i" "Useless")
+(use "Truth")
+;; 4
+(assume "p" "j" "i" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; Proof finished.
+;; (cdp)
+(save "IntTimesMaxDistr")
 
 (add-program-constant "PosQR" (py "pos=>pos=>int yprod int"))
 ;; (remove-program-constant "PosQR")
