@@ -1,3 +1,130 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Done in dev branch 2021-10-24
+
+In typ.scm
+
+In types-to-embedding generated rec-terms are normalized.
+
+In psym.scm
+
+In clause-to-exand-formula exnc instead of exr in case prev is nc
+
+In axiom.scm
+
+In add-theorem at totality theorems and in add-totality-theorem the
+warning that pconst should have been added with t-deg zero removed.
+The t-deg entry in PROGRAM-CONSTANTS is guaranteed to be correct.
+
+In proof.scm
+
+check-and-display-proof check-and-display-proof-aux replaced by
+check-proof check-proof-aux with an additional argument display-flag
+(replaces the global constant CDP-COMMENT-FLAG by making it local).
+cdp rewritten, and cp corrected.  cdp displays a linear version of the
+proof, but cp does not.  Both report on the correctness of the proof,
+its free assumptions, explicitly used theorems and implicit global
+assumptions (unproven rewrite rules).  Since the correctness of a
+proof is relative to the computation and rewrite rules and hence on
+which theorems are animated, we can only check a current proof in the
+present animation state.  Proofs stored under their name in THEOREMS
+are correct, but only w.r.t. a possibly different animation state.
+Therefore check-proof cannot be applied to theorem names.
+
+In pproof.scm
+
+If interactive commands are applied with no goal present a clearer
+error message is given.  This is done by replacing (car num-goals) by
+(if (pair? num-goals) (car num-goals) (myerror goal missing))
+
+In ets.scm
+
+negb negb boole=boole added as rewrite rule for NegConst.  AndbIntro
+AndbElim0 AndbElim1 IfBooleMonImp BooleEqToEqD BooleAeqToEq
+BooleEqToAeqLeft BooleEqToAeqRight added.
+
+In lib/nat.scm
+
+NatDoublePlus NatDoublePlusEq NatTimesDouble NatDoubleTimes2 NatHalfLe
+added.  NatPlusAssoc NatPlusAssoc NatTimesAssoc added (were only
+rewrite rules).  NatLePlusCancelR NatLePlusCancelL NatSuccPred
+NatMinusEq NatPlusMinusAssoc NatPlusMinusMinus NatMinusMax
+NatMinusPlusPlus NatMinusPlusPlusR NatNegbLeEqLt NatNegbLtEqLe added.
+NatLeLeCases is an alternative name for NatLeLin.  BooleAeqToEq
+BooleEqToAeqLeft BooleEqToAeqRight moved to ets.scm
+
+In lib/list.scm
+
+:: and : adapted to different types of list elements, as for +.
+ListRef ListItRef ListLhInitRestEq added.  Consn changed to allow
+appending nothing.  Program constants ListRef (prefix Ref, for refine)
+ListItRef (infix rf) added.  Rewrite rule n rf(Nil alpha) -> (Nil
+alpha) added.  ListLhInitRestEq ListLhRef ListItRefEq ListItRefPlus
+ListItRefComm ListLtLhRef added.
+
+In lib/pos.scm
+
+Moved NatPos NatPosExFree cNatPos from rea.scm to pos.scm.  Use
+cNatPos instead of the pconst NatToPos to block unwanted unfoldings.
+After (remove-nat-tokens) reintroduced display Lh for ListLength.
+Because of difficulties in the proof of NatToPosToNatId (where
+extensionality of NatToPosStep is needed) we remove NatToPosStep as
+separate constant and insert its rhs into the definition of NatToPos
+(via GRec).  This is also clearer.  PosEqTrans added.  NatLtZeroPos
+made an alternative (preferred) name for NatLt0Pos.  PosLtZeroLog
+PosLeMonNatToPos NatEvenTwoExp PosLogZeroLt added.  Rewrite rule
+2**p<=1 -> False added.  PosTwoExpEqOneFalse TwoExpPosLe
+PosTimesMaxDistr added.  Rewrite rule p min p -> p added.  PosLeMonLog
+NatLePosExpTwo TwoExpNatLe TwoExpNatLt ZeroLtTwoExp added.  Pconsts
+PosEven PosOdd PosToExp PosToOdd added.  PosEvenTotal PosOddTotal
+PosToExpTotal PosToOddTotal PosTimesExpOddId PosToExpEq PosToOddEq
+PosToExpTimesSOneEq PosToExpTimesEq PosToOddTimesSOneEq
+PosToOddTimesEq NatToPosDouble PosLogTimes PosLeTwoExpToEqTwoExpTimes
+PosLogMax NatToPosMax NatPosMax added.  NatDoublePlus NatDoublePlusEq
+NatTimesDouble NatDoubleTimes2 moved from pos.scm to nat.scm
+
+In lib/int.scm
+
+IntPlusCompat added.  IntToPos (pconst) added.  Properties of IntMax
+IntMin added.
+
+In lib/rat.scm
+
+RatLeLtCases RatLeLeCases (=RatLeLin) added.  Rewrite rule a max a ->
+a added.  RatDoubleEqv RatPlusMaxDistr RatTimesMaxDistr
+RatTimesMaxDistrLeft added.  Comment added after RatMaxEq2.  Reason
+for ==, i.e., the difference to RatMaxEq1 (with =): The definition of
+RatMax prefers the lhs.  It is returned in case of equality, where the
+rhs would do as well.  In the proof of RatLeBoundExFree explicit use
+of cRatLeBound0CompRule replaced by an implicit use via (ng #t).
+
+In lib/rea.scm
+
+NatPos NatPosExfree cNatPosTotal moved to lib/pos.scm
+
+In lib/rseq.scm
+
+Comment: Based on Jan Belle's exp.scm
+
+In examples/analysis/digits.scm
+
+Dates changed.  No removal of varnames x y z
+
+In examples/analysis/sdav.scm
+
+Dates changed.  No removal of varnames x y z
+
+In examples/analysis/sddiv.scm
+
+Dates changed.  No removal of varnames x y z
+
+Done locally in dev branch 2021-04-01
+
+In lib/rseq.scm
+
+Unexpected close parenthesis at line 1112 removed.
+RealLimConst added, as a consequence of RealConvLim and RealConvUniq
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Done in dev branch 2021-03-04
 
 In term.scm
