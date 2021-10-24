@@ -1,4 +1,4 @@
-;; 2019-08-26.  examples/analysis/sdav.scm
+;; 2021-03-04.  examples/analysis/sdav.scm
 
 (load "~/git/minlog/init.scm")
 
@@ -8,7 +8,6 @@
 (libload "pos.scm")
 (libload "int.scm")
 (libload "rat.scm")
-(remove-var-name "x" "y" "z")
 (libload "rea.scm")
 ;; (set! COMMENT-FLAG #t)
 
