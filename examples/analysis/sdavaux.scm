@@ -1,4 +1,4 @@
-;; 2020-04-06.  examples/analysis/sdavaux.scm
+;; 2021-11-06.  examples/analysis/sdavaux.scm
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -82,6 +82,7 @@
 (use "RatPlusComm")
 ;; Proof finished.
 ;; (cdp)
+;; (cp)
 (save "CoIAvToAvc")
 
 (define eterm (proof-to-extracted-term))
@@ -131,7 +132,7 @@
 ;;   cIntPlusSdToSdtwo clft(cCoIClosure u)clft(cCoIClosure u0)pair 
 ;;   crht(cCoIClosure u)pair crht(cCoIClosure u0))
 
-;; (cp "CoIAvToAvcSound")
+;; (cp)
 
 (deanimate "CoIAvToAvc")
 
@@ -196,7 +197,7 @@
 ;; cCoIAvcSatCoIClAuxJ eqd
 ;; ([s,s0,t]IntToSdtwo(J(SdToInt s+SdToInt s0+SdtwoToInt t*2)))
 
-;; (cp "CoIAvcSatCoIClAuxJSound")
+;; (cp)
 
 (deanimate "CoIAvcSatCoIClAuxJ")
 
@@ -279,7 +280,7 @@
 ;; cCoIAvcSatCoIClAuxK eqd
 ;; ([s,s0,t]IntToSd(K(SdToInt s+SdToInt s0+SdtwoToInt t*2)))
 
-;; (cp "CoIAvcSatCoIClAuxKSound")
+;; (cp)
 
 (deanimate "CoIAvcSatCoIClAuxK")
 
@@ -447,7 +448,7 @@
 ;;   cCoIAvcSatCoIClAuxK clft(cCoIClosure u)clft(cCoIClosure u0)t pair 
 ;;   crht(cCoIClosure u)pair crht(cCoIClosure u0))
 
-;; (cp "CoIAvcSatCoIClSound")
+;; (cp)
 
 (deanimate "CoIAvcSatCoICl")
 
@@ -597,7 +598,7 @@
 ;;     (clft(cCoIAvcSatCoICl clft tuv0 clft crht tuv0 crht crht tuv0)pair 
 ;;      crht crht(cCoIAvcSatCoICl clft tuv0 clft crht tuv0 crht crht tuv0))))
 
-;; (cp "CoIAvcToCoISound")
+;; (cp)
 
 (deanimate "CoIAvcToCoI")
 (deanimate "Id")
@@ -692,13 +693,11 @@
 ;; cCoIAverage eqd
 ;; ([u,u0]
 ;;   cCoIAvcToCoI
-;;   ([if (cCoIAvToAvc u u0) ([t,(ai yprod ai)]t)]pair
-;;    [if (cCoIAvToAvc u u0)
-;;        ([t,(ai yprod ai)][if (ai yprod ai) ([u1,u2]u1)])]pair
-;;        [if (cCoIAvToAvc u u0)
-;; 	   ([t,(ai yprod ai)][if (ai yprod ai) ([u1,u2]u2)])]))
+;;   ([if (cCoIAvToAvc u u0) ([t,uv]t)]pair
+;;    [if (cCoIAvToAvc u u0) ([t,uv][if uv ([u1,u2]u1)])]pair
+;;    [if (cCoIAvToAvc u u0) ([t,uv][if uv ([u1,u2]u2)])]))
 
-;; (cp "CoIAverageSound")
+;; (cp)
 
 (deanimate "CoIAverage")
 (deanimate "Id")
