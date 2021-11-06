@@ -1,4 +1,4 @@
-;; 2021-10-18.  proof.scm
+;; 2021-11-06.  proof.scm
 ;; 10. Proofs
 ;; ==========
 
@@ -7777,7 +7777,9 @@
 	(comment
 	 "No implicit global assumptions (unproven rewrite rules)."))
     (if (pair? theorems)
-	(comment "Theorems used: " (map aconst-to-name theorems))
+	(comment "Theorems used: " (remove-duplicates-wrt
+				    sring=?
+				    (map aconst-to-name theorems)))
 	(comment "No theorems used.")))
   *the-non-printing-object*)
 
