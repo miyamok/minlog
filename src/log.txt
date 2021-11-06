@@ -1,4 +1,16 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Done in dev branch 2021-11-06
+
+In proof.scm
+
+In check-proof duplicates in used theorems removed.
+
+In examples/analysis/sdavaux.scm
+
+Usage of cp corrected: a theorem name is not allowed as argument.
+Variable name uv added.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Done in dev branch 2021-10-24
 
 In typ.scm
