@@ -7778,7 +7778,7 @@
 	 "No implicit global assumptions (unproven rewrite rules)."))
     (if (pair? theorems)
 	(comment "Theorems used: " (remove-duplicates-wrt
-				    sring=?
+				    string=?
 				    (map aconst-to-name theorems)))
 	(comment "No theorems used.")))
   *the-non-printing-object*)
