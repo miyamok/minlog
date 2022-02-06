@@ -1,4 +1,4 @@
-;; 2021-02-24.  formula.scm
+;; 2022-02-06.  formula.scm
 ;; 7. Formulas and comprehension terms
 ;; ===================================
 
@@ -4130,6 +4130,38 @@
     (apply make-cterm (append vars (list (normalize-formula formula))))))
 
 (define nf normalize-formula)
+
+(define (beta-pi-eta-normalize-formula formula)
+  (cond
+   ((atom-form? formula)
+    (make-atomic-formula (nt (atom-form-to-kernel formula))))
+   ((predicate-form? formula)
+    (let* ((pred (predicate-form-to-predicate formula))
+	   (args (predicate-form-to-args formula))
+	   (npred (if (idpredconst-form? pred)
+		      (let ((name (idpredconst-to-name pred))
+			    (types (idpredconst-to-types pred))
+			    (cterms (idpredconst-to-cterms pred)))
+			(make-idpredconst
+			 name types (map beta-pi-eta-normalize-cterm cterms)))
+		      pred))
+	   (nargs (map bpe-nt args)))
+      (apply make-predicate-formula npred nargs)))
+   ((bicon-form? formula)
+    (make-bicon (bicon-form-to-bicon formula)
+		(beta-pi-eta-normalize-formula (bicon-form-to-left formula))
+		(beta-pi-eta-normalize-formula (bicon-form-to-right formula))))
+   ((quant-form? formula)
+    (make-quant (quant-form-to-quant formula)
+		(quant-form-to-vars formula)
+		(beta-pi-eta-normalize-formula (quant-form-to-kernel formula))))
+   (else (myerror "beta-pi-eta-normalize-formula" "formula expected" formula))))
+
+(define (beta-pi-eta-normalize-cterm cterm)
+  (let ((vars (cterm-to-vars cterm))
+	(formula (cterm-to-formula cterm)))
+    (apply make-cterm
+	   (append vars (list (beta-pi-eta-normalize-formula formula))))))
 
 ;; 7-3. Alpha-equality
 ;; ===================
