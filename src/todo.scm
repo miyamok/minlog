@@ -1,4 +1,9 @@
-;; 2018-09-03.  todo.scm
+;; 2022-02-06.  todo.scm
+
+;; 2021-11-13.  Replace NatToPos by a pconst ntp with 3 computation rules,
+;; using PosS in the last.  This is faster than NatToPos when computing
+;; the normal form of ntp(PosToNat 100000)  (0.42s rather than 0.66s).
+;; Also the trick with cNatPos becomes superfluous.
 
 ;; 2018-09-03.  search and auto should get an optional ignore-deco-flag
 
