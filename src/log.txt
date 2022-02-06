@@ -1,3 +1,33 @@
+Done locally in dev branch 2022-02-06
+
+In psym.scm
+
+RealFnEq added.
+
+In formula.scm
+
+beta-pi-eta-normalize-formula beta-pi-eta-normalize-cterm added.
+
+In axiom.scm
+
+beta-pi-eta-normalize-avar added.
+
+In pproof.scm
+
+bpe-ng (or beta-pi-eta-normalize-goal) only applies beta, pi and eta
+normalization.  simpreal and autoreal extended to cover Av and Va.
+realeq-term-compat context-and-term-to-realproof extended.
+
+In todo.txt
+
+Date corrected.
+
+In lib/nat.scm
+
+Program constants proved total immediately after they are introduced.
+This avoids having theorems like NatSuccPred saved before totality of
+Pred was proved.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Done in dev branch 2021-11-08
 
