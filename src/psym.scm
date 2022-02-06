@@ -1,4 +1,4 @@
-;; 2021-10-16.  psym.scm
+;; 2022-02-06.  psym.scm
 ;; 5. Predicates
 ;; =============
 
@@ -5467,6 +5467,7 @@
    ((string=? "EqPNc" eq-name) make-eqpnc)
    ((string=? "CoEqP" eq-name) make-coeqp)
    ((string=? "CoEqPNc" eq-name) make-coeqpnc)
+   ((string=? "RealFnEq" eq-name) make-realfneq)
    (else (myerror "eq-name-to-predicate-generator"
 		  "eq-name expected" eq-name))))
 
@@ -5474,3 +5475,9 @@
   (make-predicate-formula
    (idpredconst-name-and-types-and-cterms-to-idpredconst "RealEq" '() '())
    arg1 arg2))
+
+(define (make-realfneq arg1 arg2)
+  (make-predicate-formula
+   (idpredconst-name-and-types-and-cterms-to-idpredconst "RealFnEq" '() '())
+   arg1 arg2))
+
