@@ -1,4 +1,4 @@
-;; 2021-10-16.  pproof.scm
+;; 2022-02-06.  pproof.scm
 ;; 11. Partial proofs
 ;; ==================
 
@@ -655,6 +655,64 @@
 		       (+ 1 maxgoal))))
 
 (define ng normalize-goal)
+
+;; bpe-ng (or beta-pi-eta-normalize-goal) only applies beta, pi and
+;; eta normalization.
+
+(define (beta-pi-eta-normalize-goal . ng-info)
+  (let* ((num-goals (pproof-state-to-num-goals))
+	 (proof (pproof-state-to-proof))
+	 (maxgoal (pproof-state-to-maxgoal)))
+    (set! PPROOF-STATE
+	  (apply beta-pi-eta-normalize-goal-intern
+		 num-goals proof maxgoal ng-info))
+    (pproof-state-history-push PPROOF-STATE)
+    (display-comment "ok, the normalized goal is")
+    (if COMMENT-FLAG (newline))
+    (display-num-goal (car (pproof-state-to-num-goals)))))
+
+(define (beta-pi-eta-normalize-goal-intern num-goals proof maxgoal . ng-info)
+  (let* ((num-goal
+	  (if (pair? num-goals) (car num-goals) (myerror "goal missing")))
+	 (number (num-goal-to-number num-goal))
+	 (goal (num-goal-to-goal num-goal))
+	 (drop-info (num-goal-to-drop-info num-goal))
+	 (hypname-info (num-goal-to-hypname-info num-goal))
+	 (ignore-deco-flag (num-goal-to-ignore-deco-flag num-goal))
+	 (indices (hypname-info-to-indices hypname-info))
+	 (names (hypname-info-to-names hypname-info))
+	 (goalvar (goal-to-goalvar goal))
+	 (context (goal-to-context goal))
+	 (normalized-context
+	  (do ((l context (cdr l))
+	       (i 1 (if (avar-form? (car l)) (+ 1 i) i))
+	       (res '() (if (and
+			     (avar-form? (car l))
+			     (or (null? ng-info)
+				 (member i ng-info)
+				 (and (member i indices)
+				      (member (index-and-hypname-info-to-name
+					       i hypname-info)
+					      ng-info))))
+			    (cons (beta-pi-eta-normalize-avar (car l)) res)
+			    (cons (car l) res))))
+	      ((null? l) (reverse res))))
+	 (new-goal
+	  (apply mk-goal-in-elim-form
+		 (make-goal-in-avar-form
+		  (if (or (null? ng-info)
+			  (pair? (intersection ng-info (list number #t))))
+		      (beta-pi-eta-normalize-avar goalvar)
+		      goalvar))
+		 normalized-context))
+	 (new-num-goal
+	  (make-num-goal (+ 1 maxgoal) new-goal drop-info hypname-info
+			 ignore-deco-flag)))
+    (make-pproof-state (cons new-num-goal (cdr num-goals))
+		       proof
+		       (+ 1 maxgoal))))
+
+(define bpe-ng beta-pi-eta-normalize-goal)
 
 ;; With (assume x1 ...) we can move universally quantified variables and
 ;; hypotheses into the context.  The variables must be given names (known
@@ -5801,8 +5859,8 @@
 ;; realeq-term-compat returns a proof of t(lhs)===t(rhs).  The context
 ;; is necessary to prove Real r and then reflexivity r===r for r
 ;; without x.  This needs RealUMinusCompat RealUDivCompat
-;; RealAbsCompat RealExpCompat RealPlusCompat RealTimesCompat
-;; RealMaxCompat RealMinCompat.
+;; RealAbsCompat RealExpCompat AvCompat VaCompat
+;; RealPlusCompat RealTimesCompat RealMaxCompat RealMinCompat.
 
 (define (realeq-term-compat term var term1 term2 eq-proof context)
   (cond
@@ -5831,7 +5889,8 @@
 			  "Compat")))
 	       (unary-compat-names
 		(list "RealNNegCompat" "RealUMinusCompat" "RealUDivCompat"
-		      "RealAbsCompat" "RealExpCompat"))
+		      "RealAbsCompat" "RealExpCompat"
+		      "AvCompat" "VaCompat" ))
 	       (binary-compat-names
 		(list "RealPlusCompat" "RealTimesCompat"
 		      "RealMaxCompat" "RealMinCompat")))
@@ -5860,6 +5919,24 @@
 	       (cadr args)
 	       (realeq-term-compat
 		(car args) var term1 term2 eq-proof context)))
+	     ((string=? name "AvCompat")
+	      (mk-proof-in-elim-form ;of t(lhs)===t(rhs), here Av s x===Av s y
+	       (make-proof-in-aconst-form ;of all x,y,s(x==y -> Av s x===Av s y)
+		(theorem-name-to-aconst name))
+	       (term-subst (cadr args) var term1) ;t(lhs)
+	       (term-subst (cadr args) var term2) ;t(rhs)
+	       (car args)
+	       (realeq-term-compat
+		(cadr args) var term1 term2 eq-proof context)))
+	     ((string=? name "VaCompat")
+	      (mk-proof-in-elim-form ;of t(lhs)===t(rhs), here Va s x===Va s y
+	       (make-proof-in-aconst-form ;of all x,y,s(x==y -> Va s x===Va s y)
+		(theorem-name-to-aconst name))
+	       (term-subst (cadr args) var term1) ;t(lhs)
+	       (term-subst (cadr args) var term2) ;t(rhs)
+	       (car args)
+	       (realeq-term-compat
+		(cadr args) var term1 term2 eq-proof context)))
 	     (else
 	      (mk-proof-in-elim-form ;of ~t(lhs)=== ~t(rhs)
 	       (make-proof-in-aconst-form ;of all x,y(x===y -> ~x=== ~y))
@@ -5886,77 +5963,6 @@
 			(append unary-compat-names
 				binary-compat-names)))))))))
    (else (myerror "realeq-term-compat" "unexpected term" term))))
-
-;; Code discarded 2021-02-24
-;; (define (realeq-term-compat term var term1 term2 eq-proof context)
-;;   (cond
-;;    ((not (member var (term-to-free term))) ;we prove r===r
-;;     (let ((realproof (context-and-term-to-realproof context term)))
-;;       (mk-proof-in-elim-form
-;;        (make-proof-in-aconst-form (theorem-name-to-aconst "RealEqRefl"))
-;;        term realproof)))
-;;    ((term-in-var-form? term) eq-proof) ;of term1===term2, i.e., lhs===rhs
-;;    ((term-in-app-form? term)
-;;     (let* ((op (term-in-app-form-to-final-op term))
-;; 	   (args (term-in-app-form-to-args term))
-;; 	   (name (if (not (term-in-const-form? op))
-;; 		     (myerror "realeq-term-compat"
-;; 			      "term in constant form expected" op)
-;; 		     (string-append
-;; 		      (const-to-name (term-in-const-form-to-const op))
-;; 		      "Compat")))
-;; 	   (unary-compat-names
-;; 	    (list "RealNNegCompat" "RealUMinusCompat" "RealUDivCompat"
-;; 		  "RealAbsCompat" "RealExpCompat"))
-;; 	   (binary-compat-names
-;; 	    (list "RealPlusCompat" "RealTimesCompat"
-;; 		  "RealMaxCompat" "RealMinCompat")))
-;;       (cond
-;;        ((member name unary-compat-names)
-;; 	(cond
-;; 	 ((string=? name "RealUDivCompat")
-;; 	  (mk-proof-in-elim-form ;of RealUDiv lhs p===RealUDiv rhs p
-;; 	   (make-proof-in-aconst-form ;of all x,y,p(x==y -> P|x|p -> P|y|p ->
-;; 					;RealUDix x p===RealUDiv y p)
-;; 	    (theorem-name-to-aconst name))
-;; 	   (term-subst (car args) var term1) ;t(lhs)
-;; 	   (term-subst (car args) var term2) ;t(rhs)
-;; 	   (cadr args)
-;; 	   (realeq-term-compat (car args) var term1 term2 eq-proof context)
-;; 	   (context-and-term-and-bd-to-abspos-proof context term1 (cadr args))
-;; 	   (context-and-term-and-bd-to-abspos-proof context term2 (cadr args))))
-;; 	 ((string=? name "RealExpCompat")
-;; 	  (mk-proof-in-elim-form ;of t(lhs)===t(rhs), here lhs**n===rhs**n
-;; 	   (make-proof-in-aconst-form ;of all x,y,n(x==y -> x**n===y**n)
-;; 	    (theorem-name-to-aconst name))
-;; 	   (term-subst (car args) var term1) ;t(lhs)
-;; 	   (term-subst (car args) var term2) ;t(rhs)
-;; 	   (cadr args)
-;; 	   (realeq-term-compat (car args) var term1 term2 eq-proof context)))
-;; 	 (else
-;; 	  (mk-proof-in-elim-form ;of ~t(lhs)=== ~t(rhs)
-;; 	   (make-proof-in-aconst-form ;of all x,y(x===y -> ~x=== ~y))
-;; 	    (theorem-name-to-aconst name))
-;; 	   (term-subst (car args) var term1) ;t(lhs)
-;; 	   (term-subst (car args) var term2) ;t(rhs)
-;; 	   (realeq-term-compat (car args) var term1 term2 eq-proof context)))))
-;;        ((member name binary-compat-names)
-;; 	(mk-proof-in-elim-form ;of t(lhs)+s(lhs)===t(rhs)+s(rhs)
-;; 	 (make-proof-in-aconst-form ;of all x,y,z,z1(x===y -> z===z1 ->
-;; 					; x+z===y+z1))
-;; 	  (theorem-name-to-aconst name))
-;; 	 (term-subst (car args) var term1) ;t(lhs)
-;; 	 (term-subst (car args) var term2) ;t(rhs)
-;; 	 (term-subst (cadr args) var term1) ;s(lhs)
-;; 	 (term-subst (cadr args) var term2) ;s(rhs)
-;; 	 (realeq-term-compat ;proves t(lhs)===t(rhs) from lhs===rhs by IH
-;; 	  (car args) var term1 term2 eq-proof context)
-;; 	 (realeq-term-compat ;proves s(lhs)===s(rhs) from lhs===rhs by IH
-;; 	  (cadr args) var term1 term2 eq-proof context)))
-;;        (else (apply myerror "realeq-term-compat" name
-;; 		    "expected to be among" (append unary-compat-names
-;; 						   binary-compat-names))))))
-;;    (else (myerror "realeq-term-compat" "unexpected term" term))))
 
 ;; context-and-term-to-realproof returns either a proof of Real(term) or #f
 
@@ -6234,6 +6240,7 @@
 	      (let ((name (const-to-name (term-in-const-form-to-const op))))
 		(member name '("RealPlus" "RealUMinus" "RealMinus" "RealTimes"
 			       "RealUDiv" "RealDiv" "RealAbs" "RealExp"
+			       "Av" "Va"
 			       "RealMax" "RealMin" "RealSum"))))))
       (let* ((op (term-in-app-form-to-final-op term))
 	     (args (term-in-app-form-to-args term))
@@ -6256,6 +6263,14 @@
 	      (make-proof-in-aconst-form
 	       (theorem-name-to-aconst (string-append name "Real")))
 	      (car args) (cadr args) prev))))
+	 ((member name '("Av" "Va"))
+	  (let ((prev (context-and-term-to-realproof context (cadr args))))
+	    (and
+	     prev
+	     (mk-proof-in-elim-form
+	      (make-proof-in-aconst-form
+	       (theorem-name-to-aconst (string-append name "Real")))
+	      (cadr args) (car args) prev))))
 	 ((member name '("RealUDiv"))
 	  (let ((prev (context-and-term-to-realproof context (car args)))
 		(prevpos (context-and-term-and-bd-to-abspos-proof
@@ -6300,7 +6315,172 @@
      (else (myerror "context-and-term-to-realproof"
 		    "No realproof found for" term)))))
 
-;; Code discarded 2021-02-24
+;; Code discarded 2022-02-26
+;; ;; Given t(var), var, lhs, rhs, an eq-proof of lhs===rhs or of the
+;; ;; formula all n lhs n===rhs n and a context.  Here t(var) is of type
+;; ;; rea and var, lhs, rhs are of type rea or nat=>rea.  Then
+;; ;; realeq-term-compat returns a proof of t(lhs)===t(rhs).  The context
+;; ;; is necessary to prove Real r and then reflexivity r===r for r
+;; ;; without x.  This needs RealUMinusCompat RealUDivCompat
+;; ;; RealAbsCompat RealExpCompat RealPlusCompat RealTimesCompat
+;; ;; RealMaxCompat RealMinCompat.
+
+;; (define (realeq-term-compat term var term1 term2 eq-proof context)
+;;   (cond
+;;    ((not (member var (term-to-free term))) ;we prove r===r
+;;     (let ((realproof (context-and-term-to-realproof context term)))
+;;       (mk-proof-in-elim-form
+;;        (make-proof-in-aconst-form (theorem-name-to-aconst "RealEqRefl"))
+;;        term realproof)))
+;;    ((term-in-var-form? term) eq-proof) ;of term1===term2, i.e., lhs===rhs
+;;    ((term-in-app-form? term)
+;;     (let ((op (term-in-app-form-to-op term)))
+;;       (cond
+;;        ((term=? op var) ;then arg is without var
+;; 	(make-proof-in-all-elim-form eq-proof (term-in-app-form-to-arg term)))
+;;        ((term-in-abst-form? op) ;rec call with subst-kernel
+;;        	(realeq-term-compat (term-to-one-step-beta-reduct term)
+;;        	 var term1 term2 eq-proof context))
+;;        (else
+;; 	(let* ((op (term-in-app-form-to-final-op term))
+;; 	       (args (term-in-app-form-to-args term))
+;; 	       (name (if (not (term-in-const-form? op))
+;; 			 (myerror "realeq-term-compat"
+;; 				  "term in constant form expected" op)
+;; 			 (string-append
+;; 			  (const-to-name (term-in-const-form-to-const op))
+;; 			  "Compat")))
+;; 	       (unary-compat-names
+;; 		(list "RealNNegCompat" "RealUMinusCompat" "RealUDivCompat"
+;; 		      "RealAbsCompat" "RealExpCompat"))
+;; 	       (binary-compat-names
+;; 		(list "RealPlusCompat" "RealTimesCompat"
+;; 		      "RealMaxCompat" "RealMinCompat")))
+;; 	  (cond
+;; 	   ((member name unary-compat-names)
+;; 	    (cond
+;; 	     ((string=? name "RealUDivCompat")
+;; 	      (mk-proof-in-elim-form ;of RealUDiv lhs p===RealUDiv rhs p
+;; 	       (make-proof-in-aconst-form ;of all x,y,p(x==y -> Pxp -> Pyp ->
+;; 					;RealUDix x p===RealUDiv y p)
+;; 		(theorem-name-to-aconst name))
+;; 	       (term-subst (car args) var term1) ;t(lhs)
+;; 	       (term-subst (car args) var term2) ;t(rhs)
+;; 	       (cadr args)
+;; 	       (realeq-term-compat (car args) var term1 term2 eq-proof context)
+;; 	       (context-and-term-and-bd-to-abspos-proof
+;; 		context term1 (cadr args))
+;; 	       (context-and-term-and-bd-to-abspos-proof
+;; 		context term2 (cadr args))))
+;; 	     ((string=? name "RealExpCompat")
+;; 	      (mk-proof-in-elim-form ;of t(lhs)===t(rhs), here lhs**n===rhs**n
+;; 	       (make-proof-in-aconst-form ;of all x,y,n(x==y -> x**n===y**n)
+;; 		(theorem-name-to-aconst name))
+;; 	       (term-subst (car args) var term1) ;t(lhs)
+;; 	       (term-subst (car args) var term2) ;t(rhs)
+;; 	       (cadr args)
+;; 	       (realeq-term-compat
+;; 		(car args) var term1 term2 eq-proof context)))
+;; 	     (else
+;; 	      (mk-proof-in-elim-form ;of ~t(lhs)=== ~t(rhs)
+;; 	       (make-proof-in-aconst-form ;of all x,y(x===y -> ~x=== ~y))
+;; 		(theorem-name-to-aconst name))
+;; 	       (term-subst (car args) var term1) ;t(lhs)
+;; 	       (term-subst (car args) var term2) ;t(rhs)
+;; 	       (realeq-term-compat
+;; 		(car args) var term1 term2 eq-proof context)))))
+;; 	   ((member name binary-compat-names)
+;; 	    (mk-proof-in-elim-form ;of t(lhs)+s(lhs)===t(rhs)+s(rhs)
+;; 	     (make-proof-in-aconst-form ;of all x,y,z,z1(x===y -> z===z1 ->
+;; 					; x+z===y+z1))
+;; 	      (theorem-name-to-aconst name))
+;; 	     (term-subst (car args) var term1) ;t(lhs)
+;; 	     (term-subst (car args) var term2) ;t(rhs)
+;; 	     (term-subst (cadr args) var term1) ;s(lhs)
+;; 	     (term-subst (cadr args) var term2) ;s(rhs)
+;; 	     (realeq-term-compat ;proves t(lhs)===t(rhs) from lhs===rhs by IH
+;; 	      (car args) var term1 term2 eq-proof context)
+;; 	     (realeq-term-compat ;proves s(lhs)===s(rhs) from lhs===rhs by IH
+;; 	      (cadr args) var term1 term2 eq-proof context)))
+;; 	   (else (apply myerror "realeq-term-compat" name
+;; 			"expected to be among"
+;; 			(append unary-compat-names
+;; 				binary-compat-names)))))))))
+;;    (else (myerror "realeq-term-compat" "unexpected term" term))))
+
+;; ;; Code discarded 2021-02-24
+;; ;; (define (realeq-term-compat term var term1 term2 eq-proof context)
+;; ;;   (cond
+;; ;;    ((not (member var (term-to-free term))) ;we prove r===r
+;; ;;     (let ((realproof (context-and-term-to-realproof context term)))
+;; ;;       (mk-proof-in-elim-form
+;; ;;        (make-proof-in-aconst-form (theorem-name-to-aconst "RealEqRefl"))
+;; ;;        term realproof)))
+;; ;;    ((term-in-var-form? term) eq-proof) ;of term1===term2, i.e., lhs===rhs
+;; ;;    ((term-in-app-form? term)
+;; ;;     (let* ((op (term-in-app-form-to-final-op term))
+;; ;; 	   (args (term-in-app-form-to-args term))
+;; ;; 	   (name (if (not (term-in-const-form? op))
+;; ;; 		     (myerror "realeq-term-compat"
+;; ;; 			      "term in constant form expected" op)
+;; ;; 		     (string-append
+;; ;; 		      (const-to-name (term-in-const-form-to-const op))
+;; ;; 		      "Compat")))
+;; ;; 	   (unary-compat-names
+;; ;; 	    (list "RealNNegCompat" "RealUMinusCompat" "RealUDivCompat"
+;; ;; 		  "RealAbsCompat" "RealExpCompat"))
+;; ;; 	   (binary-compat-names
+;; ;; 	    (list "RealPlusCompat" "RealTimesCompat"
+;; ;; 		  "RealMaxCompat" "RealMinCompat")))
+;; ;;       (cond
+;; ;;        ((member name unary-compat-names)
+;; ;; 	(cond
+;; ;; 	 ((string=? name "RealUDivCompat")
+;; ;; 	  (mk-proof-in-elim-form ;of RealUDiv lhs p===RealUDiv rhs p
+;; ;; 	   (make-proof-in-aconst-form ;of all x,y,p(x==y -> P|x|p -> P|y|p ->
+;; ;; 					;RealUDix x p===RealUDiv y p)
+;; ;; 	    (theorem-name-to-aconst name))
+;; ;; 	   (term-subst (car args) var term1) ;t(lhs)
+;; ;; 	   (term-subst (car args) var term2) ;t(rhs)
+;; ;; 	   (cadr args)
+;; ;; 	   (realeq-term-compat (car args) var term1 term2 eq-proof context)
+;; ;; 	   (context-and-term-and-bd-to-abspos-proof context term1 (cadr args))
+;; ;; 	   (context-and-term-and-bd-to-abspos-proof context term2 (cadr args))))
+;; ;; 	 ((string=? name "RealExpCompat")
+;; ;; 	  (mk-proof-in-elim-form ;of t(lhs)===t(rhs), here lhs**n===rhs**n
+;; ;; 	   (make-proof-in-aconst-form ;of all x,y,n(x==y -> x**n===y**n)
+;; ;; 	    (theorem-name-to-aconst name))
+;; ;; 	   (term-subst (car args) var term1) ;t(lhs)
+;; ;; 	   (term-subst (car args) var term2) ;t(rhs)
+;; ;; 	   (cadr args)
+;; ;; 	   (realeq-term-compat (car args) var term1 term2 eq-proof context)))
+;; ;; 	 (else
+;; ;; 	  (mk-proof-in-elim-form ;of ~t(lhs)=== ~t(rhs)
+;; ;; 	   (make-proof-in-aconst-form ;of all x,y(x===y -> ~x=== ~y))
+;; ;; 	    (theorem-name-to-aconst name))
+;; ;; 	   (term-subst (car args) var term1) ;t(lhs)
+;; ;; 	   (term-subst (car args) var term2) ;t(rhs)
+;; ;; 	   (realeq-term-compat (car args) var term1 term2 eq-proof context)))))
+;; ;;        ((member name binary-compat-names)
+;; ;; 	(mk-proof-in-elim-form ;of t(lhs)+s(lhs)===t(rhs)+s(rhs)
+;; ;; 	 (make-proof-in-aconst-form ;of all x,y,z,z1(x===y -> z===z1 ->
+;; ;; 					; x+z===y+z1))
+;; ;; 	  (theorem-name-to-aconst name))
+;; ;; 	 (term-subst (car args) var term1) ;t(lhs)
+;; ;; 	 (term-subst (car args) var term2) ;t(rhs)
+;; ;; 	 (term-subst (cadr args) var term1) ;s(lhs)
+;; ;; 	 (term-subst (cadr args) var term2) ;s(rhs)
+;; ;; 	 (realeq-term-compat ;proves t(lhs)===t(rhs) from lhs===rhs by IH
+;; ;; 	  (car args) var term1 term2 eq-proof context)
+;; ;; 	 (realeq-term-compat ;proves s(lhs)===s(rhs) from lhs===rhs by IH
+;; ;; 	  (cadr args) var term1 term2 eq-proof context)))
+;; ;;        (else (apply myerror "realeq-term-compat" name
+;; ;; 		    "expected to be among" (append unary-compat-names
+;; ;; 						   binary-compat-names))))))
+;; ;;    (else (myerror "realeq-term-compat" "unexpected term" term))))
+
+;; ;; context-and-term-to-realproof returns either a proof of Real(term) or #f
+
 ;; (define (context-and-term-to-realproof context term)
 ;;   (let* ((avars (context-to-avars context))
 ;; 	 (relevant-avars ;relevant idpcs I with term instance of an argument
@@ -6317,16 +6497,29 @@
 ;; 		    (idpredconst-form? pred)
 ;; 		    (let* ((name (idpredconst-to-name pred))
 ;; 			   (extended-name (string-append name "ToReal"))
-;; 			   (matching-substs-or-f
+;; 			   (applied-args ;for xs we need (xs n) with n new
 ;; 			    (map (lambda (arg)
+;; 				   (if (and (arrow-form? (term-to-type arg))
+;; 					    (equal? (py "nat")
+;; 						    (arrow-form-to-arg-type
+;; 						     (term-to-type arg))))
+;; 				       (make-term-in-app-form
+;; 					arg (make-term-in-var-form
+;; 					     (type-to-new-var
+;; 					      (arrow-form-to-arg-type
+;; 					       (term-to-type arg)))))
+;; 				       arg))
+;; 				 args))
+;; 			   (matching-substs-or-f
+;; 			    (map (lambda (arg applied-arg)
 ;; 				   (let* ((arg-vars (term-to-free arg))
 ;; 					  (sig-vars (set-minus arg-vars vars)))
-;; 				     (apply match arg term sig-vars)))
-;; 				 args)))
+;; 				     (apply match applied-arg term sig-vars)))
+;; 				 args applied-args)))
 ;; 		      (and
 ;; 		       (apply or-op matching-substs-or-f)
-;; 		       (or (member
-;; 			    name (list "Real" "RealEq" "RealNNeg" "RealLe"))
+;; 		       (or (member name (list "Real" "RealEq" "RealNNeg"
+;; 					      "RealLe" "RealConv"))
 ;; 			   (assoc
 ;; 			    extended-name
 ;; 			    (append THEOREMS GLOBAL-ASSUMPTIONS))))))))))))
@@ -6483,6 +6676,57 @@
 ;; 		 (make-proof-in-aconst-form
 ;; 		  (theorem-name-to-aconst "RealLeElim1"))
 ;; 		 (term-substitute arg1 subst2) term le-proof)))))
+;;        ((assoc "RealConv" name-avar-alist)
+;; 	(let* ((info (assoc "RealConv" name-avar-alist))
+;; 	       (avar (cadr info))
+;; 	       (fla (avar-to-formula avar))
+;; 	       (vars (all-allnc-form-to-vars fla))
+;; 	       (kernel (all-allnc-form-to-final-kernel fla))
+;; 	       (args (predicate-form-to-args kernel))
+;; 	       (arg1 (car args))
+;; 	       (arg2 (cadr args))
+;; 	       (arg3 (caddr args))
+;; 	       (arg2-vars (term-to-free arg2))
+;; 	       (sig2-vars (set-minus arg2-vars vars))
+;; 	       (subst2 (apply match arg2 term sig2-vars)))
+;; 	  (if subst2
+;; 	      (let* ((terms (map (lambda (var)
+;; 				   (let ((info (assoc var subst2)))
+;; 				     (if info
+;; 					 (cadr info)
+;; 					 (make-term-in-var-form var))))
+;; 				 vars))
+;; 		     (conv-proof
+;; 		      (apply mk-proof-in-elim-form
+;; 			     (make-proof-in-avar-form avar) terms)))
+;; 		(mk-proof-in-elim-form
+;; 		 (make-proof-in-aconst-form
+;; 		  (theorem-name-to-aconst "RealConvElim2"))
+;; 		 (term-substitute arg1 subst2)
+;; 		 term (term-substitute arg3 subst2) conv-proof))
+;; 	      (let* ((arg1-vars (term-to-free arg1))
+;; 		     (sig1-vars (set-minus arg1-vars vars))
+;; 		     (nat-var (type-to-new-var (py "nat")))
+;; 		     (nat-var-term (make-term-in-var-form nat-var))
+;; 		     (applied-arg1 (make-term-in-app-form arg1 nat-var-term))
+;; 		     (subst1 (apply match applied-arg1 term sig1-vars))
+;; 		     (terms (map (lambda (var)
+;; 				   (let ((info (assoc var subst1)))
+;; 				     (if info
+;; 					 (cadr info)
+;; 					 (make-term-in-var-form var))))
+;; 				 vars))
+;; 		     (conv-proof
+;; 		      (apply mk-proof-in-elim-form
+;; 			     (make-proof-in-avar-form avar) terms)))
+;; 		(mk-proof-in-elim-form
+;; 		 (make-proof-in-aconst-form
+;; 		  (theorem-name-to-aconst "RealConvElim1"))
+;; 		 (term-substitute arg1 subst1)
+;; 		 (term-substitute arg2 subst1)
+;; 		 (term-substitute arg3 subst1)
+;; 		 conv-proof
+;; 		 (term-substitute nat-var-term subst1))))))
 ;;        (else
 ;; 	(let ((shortened-name-avar-alist ;only those with ToReal aconst
 ;; 	       (list-transform-positive name-avar-alist
@@ -6511,7 +6755,7 @@
 ;; 	      (let ((name (const-to-name (term-in-const-form-to-const op))))
 ;; 		(member name '("RealPlus" "RealUMinus" "RealMinus" "RealTimes"
 ;; 			       "RealUDiv" "RealDiv" "RealAbs" "RealExp"
-;; 			       "RealMax" "RealMin"))))))
+;; 			       "RealMax" "RealMin" "RealSum"))))))
 ;;       (let* ((op (term-in-app-form-to-final-op term))
 ;; 	     (args (term-in-app-form-to-args term))
 ;; 	     (name (const-to-name (term-in-const-form-to-const op))))
@@ -6543,6 +6787,19 @@
 ;; 	      (make-proof-in-aconst-form
 ;; 	       (theorem-name-to-aconst (string-append name "Real")))
 ;; 	      (car args) (cadr args) prev prevpos))))
+;; 	 ((member name '("RealSum"))
+;; 	  (let* ((natvar (type-to-new-var (py "nat")))
+;; 		 (natvarterm (make-term-in-var-form natvar))
+;; 		 (appterm (make-term-in-app-form (caddr args) natvarterm)) ;xs l
+;; 		 (extended-context (append context (list natvar)))
+;; 		 (prev (context-and-term-to-realproof
+;; 			extended-context appterm)))
+;; 	    (and prev
+;; 		 (mk-proof-in-elim-form
+;; 		  (make-proof-in-aconst-form
+;; 		   (theorem-name-to-aconst (string-append name "Real")))
+;; 		  (car args) (cadr args) (caddr args)
+;; 		  (make-proof-in-all-intro-form natvar prev)))))
 ;; 	 ((member name '("RealPlus" "RealMinus" "RealTimes"
 ;; 			 "RealDiv" "RealMax" "RealMin"))
 ;; 	  (let ((prev1 (context-and-term-to-realproof
@@ -6557,8 +6814,272 @@
 ;; 	      (car args) (cadr args) prev1 prev2))))
 ;; 	 (else (myerror "context-and-term-to-realproof"
 ;; 			"not implemented for" name)))))
+;;      ((and (term-in-app-form? term)
+;; 	   (not (term-in-beta-normal-form? term)))
+;;       (let ((nterm (term-to-beta-nf term)))
+;; 	(context-and-term-to-realproof context nterm)))
 ;;      (else (myerror "context-and-term-to-realproof"
 ;; 		    "No realproof found for" term)))))
+
+;; ;; Code discarded 2021-02-24
+;; ;; (define (context-and-term-to-realproof context term)
+;; ;;   (let* ((avars (context-to-avars context))
+;; ;; 	 (relevant-avars ;relevant idpcs I with term instance of an argument
+;; ;; 	  (list-transform-positive avars
+;; ;; 	    (lambda (avar)
+;; ;; 	      (let* ((fla (avar-to-formula avar))
+;; ;; 		     (vars (all-allnc-form-to-vars fla))
+;; ;; 		     (kernel (all-allnc-form-to-final-kernel fla)))
+;; ;; 		(and
+;; ;; 		 (predicate-form? kernel)
+;; ;; 		 (let ((pred (predicate-form-to-predicate kernel))
+;; ;; 		       (args (predicate-form-to-args kernel)))
+;; ;; 		   (and
+;; ;; 		    (idpredconst-form? pred)
+;; ;; 		    (let* ((name (idpredconst-to-name pred))
+;; ;; 			   (extended-name (string-append name "ToReal"))
+;; ;; 			   (matching-substs-or-f
+;; ;; 			    (map (lambda (arg)
+;; ;; 				   (let* ((arg-vars (term-to-free arg))
+;; ;; 					  (sig-vars (set-minus arg-vars vars)))
+;; ;; 				     (apply match arg term sig-vars)))
+;; ;; 				 args)))
+;; ;; 		      (and
+;; ;; 		       (apply or-op matching-substs-or-f)
+;; ;; 		       (or (member
+;; ;; 			    name (list "Real" "RealEq" "RealNNeg" "RealLe"))
+;; ;; 			   (assoc
+;; ;; 			    extended-name
+;; ;; 			    (append THEOREMS GLOBAL-ASSUMPTIONS))))))))))))
+;; ;; 	 (name-avar-alist
+;; ;; 	  (map (lambda (avar)
+;; ;; 		 (let* ((fla (avar-to-formula avar))
+;; ;; 			(kernel (all-allnc-form-to-final-kernel fla))
+;; ;; 			(pred (predicate-form-to-predicate kernel))
+;; ;; 			(name (idpredconst-to-name pred)))
+;; ;; 		   (list name avar)))
+;; ;; 	       relevant-avars)))
+;; ;;     (cond
+;; ;;      ((and ;term given as constant Cauchy sequence
+;; ;;        (term-in-app-form? term)
+;; ;;        (let ((op (term-in-app-form-to-final-op term))
+;; ;; 	     (args (term-in-app-form-to-args term)))
+;; ;; 	 (and (term-in-const-form? op)
+;; ;; 	      (string=? (const-to-name (term-in-const-form-to-const op))
+;; ;; 			"RealConstr")
+;; ;; 	      (term-in-abst-form? (car args))
+;; ;; 	      (not (member (term-in-abst-form-to-var (car args))
+;; ;; 			   (term-to-free
+;; ;; 			    (term-in-abst-form-to-kernel (car args))))))))
+;; ;;       (mk-proof-in-elim-form
+;; ;;        (make-proof-in-aconst-form (theorem-name-to-aconst "RealRat"))
+;; ;;        (term-in-abst-form-to-kernel (car (term-in-app-form-to-args term)))))
+;; ;;      ((pair? name-avar-alist) ;ex idpc-avars of the from I(..,term,..)
+;; ;;       (cond ;proof from the first such avar
+;; ;;        ((assoc "Real" name-avar-alist)
+;; ;; 	(let* ((info (assoc "Real" name-avar-alist))
+;; ;; 	       (avar (cadr info))
+;; ;; 	       (fla (avar-to-formula avar))
+;; ;; 	       (vars (all-allnc-form-to-vars fla))
+;; ;; 	       (kernel (all-allnc-form-to-final-kernel fla))
+;; ;; 	       (arg (car (predicate-form-to-args kernel)))
+;; ;; 	       (arg-vars (term-to-free arg))
+;; ;; 	       (sig-vars (set-minus arg-vars vars))
+;; ;; 	       (subst (apply match arg term sig-vars))
+;; ;; 	       (terms (map (lambda (var)
+;; ;; 			     (let ((info (assoc var subst)))
+;; ;; 			       (if info
+;; ;; 				   (cadr info)
+;; ;; 				   (make-term-in-var-form var))))
+;; ;; 			   vars)))
+;; ;; 	  (apply mk-proof-in-elim-form (make-proof-in-avar-form avar) terms)))
+;; ;;        ((assoc "RealEq" name-avar-alist)
+;; ;; 	(let* ((info (assoc "RealEq" name-avar-alist))
+;; ;; 	       (avar (cadr info))
+;; ;; 	       (fla (avar-to-formula avar))
+;; ;; 	       (vars (all-allnc-form-to-vars fla))
+;; ;; 	       (kernel (all-allnc-form-to-final-kernel fla))
+;; ;; 	       (args (predicate-form-to-args kernel))
+;; ;; 	       (arg1 (car args))
+;; ;; 	       (arg2 (cadr args))
+;; ;; 	       (arg1-vars (term-to-free arg1))
+;; ;; 	       (sig1-vars (set-minus arg1-vars vars))
+;; ;; 	       (subst1 (apply match arg1 term sig1-vars)))
+;; ;; 	  (if subst1
+;; ;; 	      (let* ((terms (map (lambda (var)
+;; ;; 				   (let ((info (assoc var subst1)))
+;; ;; 				     (if info
+;; ;; 					 (cadr info)
+;; ;; 					 (make-term-in-var-form var))))
+;; ;; 				 vars))
+;; ;; 		     (eq-proof
+;; ;; 		      (apply
+;; ;; 		       mk-proof-in-elim-form
+;; ;; 		       (make-proof-in-avar-form avar) terms)))
+;; ;; 		(mk-proof-in-elim-form
+;; ;; 		 (make-proof-in-aconst-form
+;; ;; 		  (theorem-name-to-aconst "RealEqToReal0"))
+;; ;; 		 term (term-substitute arg2 subst1) eq-proof))
+;; ;; 	      (let* ((arg2-vars (term-to-free arg2))
+;; ;; 		     (sig2-vars (set-minus arg2-vars vars))
+;; ;; 		     (subst2 (apply match arg2 term sig2-vars))
+;; ;; 		     (terms (map (lambda (var)
+;; ;; 				   (let ((info (assoc var subst2)))
+;; ;; 				     (if info
+;; ;; 					 (cadr info)
+;; ;; 					 (make-term-in-var-form var))))
+;; ;; 				 vars))
+;; ;; 		     (eq-proof
+;; ;; 		      (apply
+;; ;; 		       mk-proof-in-elim-form
+;; ;; 		       (make-proof-in-avar-form avar) terms)))
+;; ;; 		(mk-proof-in-elim-form
+;; ;; 		 (make-proof-in-aconst-form
+;; ;; 		  (theorem-name-to-aconst "RealEqToReal1"))
+;; ;; 		 (term-substitute arg1 subst2) term eq-proof)))))
+;; ;;        ((assoc "RealNNeg" name-avar-alist)
+;; ;; 	(let* ((info (assoc "RealNNeg" name-avar-alist))
+;; ;; 	       (avar (cadr info))
+;; ;; 	       (fla (avar-to-formula avar))
+;; ;; 	       (vars (all-allnc-form-to-vars fla))
+;; ;; 	       (kernel (all-allnc-form-to-final-kernel fla))
+;; ;; 	       (args (predicate-form-to-args kernel))
+;; ;; 	       (arg (car args))
+;; ;; 	       (arg-vars (term-to-free arg))
+;; ;; 	       (sig-vars (set-minus arg-vars vars))
+;; ;; 	       (subst (apply match arg term sig-vars))
+;; ;; 	       (terms (map (lambda (var)
+;; ;; 			     (let ((info (assoc var subst)))
+;; ;; 			       (if info
+;; ;; 				   (cadr info)
+;; ;; 				   (make-term-in-var-form var))))
+;; ;; 			   vars))
+;; ;; 	       (nneg-proof (apply mk-proof-in-elim-form
+;; ;; 				  (make-proof-in-avar-form avar) terms)))
+;; ;; 	  (mk-proof-in-elim-form
+;; ;; 	   (make-proof-in-aconst-form
+;; ;; 	    (theorem-name-to-aconst "RealNNegElim0"))
+;; ;; 	   (term-substitute arg subst) nneg-proof)))
+;; ;;        ((assoc "RealLe" name-avar-alist)
+;; ;; 	(let* ((info (assoc "RealLe" name-avar-alist))
+;; ;; 	       (avar (cadr info))
+;; ;; 	       (fla (avar-to-formula avar))
+;; ;; 	       (vars (all-allnc-form-to-vars fla))
+;; ;; 	       (kernel (all-allnc-form-to-final-kernel fla))
+;; ;; 	       (args (predicate-form-to-args kernel))
+;; ;; 	       (arg1 (car args))
+;; ;; 	       (arg2 (cadr args))
+;; ;; 	       (arg1-vars (term-to-free arg1))
+;; ;; 	       (sig1-vars (set-minus arg1-vars vars))
+;; ;; 	       (subst1 (apply match arg1 term sig1-vars)))
+;; ;; 	  (if subst1
+;; ;; 	      (let* ((terms (map (lambda (var)
+;; ;; 				   (let ((info (assoc var subst1)))
+;; ;; 				     (if info
+;; ;; 					 (cadr info)
+;; ;; 					 (make-term-in-var-form var))))
+;; ;; 				 vars))
+;; ;; 		     (le-proof
+;; ;; 		      (apply
+;; ;; 		       mk-proof-in-elim-form
+;; ;; 		       (make-proof-in-avar-form avar) terms)))
+;; ;; 		(mk-proof-in-elim-form
+;; ;; 		 (make-proof-in-aconst-form
+;; ;; 		  (theorem-name-to-aconst "RealLeElim0"))
+;; ;; 		 term (term-substitute arg2 subst1) le-proof))
+;; ;; 	      (let* ((arg2-vars (term-to-free arg2))
+;; ;; 		     (sig2-vars (set-minus arg2-vars vars))
+;; ;; 		     (subst2 (apply match arg2 term sig2-vars))
+;; ;; 		     (terms (map (lambda (var)
+;; ;; 				   (let ((info (assoc var subst2)))
+;; ;; 				     (if info
+;; ;; 					 (cadr info)
+;; ;; 					 (make-term-in-var-form var))))
+;; ;; 				 vars))
+;; ;; 		     (le-proof
+;; ;; 		      (apply
+;; ;; 		       mk-proof-in-elim-form
+;; ;; 		       (make-proof-in-avar-form avar) terms)))
+;; ;; 		(mk-proof-in-elim-form
+;; ;; 		 (make-proof-in-aconst-form
+;; ;; 		  (theorem-name-to-aconst "RealLeElim1"))
+;; ;; 		 (term-substitute arg1 subst2) term le-proof)))))
+;; ;;        (else
+;; ;; 	(let ((shortened-name-avar-alist ;only those with ToReal aconst
+;; ;; 	       (list-transform-positive name-avar-alist
+;; ;; 		 (lambda (item)
+;; ;; 		   (let* ((name (car item))
+;; ;; 			  (extended-name (string-append name "ToReal")))
+;; ;; 		     (assoc extended-name
+;; ;; 			    (append THEOREMS GLOBAL-ASSUMPTIONS)))))))
+;; ;; 	  (and
+;; ;; 	   (pair? shortened-name-avar-alist) ;build proof, else rec call
+;; ;; 	   (let* ((item (car shortened-name-avar-alist))
+;; ;; 		  (name (car item))
+;; ;; 		  (extended-name (string-append name "ToReal"))
+;; ;; 		  (avar (cadr item)))
+;; ;; 	     (mk-proof-in-elim-form
+;; ;; 	      (make-proof-in-aconst-form
+;; ;; 	       (if (assoc extended-name THEOREMS)
+;; ;; 		   (theorem-name-to-aconst extended-name)
+;; ;; 		   (global-assumption-name-to-aconst extended-name)))
+;; ;; 	      term (make-proof-in-avar-form avar))))))))
+;; ;;      ((and ;RealUMinusReal etc with rec call
+;; ;;        (term-in-app-form? term)
+;; ;;        (let ((op (term-in-app-form-to-final-op term))
+;; ;; 	     (args (term-in-app-form-to-args term)))
+;; ;; 	 (and (term-in-const-form? op)
+;; ;; 	      (let ((name (const-to-name (term-in-const-form-to-const op))))
+;; ;; 		(member name '("RealPlus" "RealUMinus" "RealMinus" "RealTimes"
+;; ;; 			       "RealUDiv" "RealDiv" "RealAbs" "RealExp"
+;; ;; 			       "RealMax" "RealMin"))))))
+;; ;;       (let* ((op (term-in-app-form-to-final-op term))
+;; ;; 	     (args (term-in-app-form-to-args term))
+;; ;; 	     (name (const-to-name (term-in-const-form-to-const op))))
+;; ;; 	(cond
+;; ;; 	 ((member name '("RealUMinus" "RealAbs"))
+;; ;; 	  (let ((prev (context-and-term-to-realproof
+;; ;; 		       context (car args))))
+;; ;; 	    (and
+;; ;; 	     prev
+;; ;; 	     (mk-proof-in-elim-form
+;; ;; 	      (make-proof-in-aconst-form
+;; ;; 	       (theorem-name-to-aconst (string-append name "Real")))
+;; ;; 	      (car args) prev))))
+;; ;; 	 ((member name '("RealExp"))
+;; ;; 	  (let ((prev (context-and-term-to-realproof context (car args))))
+;; ;; 	    (and
+;; ;; 	     prev
+;; ;; 	     (mk-proof-in-elim-form
+;; ;; 	      (make-proof-in-aconst-form
+;; ;; 	       (theorem-name-to-aconst (string-append name "Real")))
+;; ;; 	      (car args) (cadr args) prev))))
+;; ;; 	 ((member name '("RealUDiv"))
+;; ;; 	  (let ((prev (context-and-term-to-realproof context (car args)))
+;; ;; 		(prevpos (context-and-term-and-bd-to-abspos-proof
+;; ;; 			  context (car args) (cadr args))))
+;; ;; 	    (and
+;; ;; 	     prev
+;; ;; 	     (mk-proof-in-elim-form
+;; ;; 	      (make-proof-in-aconst-form
+;; ;; 	       (theorem-name-to-aconst (string-append name "Real")))
+;; ;; 	      (car args) (cadr args) prev prevpos))))
+;; ;; 	 ((member name '("RealPlus" "RealMinus" "RealTimes"
+;; ;; 			 "RealDiv" "RealMax" "RealMin"))
+;; ;; 	  (let ((prev1 (context-and-term-to-realproof
+;; ;; 			context (car args)))
+;; ;; 		(prev2 (context-and-term-to-realproof
+;; ;; 			context (cadr args))))
+;; ;; 	    (and
+;; ;; 	     prev1 prev2
+;; ;; 	     (mk-proof-in-elim-form
+;; ;; 	      (make-proof-in-aconst-form
+;; ;; 	       (theorem-name-to-aconst (string-append name "Real")))
+;; ;; 	      (car args) (cadr args) prev1 prev2))))
+;; ;; 	 (else (myerror "context-and-term-to-realproof"
+;; ;; 			"not implemented for" name)))))
+;; ;;      (else (myerror "context-and-term-to-realproof"
+;; ;; 		    "No realproof found for" term)))))
 
 ;; context-and-term-and-bd-to-abspos-proof searches for a proof of
 ;; RealPos abs term bd from the context.  It returns #f if none is
