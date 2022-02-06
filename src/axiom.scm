@@ -1,4 +1,4 @@
-;; 2021-12-15.  axiom.scm
+;; 2022-02-06.  axiom.scm
 ;; 8. Assumption variables and axioms
 ;; ==================================
 ;; To be renamed into avars scheme, with the axioms section transferred
@@ -97,6 +97,11 @@
 
 (define (normalize-avar avar)
   (make-avar (normalize-formula (avar-to-formula avar))
+	     (avar-to-index avar)
+	     (avar-to-name avar)))
+
+(define (beta-pi-eta-normalize-avar avar)
+  (make-avar (beta-pi-eta-normalize-formula (avar-to-formula avar))
 	     (avar-to-index avar)
 	     (avar-to-name avar)))
 
