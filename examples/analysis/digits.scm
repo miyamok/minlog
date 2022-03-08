@@ -1,4 +1,4 @@
-;; 2021-03-04.  examples/analysis/digits.scm
+;; 2022-03-08.  examples/analysis/digits.scm
 
 ;; Dependency of files
 
@@ -128,13 +128,14 @@
 (save "EfSd")
 
 ;; SdBound
-(set-goal "all d(Sd d -> abs d<=1)")
+(set-goal "allnc d(Sd d -> abs d<=1)")
 (assume "d" "Sdd")
 (elim "Sdd")
 (use "Truth")
 (use "Truth")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "SdBound")
 
 ;; SdUMinus
@@ -389,6 +390,7 @@
 (use "Truth")
 ;; Proof finished.
 (save "SdToIntToSdId")
+(add-rewrite-rule "IntToSd(SdToInt s)" "s")
 
 ;; IntToSdToIntId
 (set-goal "all d(abs d<=1 -> SdToInt(IntToSd d)=d)")
@@ -405,6 +407,31 @@
 (use "Truth")
 ;; Proof finished.
 (save "IntToSdToIntId")
+
+;; SdSdToInt
+(set-goal "all s Sd(SdToInt s)")
+(cases)
+(ng #t)
+(use "InitSdSdR")
+(use "InitSdSdM")
+(use "InitSdSdL")
+;; Proof finished.
+;; (cp)
+(save "SdSdToInt")
+
+;; SdToSd
+(set-goal "allnc d(Sd d -> exl s s=IntToSd d)")
+(assume "d" "Sdd")
+(elim "Sdd")
+(intro 0 (pt "SdR"))
+(use "Truth")
+(intro 0 (pt "SdM"))
+(use "Truth")
+(intro 0 (pt "SdL"))
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "SdToSd")
 
 ;; IntTimesSdToSd
 (set-goal "allnc d,e(Sd d -> Sd e -> Sd(d*e))")
