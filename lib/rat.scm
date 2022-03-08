@@ -1,4 +1,4 @@
-;; 2021-10-21.  rat.scm.
+;; 2022-03-08.  rat.scm.
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -2224,6 +2224,20 @@
 ;; (cdp)
 (save "RatLeMonTimes")
 
+;; RatLeMonTimesR
+(set-goal "all a,b,c(0<=a -> b<=c -> a*b<=a*c)")
+(assume "a" "b" "c" "0<=a" "b<=c")
+(simp (pf "a*b=b*a"))
+(simp (pf "a*c=c*a"))
+(use "RatLeMonTimes")
+(use "0<=a")
+(use "b<=c")
+(use "RatTimesComm")
+(use "RatTimesComm")
+;; Proof finished.
+;; (cp)
+(save "RatLeMonTimesR")
+
 ;; RatLeUMinus
 (set-goal "all a,b (~b<= ~a)=(a<=b)")
 (cases)
@@ -3431,6 +3445,64 @@
 (save "RatLeAbsBoundUMinusEq")
 
 (deanimate "RatLeAbsBound")
+
+(add-var-name "pf" (py "nat=>boole"))
+
+;; RatLeBoundSharp
+(set-goal "all p,q exl n((p#q)<=2**n andnc all m((p#q)<=2**m -> n<=m))")
+(assume "p" "q")
+(def "pf" "[n](p#q)<=2**n")
+(def "n" "cRatLeBound p q")
+(intro 0 (pt "NatLeast n pf"))
+(split)
+;; 18,19
+(assert "(p#q)<=2**n")
+(simp "nDef")
+(use "RatLeBoundExFree")
+;; Assertion proved.
+(assume "pqBd")
+(inst-with-to
+ "PropNatLeast" (pt "n") (pt "n") (pt "([n](p#q)<=2**n)")
+ "Truth" "pqBd" "Inst")
+(simp "pfDef")
+(use "Inst")
+;; 19
+(assume "m" "pqBd")
+(use "NatLeastLeIntro")
+(simp "pfDef")
+(use "pqBd")
+;; Proof finished.
+;; (cp)
+(save "RatLeBoundSharp")
+
+(remove-var-name "pf")
+
+;; RatAbsLeBoundSharp
+(set-goal "all a exl n(abs a<=2**n andnc all m(abs a<=2**m -> n<=m))")
+(cases)
+(cases)
+;; 3-5
+(assume "p" "q")
+(inst-with-to "RatLeBoundSharp" (pt "p") (pt "q") "Inst")
+(by-assume "Inst" "n" "nProp")
+(intro 0 (pt "n"))
+(use "nProp")
+;; 4
+(assume "p")
+(intro 0 (pt "Zero"))
+(split)
+(use "Truth")
+(assume "m" "Useless")
+(use "Truth")
+;; 5
+(assume "p" "q")
+(inst-with-to "RatLeBoundSharp" (pt "p") (pt "q") "Inst")
+(by-assume "Inst" "n" "nProp")
+(intro 0 (pt "n"))
+(use "nProp")
+;; Proof finished.
+;; (cp)
+(save "RatAbsLeBoundSharp")
 
 ;; We show that (i) RatExp for (p#1) and positive exponents and (2)
 ;; PosExp (which has nat as exponent type) are isomorphic, using that
@@ -5323,6 +5395,16 @@
 ;; Proof finished.
 ;; (cdp)
 (save "RatLtCompat")
+
+;; RatAbsMinusId
+(set-goal "all a(a<=0 -> abs a= ~a)")
+(cases)
+(assume "k" "p")
+(ng)
+(use "IntAbsMinusId")
+;; Proof finished.
+;; (cp)
+(save "RatAbsMinusId")
 
 ;; 4.  Adding external code
 ;; ========================
