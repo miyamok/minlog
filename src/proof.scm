@@ -1,4 +1,4 @@
-;; 2021-11-06.  proof.scm
+;; 2022-03-08.  proof.scm
 ;; 10. Proofs
 ;; ==========
 
@@ -7724,10 +7724,13 @@
 	 (theorems (list-transform-positive
 		       aconsts
 		     (lambda (ac) (eq? 'theorem (aconst-to-kind ac)))))
+	 (gas (list-transform-positive
+		  aconsts
+		(lambda (ac) (eq? 'global-assumption (aconst-to-kind ac)))))
 	 (impl-gas (list-transform-positive
 		       GLOBAL-ASSUMPTIONS
 		     (lambda (ga)
-		       (initial-substring? "RewriteGA"(car ga))))))
+		       (initial-substring? "RewriteGA" (car ga))))))
     (check-proof-aux display-flag proof 0 ignore-deco-flag)
     (if (pair? nc-viols)
 	(begin
@@ -7770,6 +7773,11 @@
     (if (pair? free-avars)
 	(comment "Free assumption variables present.")
 	(comment "No free assumption variables."))
+    (if (pair? gas)
+	(comment
+	 "Global assumptions used: "
+	 (map aconst-to-name gas))
+	(comment "No global assumptions used."))
     (if (pair? impl-gas)
 	(comment
 	 "Implicit global assumptions possibly used (unproven rewrite rules): "
@@ -7782,102 +7790,6 @@
 				    (map aconst-to-name theorems)))
 	(comment "No theorems used.")))
   *the-non-printing-object*)
-
-;; Code discarded 2021-10-24
-;; (define (check-proof display-flag . opt-proof-or-thm-name-and-ignore-deco-flag)
-;;   (let* ((proof-and-ignore-deco-flag
-;; 	  (cond
-;; 	   ((null? opt-proof-or-thm-name-and-ignore-deco-flag)
-;; 	    (list (current-proof) #f))
-;; 	   ((= 1 (length opt-proof-or-thm-name-and-ignore-deco-flag))
-;; 	    (let ((first (car opt-proof-or-thm-name-and-ignore-deco-flag)))
-;; 	      (cond ((proof-form? first) (list first #f))
-;; 		    ((string? first)
-;; 		     (list (theorem-name-to-proof first) #f))
-;; 		    ((boolean? first) (list (current-proof) first))
-;; 		    (else (myerror "check-proof"
-;; 				   "proof or theorem name or boolean expected"
-;; 				   first)))))
-;; 	   ((= 2 (length opt-proof-or-thm-name-and-ignore-deco-flag)
-;; 	       (let ((first (car opt-proof-or-thm-name-and-ignore-deco-flag))
-;; 		     (second
-;; 		      (cadr opt-proof-or-thm-name-and-ignore-deco-flag)))
-;; 		 (cond ((and (proof-form? first) (boolean? second))
-;; 			(list first second))
-;; 		       ((and (string? first) (boolean? second))
-;; 			(list (theorem-name-to-proof first) second))
-;; 		       (else (myerror
-;; 			      "check-proof"
-;; 			      "proof or theorem name and boolean expected"
-;; 			      first second))))))
-;; 	   (else (myerror "check-proof"
-;; 			  "list of length <=2 expected"
-;; 			  opt-proof-or-thm-name-and-ignore-deco-flag))))
-;; 	 (proof (car proof-and-ignore-deco-flag))
-;; 	 (ignore-deco-flag (cadr proof-and-ignore-deco-flag))
-;; 	 (nc-viols (nc-violations proof))
-;; 	 (h-deg-viols (h-deg-violations proof))
-;; 	 (avar-convention-viols
-;; 	  (avar-convention-violations proof ignore-deco-flag))
-;; 	 (free-avars (proof-to-free-avars proof))
-;; 	 (impl-gas (list-transform-positive
-;; 		       GLOBAL-ASSUMPTIONS
-;; 		     (lambda (ga)
-;; 		       (initial-substring? "RewriteGA"(car ga)))))
-;; 	 (expl-gas (proof-to-global-assumptions proof)))
-;;     (check-proof-aux display-flag proof 0 ignore-deco-flag)
-;;     (if (pair? nc-viols)
-;; 	(begin
-;; 	  (comment
-;; 	   "Incorrect proof: nc-intro with computational variable(s)")
-;; 	  (for-each comment (map (lambda (x)
-;; 				   (if (var-form? x)
-;; 				       (var-to-string x)
-;; 				       (avar-to-string x)))
-;; 				 nc-viols))))
-;;     (if
-;;      (pair? h-deg-viols)
-;;      (begin
-;;        (comment
-;; 	"Proof not suitable for extraction.  h-deg violations at aconst(s)")
-;;        (for-each comment h-deg-viols)))
-;;     (if (pair? avar-convention-viols)
-;; 	(begin
-;; 	  (comment
-;; 	   "Proof does not respect the avar convention.")
-;; 	  (do ((l avar-convention-viols (cdr l)))
-;; 	      ((null? l))
-;; 	    (let* ((pair (car l))
-;; 		   (flagged-avar1 (car pair))
-;; 		   (flagged-avar2 (cadr pair))
-;; 		   (avar1 (cadr flagged-avar1))
-;; 		   (avar2 (cadr flagged-avar2)))
-;; 	      (comment "The same avar with name "
-;; 		       (let ((name (avar-to-name avar1)))
-;; 			 (if (string=? "" name)
-;; 			     DEFAULT-AVAR-NAME
-;; 			     name)		       )
-;; 		       " and index "
-;; 		       (avar-to-index avar1)
-;; 		       " carries the two different formulas")
-;; 	      (pp (avar-to-formula avar1))
-;; 	      (comment "and")
-;; 	      (pp (avar-to-formula avar2))))))
-;;     (comment "Ok, proof is correct.")
-;;     (if (pair? free-avars)
-;; 	(comment "Free assumption variables present.")
-;; 	(comment "No free assumption variables."))
-;;     (if (pair? impl-gas)
-;; 	(comment
-;; 	 "Implicit global assumptions possibly used (unproven rewrite rules): "
-;; 	 (map car impl-gas))
-;; 	(comment
-;; 	 "No implicit global assumptions (unproven rewrite rules)."))
-;;     (if (pair? expl-gas)
-;; 	(comment "Explicit global assumptions used: "
-;; 		 (map aconst-to-name  expl-gas))
-;; 	(comment "No explicit global assumptions used.")))
-;;   *the-non-printing-object*)
 
 (define (check-proof-aux display-flag proof n ignore-deco-flag)
   (cond
