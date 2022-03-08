@@ -1,4 +1,47 @@
-Done locally in dev branch 2022-02-06
+Done in dev branch 2022-03-08
+
+In doc/ref.tex
+
+PropNatLeast added
+
+In examples/analysis/digits.scm
+
+SdToIntToSdId added as rewrite rule.  SdSdToInt SdToSd added.
+In SdBound all d replaced by allnc d
+
+In examples/analysis/readwrite.scm
+
+Adapted to the current state of Minlog: numbers.scm replaced by
+nat.scm list.scm pos.scm int.scm rat.scm rea.scm.  Also digits.scm
+loaded.  Primitive pairs replaced by defined pairs.
+
+In lib/nat.scm
+
+PropNatLeast added
+
+In lib/pos.scm
+
+PosLeBoundSharp added.
+
+In lib/int.scm
+
+IntAbsMinusId added
+   
+In lib/rat.scm
+
+RatAbsMinusId RatLeMonTimesR added.  RatLeBoundSharp
+RatAbsLeBoundSharp added using NatLeast.
+
+In src/proof.scm
+
+In check-proof used global assumptions displayed.
+
+In src/pproof.scm
+
+Av, Va replaced by In, Out
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Done in dev branch 2022-02-06
 
 In psym.scm
 
