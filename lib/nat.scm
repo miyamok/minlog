@@ -1,4 +1,4 @@
-;; 2021-11-29.  nat.scm
+;; 2022-03-08.  nat.scm
 
 ;; (load "~/git/minlog/init.scm")
  
@@ -3891,6 +3891,37 @@
 ;; Proof finished.
 ;; (cdp)
 (save "NatLeastLtElim")
+
+;; PropNatLeast
+(set-goal "all n,m,pf(m<=n -> pf m -> pf(NatLeast n pf))")
+(ind)
+;; 2,3
+(ng #t)
+(assume "m" "pf" "m=0")
+(simp "m=0")
+(assume "pf0")
+(use "pf0")
+;; 3
+(assume "n" "IH")
+(ng #t)
+(cases)
+;; Zero
+(assume "pf" "Useless" "g0")
+(simp "g0")
+(use "g0")
+;; Succ
+(assume "m" "pf" "m<=n" "gSm")
+(inst-with-to "IH" (pt "m") (pt "[n0]pf(Succ n0)") "m<=n" "gSm" "Inst")
+(ng)
+(cases (pt "pf Zero"))
+(assume "g0")
+(use "g0")
+(assume "Useless")
+(ng #t)
+(use "Inst")
+;; Proof finished.
+;; (cp)
+(save "PropNatLeast")
 
 ;; EqPNatNcPlus
 (set-goal "allnc n^1,n^2,m^(
