@@ -1,4 +1,4 @@
-;; 2021-10-21.  int.scm
+;; 2022-03-08.  int.scm
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -6755,4 +6755,17 @@
 ;; Proof finished.
 ;; (cdp)
 (save "IntExpTimesPos")
+
+;; IntAbsMinusId
+(set-goal "all k(k<=0 -> abs k= ~k)")
+(cases)
+(assume "p" "Absurd")
+(use "Absurd")
+(strip)
+(use "Truth")
+(strip)
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "IntAbsMinusId")
 
