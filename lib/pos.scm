@@ -1,4 +1,4 @@
-;; 2021-10-20.  pos.scm
+;; 2022-03-08.  pos.scm
 
 ;; (load "~/git/minlog/init.scm")
 ;; (set! COMMENT-FLAG #f)
@@ -6193,3 +6193,86 @@
 ;; Proof finished.
 ;; (cdp)
 (save "NatPosMax")
+
+;; PosLeBoundSharp
+(set-goal "all p(1<p -> exl n(2**Pred n<p andnc p<=2**n))")
+(assume "p" "1<p")
+(cases (pt "2**PosLog p<p"))
+;; 3,4
+(assume "LtHyp")
+(intro 0 (pt "Succ(PosLog p)"))
+(split)
+;; 7,8
+(use "LtHyp")
+;; 8
+(use "PosLtToLe")
+(use "PosLtExpTwoSuccLog")
+;; 4
+(assume "NotLtHyp")
+(assert "p<=2**PosLog p")
+(use "PosNotLtToLe")
+(use "NotLtHyp")
+;; Assertion proved
+(assume "LeHyp")
+(drop "NotLtHyp")
+(use "PosLeCases" (pt "p") (pt "2**PosLog p"))
+;; 16,17
+(use "LeHyp")
+(drop "LeHyp")
+(assume "LtHyp")
+(assert "p<p")
+(use "PosLtLeTrans" (pt "2**PosLog p"))
+(use "LtHyp")
+(use "PosLeExpTwoLog")
+(assume "Absurd")
+(intro 0 (pt "Zero"))
+(split)
+(use "EfAtom")
+(use "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 18
+(assume "EqHyp")
+(intro 0 (pt "PosLog p"))
+(split)
+;; 33,34
+(assert "2**Pred(PosLog p)<2**PosLog p")
+;; 35,36
+(use "PosLtMonPosExpTwo")
+(use "NatLtLeTrans" (pt "Succ(Pred(PosLog p))"))
+(use "Truth")
+(simp "NatSuccPred")
+(use "Truth")
+(simp "PosLogZeroLt")
+(use "1<p")
+;; 35
+(assume "LtHyp")
+(use "PosLtLeTrans" (pt "2**PosLog p"))
+(use "LtHyp")
+(use "PosLeExpTwoLog")
+(use "LeHyp")
+;; Proof finished.
+;; (cp)
+(save "PosLeBoundSharp")
+
+;; (define eterm (proof-to-extracted-term))
+;; (define neterm (rename-variables (nt eterm)))
+;; (pp neterm)
+
+;; [p]
+;;  [if (2**PosLog p<p)
+;;    (Succ(PosLog p))
+;;    ((cPosLeCases nat)p(2**PosLog p)Zero(PosLog p))]
+
+;; (animate "PosLeCases")
+
+;; (define neterm (rename-variables (nt eterm)))
+;; (pp neterm)
+
+;; [p]
+;;  [if (2**PosLog p<p)
+;;    (Succ(PosLog p))
+;;    [if (NatLt(PosToNat p)(PosToNat(2**PosLog p))) Zero (PosLog p)]]
+
+;; (deanimate "PosLeCases")
+
