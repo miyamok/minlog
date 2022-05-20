@@ -1,7 +1,6 @@
-;; $Id: prop.scm 2672 2014-01-08 09:59:10Z schwicht $
+;; 2022-04-28.  prop.scm
 ;; 13. Ein Beweiser fuer Aussagenlogik
 ;; ===================================
-;; prop.scm
 
 ;; @article{Vorobev64,
 ;; 		author="Vorob'ev, N. N.",
@@ -340,17 +339,27 @@
 	  (do ((x elem-subfors-without-botFT (cdr x))
 	       (res
 		'()
-		(if (member-wrt
-		     formula=?
-		     falsity-log
-		     (append (formula-to-elem-subformulas goal-formula)
-			     elems ands-and-and-imps elem-imps leftit-imps))
-		    (cons (formula-to-new-avar
-			   (mk-imp (mk-neg-log (mk-neg-log (car x))) (car x)))
-			  res)
-		    (cons (formula-to-new-avar
-			   (mk-imp (mk-neg (mk-neg (car x))) (car x)))
-			  res))))
+		(if
+		 (or
+		  (member-wrt formula=? falsity-log
+			      (append (formula-to-elem-subformulas goal-formula)
+				      elems))
+		  (member-wrt formula=? falsity-log
+			      (apply
+			       append
+			       (map formula-to-elem-subformulas
+				    (append ands-and-and-imps elem-imps))))
+		  (member-wrt formula=? falsity-log
+			      (apply
+			       append
+			       (map formula-to-elem-subformulas
+				    (map avar-to-formula leftit-imps)))))
+		 (cons (formula-to-new-avar
+			(mk-imp (mk-neg-log (mk-neg-log (car x))) (car x)))
+		       res)
+		 (cons (formula-to-new-avar
+			(mk-imp (mk-neg (mk-neg (car x))) (car x)))
+		       res))))
 	      ((null? x) (reverse res))))
 	 (proof1-or-f (prop0 (list elems ands-and-and-imps elem-imps
 				   (union-wrt formula=? stabs leftit-imps))
