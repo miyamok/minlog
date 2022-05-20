@@ -2735,8 +2735,9 @@
 			      new-pat)))
 		 (new-subst (compose-substitutions
 			     new-denom (compose-substitutions
-					new-num (compose-substitutions
-						 num-subst denom-subst))))
+					(compose-substitutions
+                                         num-subst denom-subst)
+                                        new-num)))
 		 (new-guards
 		  (let* ((num-string (term-to-haskell-expr
 				      (make-term-in-var-form num-var)))
