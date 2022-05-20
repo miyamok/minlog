@@ -1,4 +1,4 @@
-;; 2022-02-06.  psym.scm
+;; 2022-04-28.  psym.scm
 ;; 5. Predicates
 ;; =============
 
@@ -5239,6 +5239,9 @@
 ;; lists are taken to be lists of EqD.  Example:
 ;; (add-co "IMR" '("CoEqPNc" "RealEq") '("CoEqPNc" "RealEq"))
 
+(define (transpose xss)
+  (apply map list xss))
+
 (define (add-co idpc-name . opt-prim-prod-eq-info)
   (if ;partial test for correct opt-prim-prod-eq-info
    (let ((symbols (list-transform-positive opt-prim-prod-eq-info symbol?))
@@ -5288,7 +5291,6 @@
        (idpc-clauses-list (map (lambda (idpc-clauses-with-names)
 				 (map car idpc-clauses-with-names))
 			       idpc-clauses-with-names-list))
-       
        (prim-prod? (if (member 'prim (list-transform-positive
 					 opt-prim-prod-eq-info symbol?))
 		       #t #f))
@@ -5315,27 +5317,51 @@
 	   (for-each
 	    (lambda (eq-name type)
 	      (cond
-	       ((string=? "RealEq" eq-name)
-		(if (not (equal? (make-alg "rea") type))
-		    (myerror "add-co" "type rea expected" type)))
 	       ((string=? "=" eq-name)
 		(if (not (finalg? type))
 		    (myerror "add-co" "finitary algebra expected" type)))
+	       ((string=? "RatEqv" eq-name)
+		(if (not (equal? (make-alg "rat") type))
+		    (myerror "add-co" "type rat expected" type)))
+	       ((string=? "RealEq" eq-name)
+		(if (not (equal? (make-alg "rea") type))
+		    (myerror "add-co" "type rea expected" type)))
+	       ((string=? "RatFnEq" eq-name)
+		(if (not (equal? (py "rat=>rat") type))
+		    (myerror "add-co" "type rat=>rat expected" type)))
+	       ((string=? "RealFnEq" eq-name)
+		(if (not (equal? (py "rea=>rea") type))
+		    (myerror "add-co" "type rea=>rea expected" type)))
 	       (else
-		(if (not (member eq-name
-				 (list "EqD" "CoEqPNc" "EqPNc" "RealFnEq")))
-		    (myerror
-		     "add-co" "eq-name EqD, CoEqPNc, EqPNc or RealFnEq expected"
-		     eq-name)))))
+		(if (not (member eq-name (list "EqD" "CoEqPNc" "EqPNc")))
+		    (myerror "add-co" "unexpected eq-name" eq-name)))))
 	    eq-names-list (arity-to-types arity)))
 	 filled-expanded-eq-names-lists arities))
-       (var-lists (map (lambda (arity)
-       			 (map (lambda (type)
-       				(if (equal? type (make-alg "rea"))
-				    (type-to-new-var type)
-       				    (type-to-new-partial-var type)))
-       			      (arity-to-types arity)))
-       		       arities))
+       (conclss
+	(map (lambda (idpc-clauses)
+	       (map imp-impnc-all-allnc-form-to-final-conclusion idpc-clauses))
+	     idpc-clauses-list))
+       (argsss (map (lambda (concls)
+		      (map predicate-form-to-args concls))
+		    conclss))
+       (transposed-argsss (map transpose argsss))
+       (min-t-degss
+	(map (lambda (transposed-argss)
+	       (map (lambda (terms) (apply min (map term-to-t-deg terms)))
+		    transposed-argss))
+	     transposed-argsss))
+       (var-lists
+	(map (lambda (arity min-t-degs)
+	       (map type-and-t-deg-to-new-var
+		    (arity-to-types arity) min-t-degs))
+	     arities min-t-degss))
+       ;; (var-lists (map (lambda (arity)
+       ;; 			 (map (lambda (type)
+       ;; 				(if (equal? type (make-alg "rea"))
+       ;; 				    (type-to-new-var type)
+       ;; 				    (type-to-new-partial-var type)))
+       ;; 			      (arity-to-types arity)))
+       ;; 		       arities))
        ;; (mr-idpc? (mr-idpredconst-name? idpc-name))
        (nc-idpc? (nc-idpredconst-name? idpc-name))
        (clauses-with-fvars ;one for each of idpc-names
@@ -5461,12 +5487,14 @@
       (myerror "eq-name-to-predicate-generator" "string expected" eq-name))
   (cond
    ((string=? "EqD" eq-name) make-eqd)
-   ((string=? "RealEq" eq-name) make-realeq)
    ((string=? "=" eq-name) make-=)
    ((string=? "EqP" eq-name) make-eqp)
    ((string=? "EqPNc" eq-name) make-eqpnc)
    ((string=? "CoEqP" eq-name) make-coeqp)
    ((string=? "CoEqPNc" eq-name) make-coeqpnc)
+   ((string=? "RatEqv" eq-name) make-rateqv)
+   ((string=? "RealEq" eq-name) make-realeq)
+   ((string=? "RatFnEq" eq-name) make-ratfneq)
    ((string=? "RealFnEq" eq-name) make-realfneq)
    (else (myerror "eq-name-to-predicate-generator"
 		  "eq-name expected" eq-name))))
@@ -5479,5 +5507,16 @@
 (define (make-realfneq arg1 arg2)
   (make-predicate-formula
    (idpredconst-name-and-types-and-cterms-to-idpredconst "RealFnEq" '() '())
+   arg1 arg2))
+
+(define (make-rateqv arg1 arg2)
+  (make-atomic-formula
+   (mk-term-in-app-form
+    (make-term-in-const-form (pconst-name-to-pconst "RatEqv"))
+    arg1 arg2)))
+
+(define (make-ratfneq arg1 arg2)
+  (make-predicate-formula
+   (idpredconst-name-and-types-and-cterms-to-idpredconst "RatFnEq" '() '())
    arg1 arg2))
 
