@@ -1,4 +1,4 @@
-;; 2022-02-06.  formula.scm
+;; 2022-05-02.  formula.scm
 ;; 7. Formulas and comprehension terms
 ;; ===================================
 
@@ -4134,7 +4134,8 @@
 (define (beta-pi-eta-normalize-formula formula)
   (cond
    ((atom-form? formula)
-    (make-atomic-formula (nt (atom-form-to-kernel formula))))
+    (make-atomic-formula (term-to-beta-pi-eta-nf
+			  (atom-form-to-kernel formula))))
    ((predicate-form? formula)
     (let* ((pred (predicate-form-to-predicate formula))
 	   (args (predicate-form-to-args formula))
