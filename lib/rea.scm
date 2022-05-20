@@ -1,4 +1,4 @@
-;; 2021-10-15.  rea.scm
+;; 2022-04-28.  rea.scm
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -8450,4 +8450,82 @@
 ;; Proof finished.
 ;; (cdp)
 (save "RealConvEq")
+
+;; RealHalfPlus
+(set-goal "allnc x(Real x -> x===(1#2)*(x+x))")
+(assume "x" "Rx")
+(simpreal (pf "x+x===2*x"))
+(simpreal "RealTimesAssoc")
+(ng #t)
+(use "RealEqSym")
+(use "RealOneTimes")
+(autoreal)
+(simpreal (pf "x+x===1*x+1*x"))
+(simpreal "<-" "RealTimesPlusDistrLeft")
+(use "RealEqRefl")
+(autoreal)
+(simpreal "RealOneTimes")
+(use "RealEqRefl")
+(autoreal)
+;; Proof finished.
+;; (cp)
+(save "RealHalfPlus")
+
+;; RealAbsAvBd
+(set-goal "allnc x,y,z(Real x -> Real y -> abs x<<=z -> abs y<<=z ->
+ abs((1#2)*(x+y))<<=z)")
+(assume "x" "y" "z" "Rx" "Ry" "xBd" "yBd")
+(use "RealLeAbs")
+;; 3,4
+(simpreal (pf "z===(1#2)*(z+z)"))
+(use "RealLeMonTimesR")
+(use "RatLeToRealLe")
+(use "Truth")
+(use "RealLeMonPlusTwo")
+(use "RealLeTrans" (pt "abs x"))
+(use "RealLeIdAbs")
+(use "Rx")
+(use "xBd")
+(use "RealLeTrans" (pt "abs y"))
+(use "RealLeIdAbs")
+(use "Ry")
+(use "yBd")
+;; ?^6:z===(1#2)*(z+z)
+(use "RealHalfPlus")
+(autoreal)
+;; ?^4:~((1#2)*(x+y))<<=z
+(simpreal "<-" (pf "~ ~z===z"))
+(use "RealLeUMinus")
+(simpreal (pf "~z===RealTimes(1#2)(~z+ ~z)"))
+(use "RealLeMonTimesR")
+(use "RatLeToRealLe")
+(use "Truth")
+(use "RealLeMonPlusTwo")
+(simpreal "<-" (pf "~ ~x===x"))
+(use "RealLeUMinus")
+(use "RealLeTrans" (pt "abs x"))
+(simpreal "<-" "RealAbsUMinus")
+(use "RealLeIdAbs")
+(autoreal)
+(use "xBd")
+(use "RealUMinusUMinus")
+(use "Rx")
+
+(simpreal "<-" (pf "~ ~y===y"))
+(use "RealLeUMinus")
+(use "RealLeTrans" (pt "abs y"))
+(simpreal "<-" "RealAbsUMinus")
+(use "RealLeIdAbs")
+(autoreal)
+(use "yBd")
+(use "RealUMinusUMinus")
+(use "Ry")
+;; ?^23:~z===(1#2)*(~z+ ~z)
+(use "RealHalfPlus")
+(autoreal)
+(use "RealUMinusUMinus")
+(autoreal)
+;; Proof finished.
+;; (cp)
+(save "RealAbsAvBd")
 
