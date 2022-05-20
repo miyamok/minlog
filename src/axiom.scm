@@ -1,4 +1,4 @@
-;; 2022-02-06.  axiom.scm
+;; 2022-03-24.  axiom.scm
 ;; 8. Assumption variables and axioms
 ;; ==================================
 ;; To be renamed into avars scheme, with the axioms section transferred
