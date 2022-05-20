@@ -1,4 +1,4 @@
-;; 2022-03-08.  pproof.scm
+;; 2022-04-28.  pproof.scm
 ;; 11. Partial proofs
 ;; ==================
 
@@ -5859,7 +5859,7 @@
 ;; realeq-term-compat returns a proof of t(lhs)===t(rhs).  The context
 ;; is necessary to prove Real r and then reflexivity r===r for r
 ;; without x.  This needs RealUMinusCompat RealUDivCompat
-;; RealAbsCompat RealExpCompat InCompat OutCompat
+;; RealAbsCompat RealExpCompat InCompat OutCompat AvCompat VaCompat
 ;; RealPlusCompat RealTimesCompat RealMaxCompat RealMinCompat.
 
 (define (realeq-term-compat term var term1 term2 eq-proof context)
@@ -5890,7 +5890,7 @@
 	       (unary-compat-names
 		(list "RealNNegCompat" "RealUMinusCompat" "RealUDivCompat"
 		      "RealAbsCompat" "RealExpCompat"
-		      "InCompat" "OutCompat" ))
+		      "InCompat" "OutCompat" "AvCompat" "VaCompat" ))
 	       (binary-compat-names
 		(list "RealPlusCompat" "RealTimesCompat"
 		      "RealMaxCompat" "RealMinCompat")))
@@ -5931,6 +5931,24 @@
 	     ((string=? name "OutCompat")
 	      (mk-proof-in-elim-form ;of t(lhs)===t(rhs), here Out s x===Out s y
 	       (make-proof-in-aconst-form ;of x==y -> Out s x===Out s y
+		(theorem-name-to-aconst name))
+	       (term-subst (cadr args) var term1) ;t(lhs)
+	       (term-subst (cadr args) var term2) ;t(rhs)
+	       (car args)
+	       (realeq-term-compat
+		(cadr args) var term1 term2 eq-proof context)))
+	     ((string=? name "AvCompat")
+	      (mk-proof-in-elim-form ;of t(lhs)===t(rhs), here Av d x===Av d y
+	       (make-proof-in-aconst-form ;of all x,y,d(x==y -> Av d x===Av d y)
+		(theorem-name-to-aconst name))
+	       (term-subst (cadr args) var term1) ;t(lhs)
+	       (term-subst (cadr args) var term2) ;t(rhs)
+	       (car args)
+	       (realeq-term-compat
+		(cadr args) var term1 term2 eq-proof context)))
+	     ((string=? name "VaCompat")
+	      (mk-proof-in-elim-form ;of t(lhs)===t(rhs), here Va d x===Va d y
+	       (make-proof-in-aconst-form ;of x==y -> Va d x===Va d y
 		(theorem-name-to-aconst name))
 	       (term-subst (cadr args) var term1) ;t(lhs)
 	       (term-subst (cadr args) var term2) ;t(rhs)
@@ -6240,7 +6258,7 @@
 	      (let ((name (const-to-name (term-in-const-form-to-const op))))
 		(member name '("RealPlus" "RealUMinus" "RealMinus" "RealTimes"
 			       "RealUDiv" "RealDiv" "RealAbs" "RealExp"
-			       "In" "Out"
+			       "In" "Out" "Av" "Va"
 			       "RealMax" "RealMin" "RealSum"))))))
       (let* ((op (term-in-app-form-to-final-op term))
 	     (args (term-in-app-form-to-args term))
@@ -6263,7 +6281,7 @@
 	      (make-proof-in-aconst-form
 	       (theorem-name-to-aconst (string-append name "Real")))
 	      (car args) (cadr args) prev))))
-	 ((member name '("In" "Out"))
+	 ((member name '("In" "Out" "Av" "Va"))
 	  (let ((prev (context-and-term-to-realproof context (cadr args))))
 	    (and
 	     prev
