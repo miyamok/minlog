@@ -1,4 +1,14 @@
-;; 2022-02-06.  todo.scm
+;; 2022-05-11.  todo.scm
+
+;; 2022-05-11.  For simplified simultaneous (co)recursion the types
+;; should be differen (email by Jan Belle, 2020-08-26; see
+;; examples/test/pconst.scm).  For the tree, tlist example the type
+;; of (Rec tree=>alpha) is tree=>alpha=>alpha=>alpha, but it should
+;; be tree=>alpha=>(list=>alpha)=>alpha.  This problem shows up at
+;; simplified corecursion when formulating the computation rules.
+
+;; 2022-05-10.  (use "GenRead") does not work (MATCH-TREE-BOUND reached).
+;; However (intro 1) works.  Why? (see edamplesanalysissdrw.scm)
 
 ;; 2021-11-13.  Replace NatToPos by a pconst ntp with 3 computation rules,
 ;; using PosS in the last.  This is faster than NatToPos when computing
