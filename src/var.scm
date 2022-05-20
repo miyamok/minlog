@@ -312,3 +312,6 @@
 
 ;; ;; (check-restricted-var (term-in-var-form-to-var (pt "(nat=>nat)=>boole")))
 ;; ;; (check-restricted-var (term-in-var-form-to-var (pt "(nat=>alpha)=>boole")))
+(define (type-and-t-deg-to-new-var type t-deg)
+  (make-var type (+ 1 MAXVARINDEX) t-deg (default-var-name type)))
+
