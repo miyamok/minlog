@@ -1,3 +1,55 @@
+Done locally in dev branch 2022-05-20
+
+In var.scm
+
+type-and-t-deg-to-new-var added
+
+In psym.scm
+
+In add-co t-deg of variables determined by the minimal t-deg of
+argument terms in the final conclusion of clauses of the given
+idpreconst.  add-co extended to admit RatEqv and RatFnEq as
+equalities.  eq-name-to-predicate-generator extended by make-rateqv
+make-ratfneq
+
+In term.scm
+
+Problem in the Haskell translation fixed by Frederik Nordvall
+Forsberg.  It concerned the minus sign for rationals.  Two
+substitutions were composed in the wrong order, which meant that the
+minus sign was thrown away.
+
+In formula.scm
+
+In beta-pi-eta-normalize-formula term-to-beta-pi-eta-nf instead of
+nt used
+
+In axiom.scm
+
+beta-pi-eta-normalize-avar added again (was accidentially deleted).
+
+In pproof.scm
+
+realeq-term-compat and context-and-term-to-realproof extended
+
+In prop.scm
+
+In prop-c-intern constructions of stabs corrected.
+
+In lib/rea.scm
+
+RealHalfPlus RealAbsAvBd added
+
+In todo.scm
+
+Two issues added: simplified simultaneous (co)recursion, and use for
+clauses with predicate parameters.
+
+In examples/analysis/readwrite.scm
+
+Minor changes
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Done in dev branch 2022-03-08
 
 In doc/ref.tex
