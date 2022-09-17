@@ -6237,6 +6237,16 @@
 ;; LSound: cL mr L.  Hence this formula must be stored under LSound.
 ;; To check the correctness of LSound we must animate cL.
 
+;; 2022-09-10.  In add-sound we work with the proof of a theorem given
+;; by its name.  This proof can contain the identity theorem Id,
+;; usually to introduce let in the extracted term.  These uses of Id
+;; need to be removed by expand-theorems before
+;; proof-to-soundness-proof is applied.  Also the theorems Lft and Rht
+;; need to be animated, to enable computation of projections applied
+;; to pairs.
+
+(define ADD-SOUND-COMMENT-FLAG #t)
+
 (define (add-sound thm-name)
   (let* ((info (assoc thm-name THEOREMS))
 	 (proof (if info
@@ -6246,42 +6256,95 @@
     (if
      (is-used? sname '() 'theorem)
      *the-non-printing-object*
-     (let* ((sproof (proof-to-soundness-proof proof))
+     (let* (;(eproof (expand-theorems proof (lambda (x) (string=? "Id" x))))
+	    (sproof (proof-to-soundness-proof proof))
 	    (pconst-name (theorem-or-global-assumption-name-to-pconst-name
 			  thm-name)) ;cL
 	    (fla (aconst-to-formula (theorem-name-to-aconst thm-name)))
 	    (uninst-type (formula-to-et-type fla))
 	    (eterm (proof-to-extracted-term proof))
 	    (neterm (nt eterm)))
-       (if COMMENT-FLAG
-	   (begin (set! COMMENT-FLAG #f)
-		  (if (not (assoc pconst-name PROGRAM-CONSTANTS))
-		      (add-program-constant pconst-name uninst-type))
-		  (add-computation-rule
-		   (make-term-in-const-form (pconst-name-to-pconst pconst-name))
-		   neterm)
-		  (set! COMMENT-FLAG #t))
-	   (begin (if (not (assoc pconst-name PROGRAM-CONSTANTS))
-		      (add-program-constant pconst-name uninst-type))
-		  (add-computation-rule
-		   (make-term-in-const-form (pconst-name-to-pconst pconst-name))
-		   neterm)))
+       (set! ADD-SOUND-COMMENT-FLAG COMMENT-FLAG)
+       (set! COMMENT-FLAG #f)
+       (if (not (assoc pconst-name PROGRAM-CONSTANTS))
+	   (add-program-constant pconst-name uninst-type))
+       (add-computation-rule
+	(make-term-in-const-form (pconst-name-to-pconst pconst-name))
+	neterm)
        (let* ((pconst (pconst-name-to-pconst pconst-name))
 	      (pconst-term (make-term-in-const-form pconst))
 	      (new-sfla (rename-variables
 			 (real-and-formula-to-mr-formula-aux pconst-term fla)))
-	      (new-sproof (proof-to-proof-with-new-formula sproof new-sfla))
-	      (saconst (make-aconst sname 'theorem new-sfla empty-subst)))
-	 (set! THEOREMS (cons (list sname saconst new-sproof) THEOREMS))
-	 (comment "ok, " sname " has been added as a new theorem:")
-	 (if COMMENT-FLAG
-	     (begin
-	       (newline)
-	       (pp sname)
-	       (newline)
-	       (comment "with computation rule")
-	       (newline)
-	       (pp (string-append "c" thm-name "0CompRule")))))))))
+	      (idan (and (assoc "cId" PROGRAM-CONSTANTS)
+			 (pair? (pconst-name-to-comprules "cId"))))
+	      (lan (and (assoc "cLft" PROGRAM-CONSTANTS)
+			(pair? (pconst-name-to-comprules "cLft"))))
+	      (ran (and (assoc "cRht" PROGRAM-CONSTANTS)
+			(pair? (pconst-name-to-comprules "cRht")))))
+	 (if (not idan) (animate "Id"))
+	 (if (not lan) (animate "Lft"))
+	 (if (not ran) (animate "Rht"))
+	 (let* ((new-sproof (proof-to-proof-with-new-formula sproof new-sfla))
+		(saconst (make-aconst sname 'theorem new-sfla empty-subst)))
+	   (set! THEOREMS (cons (list sname saconst new-sproof) THEOREMS))
+	   (if (not idan) (deanimate "Id"))
+	   (if (not lan) (deanimate "Lft"))
+	   (if (not ran) (deanimate "Rht"))
+	   (set! COMMENT-FLAG ADD-SOUND-COMMENT-FLAG)
+	   (comment "ok, " sname " has been added as a new theorem:")
+	   (newline)
+	   (pp sname)
+	   (newline)
+	   (comment "with computation rule")
+	   (newline)
+	   (pp (string-append "c" thm-name "0CompRule"))))))))
+
+;; Code discarded 2022-09-10
+;; (define (add-sound thm-name)
+;;   (let* ((info (assoc thm-name THEOREMS))
+;; 	 (proof (if info
+;; 		    (theorem-name-to-proof thm-name)
+;; 		    (myerror "add-sound" "theorem" thm-name "missing")))
+;; 	 (sname (string-append thm-name "Sound"))) ;LSound
+;;     (if
+;;      (is-used? sname '() 'theorem)
+;;      *the-non-printing-object*
+;;      (let* ((sproof (proof-to-soundness-proof proof))
+;; 	    (pconst-name (theorem-or-global-assumption-name-to-pconst-name
+;; 			  thm-name)) ;cL
+;; 	    (fla (aconst-to-formula (theorem-name-to-aconst thm-name)))
+;; 	    (uninst-type (formula-to-et-type fla))
+;; 	    (eterm (proof-to-extracted-term proof))
+;; 	    (neterm (nt eterm)))
+;;        (if COMMENT-FLAG
+;; 	   (begin (set! COMMENT-FLAG #f)
+;; 		  (if (not (assoc pconst-name PROGRAM-CONSTANTS))
+;; 		      (add-program-constant pconst-name uninst-type))
+;; 		  (add-computation-rule
+;; 		   (make-term-in-const-form (pconst-name-to-pconst pconst-name))
+;; 		   neterm)
+;; 		  (set! COMMENT-FLAG #t))
+;; 	   (begin (if (not (assoc pconst-name PROGRAM-CONSTANTS))
+;; 		      (add-program-constant pconst-name uninst-type))
+;; 		  (add-computation-rule
+;; 		   (make-term-in-const-form (pconst-name-to-pconst pconst-name))
+;; 		   neterm)))
+;;        (let* ((pconst (pconst-name-to-pconst pconst-name))
+;; 	      (pconst-term (make-term-in-const-form pconst))
+;; 	      (new-sfla (rename-variables
+;; 			 (real-and-formula-to-mr-formula-aux pconst-term fla)))
+;; 	      (new-sproof (proof-to-proof-with-new-formula sproof new-sfla))
+;; 	      (saconst (make-aconst sname 'theorem new-sfla empty-subst)))
+;; 	 (set! THEOREMS (cons (list sname saconst new-sproof) THEOREMS))
+;; 	 (comment "ok, " sname " has been added as a new theorem:")
+;; 	 (if COMMENT-FLAG
+;; 	     (begin
+;; 	       (newline)
+;; 	       (pp sname)
+;; 	       (newline)
+;; 	       (comment "with computation rule")
+;; 	       (newline)
+;; 	       (pp (string-append "c" thm-name "0CompRule")))))))))
 
 ;; Code discarded 2021-10-24
 ;; (define (add-sound thm-name)
