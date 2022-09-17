@@ -1,4 +1,4 @@
-;; 2022-04-28.  psym.scm
+;; 2022-05-24.  psym.scm
 ;; 5. Predicates
 ;; =============
 
@@ -5239,7 +5239,7 @@
 ;; lists are taken to be lists of EqD.  Example:
 ;; (add-co "IMR" '("CoEqPNc" "RealEq") '("CoEqPNc" "RealEq"))
 
-(define (transpose xss)
+(define (transpos xss)
   (apply map list xss))
 
 (define (add-co idpc-name . opt-prim-prod-eq-info)
@@ -5344,7 +5344,7 @@
        (argsss (map (lambda (concls)
 		      (map predicate-form-to-args concls))
 		    conclss))
-       (transposed-argsss (map transpose argsss))
+       (transposed-argsss (map transpos argsss))
        (min-t-degss
 	(map (lambda (transposed-argss)
 	       (map (lambda (terms) (apply min (map term-to-t-deg terms)))
