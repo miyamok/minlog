@@ -1,4 +1,30 @@
-Done locally in dev branch 2022-05-20
+Done in dev branch 2022-09-17
+
+In examples/analysis/
+
+New file sdind.scm added
+
+In ets.scm
+
+In add-sound we work with the proof of a theorem given by its name.
+This proof can contain the identity theorem Id, usually to introduce
+let in the extracted term.  These uses of Id need to be removed by
+expand-theorems before proof-to-soundness-proof is applied.  Also the
+theorems Lft and Rht need to be animated, to enable computation of
+projections applied to pairs.
+
+In psym.scm
+
+transpose renamed into transpos.  Reason: transpose already defined
+in lalr.scm
+
+In examples/arith/quotrem.scm
+
+Adapted to sharp substitutions.  ex k,l replaced by exd k exl l.
+Defined pairs used.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Done in dev branch 2022-05-20
 
 In var.scm
 
