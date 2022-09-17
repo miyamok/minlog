@@ -1,4 +1,4 @@
-;; 2020-08-01.  quotrem.scm
+;; 2022-06-18.  quotrem.scm
 
 ;; (load "~/git/minlog/init.scm")
 
@@ -9,34 +9,36 @@
 (add-var-name "k" (py "nat"))
 
 ;; QR
-(set-goal "all m,n ex k,l(n=(m+1)*k+l & l<m+1)")
+(set-goal "all m,n exd k exl l(n=(m+1)*k+l andnc l<m+1)")
 (assume "m")
 (ind)
+;; 3,4
 ;; Base
-(ex-intro (pt "0"))
-(ex-intro (pt "0"))
+(intro 0 (pt "0"))
+(intro 0 (pt "0"))
 (split)
 (use "Truth")
 (use "Truth")
+;; 4
 ;; Step
 (assume "n" "IH")
 (by-assume "IH" "k" "kProp")
 (by-assume "kProp" "l" "klProp")
 (cases (pt "l<m"))
-
+;; 16,17
 ;; Case l<m
 (assume "l<m")
-(ex-intro (pt "k"))
-(ex-intro (pt "l+1"))
+(intro 0 (pt "k"))
+(intro 0 (pt "l+1"))
 (ng)
 (split)
 (use "klProp")
 (use "l<m")
-
+;; 17
 ;; Case l<m -> F
 (assume "l<m -> F")
-(ex-intro (pt "k+1"))
-(ex-intro (pt "0"))
+(intro 0 (pt "k+1"))
+(intro 0 (pt "0"))
 (ng)
 (split)
 (assert "l=m")
@@ -50,22 +52,26 @@
 (use "klPropSimp")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "QR")
 
 (define eterm (proof-to-extracted-term (theorem-name-to-proof "QR")))
-(add-var-name "p" (py "nat@@nat"))
+(add-var-name "nm" (py "nat yprod nat"))
 (define neterm (rename-variables (nt eterm)))
-(pp neterm)
+(ppc neterm)
 
 ;; [n,n0]
-;;  (Rec nat=>nat@@nat)n0(0@0)
-;;  ([n1,p][if (right p<n) (left p@Succ right p) (Succ left p@0)])
+;;  (Rec nat=>nat yprod nat)n0(0 pair 0)
+;;  ([n1,nm]
+;;    [case nm
+;;      (n2 pair n3 -> 
+;;      [case (n3<n) (True -> n2 pair Succ n3) (False -> Succ n2 pair 0)])])
 
 (pp (nt (mk-term-in-app-form neterm (pt "2") (pt "7"))))
 (pp (nt (mk-term-in-app-form neterm (pt "5") (pt "7"))))
 (pp (nt (mk-term-in-app-form neterm (pt "6") (pt "54"))))
 (pp (nt (mk-term-in-app-form neterm (pt "6") (pt "754")))) 
-;; 107@5
+;; 107 pair 5
 
 (define expr (term-to-scheme-expr neterm))
 
@@ -73,16 +79,12 @@
 ;;   (lambda (n0)
 ;;     (((natRec n0) (cons 0 0))
 ;;       (lambda (n1)
-;;         (lambda (p)
-;;           (if (< (cdr p) n)
-;;               (cons (car p) (+ (cdr p) 1))
-;;               (cons (+ (car p) 1) 0)))))))
+;;         (lambda (nm)
+;;           (((lambda (n2)
+;;               (lambda (n3)
+;;                 (if (< n3 n) (cons n2 (+ n3 1)) (cons (+ n2 1) 0))))
+;;              (car nm))
+;;             (cdr nm)))))))
 
 (((ev expr) 6) 754)
 ;; (107 . 5)
-
-(((ev expr) 682) 387688)
-;; (567 . 427)
-
-;; (+ (* 567 683) 427)
-;; 387688
