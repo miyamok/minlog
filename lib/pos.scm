@@ -1,4 +1,4 @@
-;; 2022-03-08.  pos.scm
+;; 2023-04-16.  pos.scm
 
 ;; (load "~/git/minlog/init.scm")
 ;; (set! COMMENT-FLAG #f)
@@ -5330,6 +5330,49 @@
 ;; (cdp)
 (add-rewrite-rule "p<=SZero p" "True")
 
+;; Added 2023-04-16
+
+;;  NatLtZeroPosToNat
+(set-goal "all p Zero<PosToNat p")
+(ind)
+;; 2-4
+(use "Truth")
+;; 3
+(assume "p" "IH")
+(use "NatLtLeTrans" (pt "PosToNat p"))
+(use "IH")
+(simp "PosToNatLe")
+(use "Truth")
+;; 4
+(assume "p" "IH")
+(use "NatLtLeTrans" (pt "PosToNat p"))
+(use "IH")
+(simp "PosToNatLe")
+(use "PosLeTrans" (pt "SZero p"))
+(use "Truth")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "NatLtZeroPosToNat")
+
+;; PosToNatNotZero
+(set-goal "all p(PosToNat p=Zero -> F)")
+(assume "p" "p=0")
+(assert "PosToNat p<=Zero")
+(use "p=0")
+;; Assertion proved.
+(assume "p<=0")
+(assert "PosToNat p<PosToNat p")
+(use "NatLeLtTrans" (pt "Zero"))
+(use "p<=0")
+(use "NatLtZeroPosToNat")
+;; Assertion proved.
+(assume "Absurd")
+(use "Absurd")
+;; Proof finished.
+;; (cp)
+(save "PosToNatNotZero")
+
 ;; PosLeMonPosExp
 (set-goal "all p,n,m(n<=m -> p**n<=p**m)")
 (assume "p")
@@ -6275,4 +6318,89 @@
 ;;    [if (NatLt(PosToNat p)(PosToNat(2**PosLog p))) Zero (PosLog p)]]
 
 ;; (deanimate "PosLeCases")
+
+;; Added 2023-04-16
+
+(add-program-constant "PosF" (py "nat=>pos"))
+(add-computation-rules
+ "PosF Zero" "One"
+ "PosF(Succ n)" "PosF n*cNatPos(Succ n)")
+
+(set-totality-goal "PosF")
+(fold-alltotal)
+(ind)
+(use "TotalVar")
+(assume "n" "Tn")
+(ng #t)
+(use "PosTimesTotal")
+(use "Tn")
+(use "TotalVar")
+;; Proof finished.
+;; (cp)
+(save-totality)
+
+;; PosFToNatF
+(set-goal "all n PosToNat(PosF n)=NatF n")
+(ind)
+(use "Truth")
+(assume "n" "IH")
+(simp "PosF1CompRule")
+(simp "PosToNatTimes")
+(simp "NatPosExFree")
+(simp "PosToNatToPosId")
+(simp "IH")
+(use "Truth")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "PosFToNatF")
+
+;; NatFToPosF
+(set-goal "all n NatToPos(NatF n)=PosF n")
+(assume "n")
+(use "PosEqTrans" (pt "NatToPos(PosToNat(PosF n))"))
+(simp "PosFToNatF")
+(use "Truth")
+(use "NatToPosToNatId")
+;; Proof finished.
+;; (cp)
+(save "NatFToPosF")
+
+;; NatLeOneNatF
+(set-goal "all n Succ Zero<=NatF n")
+(ind)
+(use "Truth")
+(assume "n" "IH")
+(simp "<-" "PosFToNatF")
+(use "NatLtToSuccLe")
+(use "NatLtZeroPos")
+;; Proof finished.
+;; (cp)
+(save "NatLeOneNatF")
+
+;; PosTimesChoosePosF
+(set-goal "all n,m(m<=n -> cNatPos(Choose n m)*PosF(n--m)*PosF m=PosF n)")
+(assume "n" "m" "m<=n")
+(simp "<-" "NatFToPosF")
+(simp "NatPosExFree")
+(simp "<-" "NatToPosTimes")
+(simp "<-" "NatFToPosF")
+(simp "<-" "NatToPosTimes")
+(simp "NatTimesChooseNatF")
+(use "NatFToPosF")
+(use "m<=n")
+(use "NatLtZeroNatF")
+(use "NatSuccLeToLt")
+(simp (pf "Succ Zero=Succ Zero*Succ Zero"))
+(use "NatLeMonTimes")
+(use "NatLeToLeOneChoose")
+(use "m<=n")
+(use "NatLeOneNatF")
+(use "Truth")
+(use "NatLtZeroNatF")
+(use "NatLeToLtZeroChoose")
+(use "m<=n")
+;; Proof finished.
+;; (cp)
+(save "PosTimesChoosePosF")
 
