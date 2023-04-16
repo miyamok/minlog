@@ -1,4 +1,4 @@
-;; 2022-03-08.  nat.scm
+;; 2023-01-25.  nat.scm
 
 ;; (load "~/git/minlog/init.scm")
  
@@ -3343,94 +3343,98 @@
 (save "NatEqTotal")
 
 ;; The following would fit better into a file lib/boole.scm
+;; Renamed into EqFalseToNeg NegToEqFalse and moved to ets.scm
 
-;; EqFalseToNeg
-(set-goal "all boole(boole=False -> boole -> F)")
-(cases)
-(assume "Absurd" "Useless")
-(use "Absurd")
-(assume "Useless" "Absurd")
-(use "Absurd")
-;; Proof finished.
-;; (cdp)
-(save "EqFalseToNeg")
+;; ;; EqFalseToNeg
+;; (set-goal "all boole(boole=False -> boole -> F)")
+;; (cases)
+;; (assume "Absurd" "Useless")
+;; (use "Absurd")
+;; (assume "Useless" "Absurd")
+;; (use "Absurd")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save "EqFalseToNeg")
 
-;; NegToEqFalse
-(set-goal "all boole((boole -> F) -> boole=False)")
-(cases)
-(assume "Absurd")
-(use-with "Absurd" "Truth")
-(assume "Useless")
-(use "Truth")
-;; Proof finished.
-;; (cdp)
-(save "NegToEqFalse")
+;; ;; NegToEqFalse
+;; (set-goal "all boole((boole -> F) -> boole=False)")
+;; (cases)
+;; (assume "Absurd")
+;; (use-with "Absurd" "Truth")
+;; (assume "Useless")
+;; (use "Truth")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save "NegToEqFalse")
 
-;; OrIntroLeft
-(set-goal "all boole1,boole2(boole1 -> boole1 orb boole2)")
-(cases)
-(strip)
-(use "Truth")
-(cases)
-(strip)
-(use "Truth")
-(assume "Absurd")
-(use "Absurd")
-;; Proof finished.
-;; (cdp)
-(save "OrIntroLeft")
+;; Theorems OrIntroLeft OrIntroRight OrElim IfAndb IfOrb moved here
+;; from nat.scm
 
-;; OrIntroRight
-(set-goal "all boole1,boole2(boole2 -> boole1 orb boole2)")
-(cases)
-(strip)
-(use "Truth")
-(cases)
-(strip)
-(use "Truth")
-(assume "Absurd")
-(use "Absurd")
-;; Proof finished.
-;; (cdp)
-(save "OrIntroRight")
+;; ;; OrIntroLeft
+;; (set-goal "all boole1,boole2(boole1 -> boole1 orb boole2)")
+;; (cases)
+;; (strip)
+;; (use "Truth")
+;; (cases)
+;; (strip)
+;; (use "Truth")
+;; (assume "Absurd")
+;; (use "Absurd")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save "OrIntroLeft")
 
-;; OrElim
-(set-goal "all boole1,boole2(
- boole1 orb boole2 -> (boole1 -> Pvar) -> (boole2 -> Pvar) -> Pvar)")
-(cases)
-(assume "boole1" "Useless1" "Hyp" "Useless2")
-(use-with "Hyp" "Truth")
-(cases)
-(assume "Useless1" "Useless2" "Hyp")
-(use-with "Hyp" "Truth")
-(ng #t)
-(assume "Absurd" "Hyp1" "Hyp2")
-(use-with "Hyp1" "Absurd")
-;; Proof finished.
-;; (cdp)
-(save "OrElim")
+;; ;; OrIntroRight
+;; (set-goal "all boole1,boole2(boole2 -> boole1 orb boole2)")
+;; (cases)
+;; (strip)
+;; (use "Truth")
+;; (cases)
+;; (strip)
+;; (use "Truth")
+;; (assume "Absurd")
+;; (use "Absurd")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save "OrIntroRight")
 
-;; IfAndb
-(set-goal "all boole1,boole2 [if boole1 boole2 False]=(boole1 andb boole2)")
-(cases)
-(assume "boole1")
-(use "Truth")
-(assume "boole1")
-(use "Truth")
-;; Proof finished.
-;; (cdp)
-(save "IfAndb")
+;; ;; OrElim
+;; (set-goal "all boole1,boole2(
+;;  boole1 orb boole2 -> (boole1 -> Pvar) -> (boole2 -> Pvar) -> Pvar)")
+;; (cases)
+;; (assume "boole1" "Useless1" "Hyp" "Useless2")
+;; (use-with "Hyp" "Truth")
+;; (cases)
+;; (assume "Useless1" "Useless2" "Hyp")
+;; (use-with "Hyp" "Truth")
+;; (ng #t)
+;; (assume "Absurd" "Hyp1" "Hyp2")
+;; (use-with "Hyp1" "Absurd")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save "OrElim")
 
-;; IfOrb
-(set-goal "all boole1,boole2 [if boole1 True boole2]=(boole1 orb boole2)")
-(cases)
-(assume "boole1")
-(use "Truth")
-(assume "boole1")
-(use "Truth")
-;; Proof finished.
-;; (cdp)
-(save "IfOrb")
+;; ;; IfAndb
+;; (set-goal "all boole1,boole2 [if boole1 boole2 False]=(boole1 andb boole2)")
+;; (cases)
+;; (assume "boole1")
+;; (use "Truth")
+;; (assume "boole1")
+;; (use "Truth")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save "IfAndb")
+
+;; ;; IfOrb
+;; (set-goal "all boole1,boole2 [if boole1 True boole2]=(boole1 orb boole2)")
+;; (cases)
+;; (assume "boole1")
+;; (use "Truth")
+;; (assume "boole1")
+;; (use "Truth")
+;; ;; Proof finished.
+;; ;; (cdp)
+;; (save "IfOrb")
 
 ;; NatNegbLeEqLt
 (set-goal "all n,m negb(n<=m)=(m<n)")
@@ -4579,6 +4583,28 @@
 ;; (cdp)
 (save "NatLeMonMinus")
 
+;; NatLeMonMinusLeft
+(set-goal "all n,m,l(m<=l -> m--n<=l--n)")
+(ind)
+(ng #t)
+(assume "m" "l" "m<=l")
+(use "m<=l")
+(assume "n" "IH")
+(cases)
+(ng #t)
+(strip)
+(use "Truth")
+(assume "m")
+(cases)
+(assume "Absurd")
+(use "EfAtom")
+(use "Absurd")
+(ng #t)
+(use "IH")
+;; Proof finished.
+;; (cp)
+(save "NatLeMonMinusLeft")
+
 ;; NatLeMonMax
 (set-goal "all n,m,l,l0(n<=m -> l<=l0 -> n max l<=m max l0)")
 (ind)
@@ -4620,6 +4646,36 @@
 ;; Proof finished.
 ;; (cdp)
 (save "NatLeMonMax")
+
+;; NatLtMax
+(set-goal "all n,m,l(l+l<n+m -> l<n max m)")
+(assume "n" "m" "l" "LtHyp")
+(use "NatNotLeToLt")
+(assume "LeHyp")
+
+(assert "n<=l")
+(use "NatLeTrans" (pt "n max m"))
+(use "NatMaxUB1")
+(use "LeHyp")
+(assume "n<=l")
+
+(assert "m<=l")
+(use "NatLeTrans" (pt "n max m"))
+(use "NatMaxUB2")
+(use "LeHyp")
+(assume "m<=l")
+
+(assert "n+m<=l+l")
+(use "NatLeMonPlus")
+(auto)
+(assume "n+m<=l+l")
+
+(assert "l+l<l+l")
+(use "NatLtLeTrans" (pt "n+m"))
+(auto)
+;; Proof finished.
+;; (cp)
+(save "NatLtMax")
 
 ;; NatPlusMinus
 (set-goal "all n,m,l(l<=m -> n+(m--l)=n+m--l)")
@@ -4892,6 +4948,24 @@
 ;; Proof finished.
 ;; (cdp)
 (save "NatMinusZero")
+
+;; NatMinusPlusLe
+(set-goal "all n, m n<=n--m+m")
+(assume "n" "m")
+(cases (pt "n<=m"))
+(assume "n<=m")
+(simp "NatMinusZero")
+(use "n<=m")
+(use "n<=m")
+(assume "n</=m")
+(simp "NatMinusPlusEq")
+(use "Truth")
+(use "NatLtToLe")
+(use "NatNotLeToLt")
+(use "n</=m")
+;; Proof finished.
+;; (cp)
+(save "NatMinusPlusLe")
 
 ;; NatMinusMax
 (set-goal "all n,m n max m--n=m--n")
@@ -6385,6 +6459,305 @@
 ;; (cdp)
 (save "CoEqPNatNcZeroZero")
 
+;; 2023-04-16.  Choose (binomial coefficients) added
+
+(add-program-constant "Choose" (py "nat=>nat=>nat"))
+
+(add-computation-rules
+ "Choose Zero Zero" "Succ Zero"
+ "Choose Zero(Succ m)" "Zero"
+ "Choose(Succ n)Zero" "Succ Zero"
+ "Choose(Succ n)(Succ m)" "Choose n m+Choose n(Succ m)")
+
+(set-totality-goal "Choose")
+(fold-alltotal)
+(ind)
+;; 3,4
+(fold-alltotal)
+(cases)
+(use "NatTotalVar")
+(assume "n")
+(use "NatTotalVar")
+;; 4
+(assume "n" "IH")
+(fold-alltotal)
+(cases)
+(use "NatTotalVar")
+(assume "m")
+(use "NatPlusTotal")
+(use "IH")
+(use "NatTotalVar")
+(use "IH")
+(use "NatTotalVar")
+;; Proof finished.
+;; (cdp)
+(save-totality)
+
+(set-goal "all n Choose n Zero=Succ Zero")
+(cases)
+(use "Truth")
+(assume "n")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(add-rewrite-rule "Choose n Zero" "Succ Zero")
+
+(set-goal "all n Choose n(Succ Zero)=n")
+(cases)
+(use "Truth")
+(ind)
+(use "Truth")
+(assume "n" "IH")
+(ng)
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(add-rewrite-rule "Choose n(Succ Zero)" "n")
+
+;; NatLtToChooseZero
+(set-goal "all n,m(n<m -> Choose n m=Zero)")
+(ind)
+;; 2,3
+(cases)
+(ng #t)
+(assume "Absurd")
+(use "Absurd")
+(assume "m" "Useless")
+(use "Truth")
+;; 3
+(assume "n" "IH")
+(cases)
+(assume "Absurd")
+(use "Absurd")
+(ng #t)
+(assume "m" "n<m")
+(simp "IH")
+(ng #t)
+(use "IH")
+(use "NatLtTrans" (pt "m"))
+(use "n<m")
+(use "Truth")
+(use "n<m")
+;; Proof finished.
+;; (cdp)
+(save "NatLtToChooseZero")
+
+(set-goal "all n Choose n(Succ n)=Zero")
+(assume "n")
+(use "NatLtToChooseZero")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(add-rewrite-rule "Choose n(Succ n)" "Zero")
+
+(set-goal "all n Choose n n=Succ Zero")
+(ind)
+;; 2,3
+(use "Truth")
+;; 3
+(assume "n" "IH")
+(ng #t)
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(add-rewrite-rule "Choose n n" "Succ Zero")
+
+(set-goal "all n Choose(Succ n)n=Succ n")
+(ind)
+;; 2,3
+(use "Truth")
+;; 3
+(assume "n" "IH")
+(use "IH")
+;; Proof finished.
+;; (cdp)
+(add-rewrite-rule "Choose(Succ n)n" "Succ n")
+
+;; NatLeToLtZeroChoose
+(set-goal "all n,m(m<=n -> Zero<Choose n m)")
+(ind)
+;; 2,3
+(cases)
+;; 4,5
+(assume "Useless")
+(use "Truth")
+;; 5
+(assume "n" "Absurd")
+(use "Absurd")
+;; 3
+(assume "n" "IH")
+(cases)
+;; 9,10
+(assume "Useless")
+(use "Truth")
+(assume "m" "m<=n")
+(ng #t)
+(use "NatLeLtTrans" (pt "Zero+Choose n(Succ m)"))
+(use "Truth")
+(simp "NatLt3RewRule")
+(use "IH")
+(use "m<=n")
+;; Proof finished.
+;; (cp)
+(save "NatLeToLtZeroChoose")
+
+;; NatLeToLeOneChoose
+(set-goal "all n,m(m<=n -> Succ Zero<=Choose n m)")
+(assume "n" "m" "m<=n")
+(use "NatLtToSuccLe")
+(use  "NatLeToLtZeroChoose")
+(use "m<=n")
+;; Proof finished.
+;; (cp)
+(save "NatLeToLeOneChoose")
+
+;; NatPosToChooseSuccPred
+(set-goal "all n,m(Zero<m ->  Choose(Succ n)m=Choose n(Pred m)+Choose n m)")
+(ind)
+;; 2,3
+(cases)
+(assume "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 5
+(assume "n")
+(ng #t)
+(assume "Useless")
+(use "Truth")
+;; 3
+(assume "n" "IH")
+(cases)
+(assume "Absurd")
+(use "EfAtom")
+(use "Absurd")
+(assume "m" "Useless")
+(ng #t)
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "NatPosToChooseSuccPred")
+
+;; 2023-03-05.  Faculty added.  Relation between Choose and NatF proved.
+
+(add-program-constant "NatF" (py "nat=>nat"))
+(add-computation-rules
+ "NatF Zero" "Succ Zero"
+ "NatF(Succ n)" "NatF n*(Succ n)")
+
+(set-totality-goal "NatF")
+(fold-alltotal)
+(ind)
+(use "TotalVar")
+(assume "n" "Tn")
+(ng #t)
+(use "NatPlusTotal")
+(use "NatTimesTotal")
+(use "Tn")
+(use "TotalVar")
+(use "Tn")
+;; Proof finished.
+;; (cp)
+(save-totality)
+
+;; NatTimesChooseNatF
+(set-goal "all n,m(m<=n -> Choose n m*NatF(n--m)*NatF m=NatF n)")
+(ind)
+;; 2,3
+(cases)
+;; 4,5
+(assume "Useless")
+(use "Truth")
+;; 5
+(assume "n" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 3
+(assume "n" "IH")
+(cases)
+;; 10,11
+(assume "Useless")
+(use "Truth")
+;; 11
+(assume "m" "m<=n")
+(use "NatLeCases" (pt "m")(pt "n"))
+(use "m<=n")
+;; 15
+(assume "m<n")
+(defnc "n0" "NatF(Succ n)")
+(defnc "m0" "NatF(Succ m)")
+(simp "<-" "n0Def")
+(simp "<-" "m0Def")
+(ng #t)
+(simp (pf "Choose n m*NatF(n--m)*m0=Choose n m*NatF(n--m)*(NatF m)*(Succ m)"))
+(simp "IH")
+(simp (pf "NatF(n--m)=NatF(n--(Succ m))*(n--m)"))
+(simp (pf "Choose n(Succ m)*(NatF(n--Succ m)*(n--m))*m0=
+           Choose n(Succ m)*NatF(n--Succ m)*m0*(n--m)"))
+(simp "m0Def")
+(assert "Succ m<=n")
+(use "NatLtToSuccLe")
+(use "m<n")
+(assume "Sm<=n")
+(inst-with-to "IH" (pt "Succ m") "Sm<=n" "Inst")
+(simp "Inst")
+(simp "<-" "NatTimesPlusDistr")
+;; ?^51:NatF n*(Succ m+(n--m))=n0
+(simp "NatPlusMinus")
+(simp "NatPlusComm")
+(simp "<-" "NatPlusMinusAssoc")
+(simp "NatMinus1RewRule")
+(simp "n0Def")
+(use "Truth")
+;; 56
+(use "Truth")
+;; 53
+(use "NatLtToLe")
+(use "m<n")
+;; 42
+(simp "<-" "NatTimesAssoc")
+(simp "<-" "NatTimesAssoc")
+(simp (pf "(n--m)*m0=m0*(n--m)"))
+(use "Truth")
+(use "NatTimesComm")
+;; 40
+(simp (pf "n--m=Succ(n--Succ m)"))
+(use "Truth")
+(ng #t)
+(simp "NatSuccPred")
+(use "Truth")
+(simp (pf "Zero=m--m"))
+(use "NatLtMonMinusLeft")
+(use "m<n")
+(use "Truth")
+(use "Truth")
+;; 38
+(use "m<=n")
+;; 36
+(simp "m0Def")
+(use "Truth")
+;; 16
+(assume "m=n")
+(simp "m=n")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "NatTimesChooseNatF")
+
+;; NatLtZeroNatF
+(set-goal "all n Zero<NatF n")
+(ind)
+(use "Truth")
+(assume "n" "IH")
+(ng #t)
+(use "NatLtLeTrans" (pt "Zero+NatF n"))
+(use "IH")
+(use "NatLeMonPlus")
+(use "Truth")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "NatLtZeroNatF")
+ 
 ;; (display-default-varnames)
 
 ;; nw: 	nat ysum gamma
