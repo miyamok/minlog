@@ -409,6 +409,33 @@
 		   (term-to-token-tree (cadr args))))
 	 #f))))
 
+;; RatNum and RatDen not needed in this file
+;; (add-program-constant "RatNum" (py "rat=>int"))
+;; (add-computation-rules
+;;  "RatNum(k#p)" "k")
+
+;; (set-totality-goal "RatNum")
+;; (fold-alltotal)
+;; (cases)
+;; (assume "k" "p")
+;; (use "TotalVar")
+;; ;; Proof finished.
+;; ;; (cp)
+;; (save-totality)
+
+;; (add-program-constant "RatDen" (py "rat=>pos"))
+;; (add-computation-rules
+;;  "RatDen(k#p)" "p")
+
+;; (set-totality-goal "RatDen")
+;; (fold-alltotal)
+;; (cases)
+;; (assume "k" "p")
+;; (use "TotalVar")
+;; ;; Proof finished.
+;; ;; (cp)
+;; (save-totality)
+
 ;; 2. Parsing and display for arithmetical operations
 ;; ==================================================
 
@@ -2900,7 +2927,55 @@
 (ng)
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatUDivTimes")
+
+;; With positivity assumptions we can have = rather than ==
+
+;; RatUDivTimesEq
+(set-goal "all a(0<abs a -> all b(0<abs b ->
+ RatUDiv(a*b)=(RatUDiv a)*(RatUDiv b)))")
+(cases)
+(cases)
+;; 3-5
+(assume "p1" "q1" "Useless1")
+(cases)
+(cases)
+;; 8-10
+(assume "p2" "q2" "Useless2")
+(ng #t)
+(use "Truth")
+;; 9
+(assume "p2" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 10
+(assume "p2" "q2" "Useless2")
+(ng #t)
+(use "Truth")
+;; 4
+(assume "p1" "Absurd" "b" "Useless")
+(use "EfAtom")
+(use "Absurd")
+;; 5
+(assume "p1" "q1" "Useless1")
+(cases)
+(cases)
+;; 21-23
+(assume "p2" "q2" "Useless2")
+(ng #t)
+(use "Truth")
+;; 22
+(assume "p2" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 23
+(assume "p2" "q2" "Useless2")
+(ng #t)
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatUDivTimesEq")
 
 ;; RatTimesUDivR
 (set-goal "all a(0<abs a -> a*RatUDiv a==1)")
@@ -2911,6 +2986,7 @@
 (use "RatEqvSym")
 (use "RatUDivExpandRInst")
 ;; Proof finished.
+;; (cp)
 (save "RatTimesUDivR")
 
 ;; RatUDivUDiv
@@ -2927,7 +3003,26 @@
 (assume "p" "q")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatUDivUDiv")
+
+;; RatUDivUDivEq
+(set-goal "all a(0<abs a -> RatUDiv(RatUDiv a)=a)")
+(cases)
+(cases)
+;; 3-5
+(assume "p" "q" "Useless")
+(use "Truth")
+;; 4
+(assume "q" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 5
+(assume "p" "q" "Useless")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatUDivUDivEq")
 
 ;; RatAbsCompat
 (set-goal "all a,b(a==b -> abs a==abs b)")
@@ -2991,6 +3086,7 @@
 (assume "EqHyp")
 (use "EqHyp")
 ;; Proof finished.
+;; (cp)
 (save "RatAbsCompat")
 
 ;; RatHalfCompat
@@ -3015,6 +3111,7 @@
 (simp "kq=jp")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatHalfCompat")
 
 ;; RatEqvExpIntNegUDivExp
@@ -3032,8 +3129,27 @@
 (assume "p1" "q")
 (use "Truth")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatEqvExpIntNegUDivExp")
+
+;; RatEqvExpIntNegUDivExpEq
+(set-goal "all p,a(0<abs a -> a**IntN p=RatUDiv a**p)")
+(assume "p")
+(cases)
+(cases)
+;; 4-6
+(assume "p1" "q" "Useless")
+(use "Truth")
+;; 5
+(assume "q" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 6
+(assume "p1" "q" "Useless")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatEqvExpIntNegUDivExpEq")
 
 ;; RatExpCompatPos
 (set-goal "all p,a,b(a==b -> a**p==b**p)")
@@ -3048,15 +3164,12 @@
 (simp "<-" "IntExpTimesPos")
 (use "Truth")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatExpCompatPos")
 
-;; As examples of simprat we prove some inequalities useful later for
-;; estimates.
-
 ;; RatExpPosS
-(set-goal "all a,r a**PosS r==a**r*a")
-(assert "all a,r a**PosToNat(PosS r)==a**PosToNat r*a")
+(set-goal "all a,r a**PosS r=a**r*a")
+(assert "all a,r a**PosToNat(PosS r)=a**PosToNat r*a")
 (cases)
 (cases)
 ;; 5-7
@@ -3080,7 +3193,9 @@
 (simp "PosToNatToPosId")
 (simp "<-" "IntPNatToPosEqNatToInt")
 (simp "NatToPosToNatId")
-(ng)
+(ng #t)
+;; ?^29:p**PosS r=p**r*p
+(simp "PosSSucc")
 (use "Truth")
 (use "NatLt0Pos")
 (simp "SuccPosPred")
@@ -3107,10 +3222,12 @@
 (simp "<-" "PosToNatToIntId")
 (use "Assertion")
 ;; Proof finished
+;; (cp)
 (save "RatExpPosS")
+(add-rewrite-rule "a**PosS r" "a**r*a")
 
 ;; RatExpSucc
-(set-goal "all n,a a**Succ n==a*a**n")
+(set-goal "all n,a a**Succ n=a**n*a")
 (cases)
 (cases)
 (assume "k" "p")
@@ -3119,12 +3236,86 @@
 (simp "NatToInt1CompRule")
 (simp "<-" "IntPNatToPosEqNatToInt")
 (simp "IntS1CompRule")
-(simprat "RatExpPosS")
-(simp "RatTimesComm")
+(simp "RatExpPosS")
 (use "Truth")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatExpSucc")
+(add-rewrite-rule "a**Succ n" "a**n*a")
+
+;; RatExpIntS
+(set-goal "all a,n a**IntS n=a**n*a")
+(assume "a" "n")
+(simp "IntSNat")
+(use "RatExpSucc")
+;; Proof finished.
+;; (cp)
+(save "RatExpIntS")
+(add-rewrite-rule "a**IntS n" "a**n*a")
+
+;; Need (in int.scm, after IntPosTimes)
+
+;; IntPosToTimesPos
+(set-goal "all k,j(0<k -> 0<j -> 0<k*j)")
+(cases)
+;; 2-4
+(assume "p")
+(cases)
+;; 6-8
+(assume "q" "Useless1" "Useless2")
+(use "Truth")
+;; 7
+(assume "Useless" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 8
+(assume "q" "Useless" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 3
+(assume "j" "Absurd" "Useless")
+(use "EfAtom")
+(use "Absurd")
+;; 4
+(assume "p" "j" "Absurd" "Useless")
+(use "EfAtom")
+(use "Absurd")
+;; Proof finished.
+;; (cp)
+(save "IntPosToTimesPos")
+
+;; Need
+;; RatPosToTimesPos
+(set-goal "all a,b(0<a -> 0<b -> 0<a*b)")
+(cases)
+(assume "k" "p")
+(cases)
+(assume "j" "q" "0<k" "0<j")
+(use "IntPosToTimesPos")
+(use "0<k")
+(use "0<j")
+;; Proof finished.
+;; (cp)
+(save "RatPosToTimesPos")
+
+;; RatExpPos
+(set-goal "all a,n(0<abs a -> 0<abs(a**n))")
+(assume "a")
+(ind)
+(assume "Useless")
+(ng #t)
+(use "Truth")
+(assume "n" "IH" "0<|a|")
+(ng #t)
+(simp "RatAbsTimes")
+(use "RatPosToTimesPos")
+(use "IH")
+(use "0<|a|")
+(use "0<|a|")
+;; Proof finished.
+;; (cp)
+(save "RatExpPos")
 
 ;; RatUDivExp
 (set-goal "all a,n RatUDiv(a**n)==RatUDiv a**n")
@@ -3133,13 +3324,33 @@
 (ng #t)
 (use "Truth")
 (assume "n" "IH")
-(simprat "RatExpSucc")
-(simprat "RatExpSucc")
+(simp "RatExpSucc")
+(simp "RatExpSucc")
 (simprat "<-" "IH")
 (use "RatUDivTimes")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatUDivExp")
+
+;; RatUDivExpEq
+(set-goal "all a,n(0<abs a -> RatUDiv(a**n)=RatUDiv a**n)")
+(assume "a")
+(ind)
+(assume "0<|a|")
+(ng #t)
+(use "Truth")
+(assume "n" "IH" "0<|a|")
+(ng #t)
+(simp "<-" "IH")
+(use "RatUDivTimesEq")
+;; ?^11:0<abs(a**n)
+(use "RatExpPos")
+(use "0<|a|")
+(use "0<|a|")
+(use "0<|a|")
+;; Proof finished.
+;; (cp)
+(save "RatUDivExpEq")
 
 ;; RatUDivExpPos
 (set-goal "all a,p RatUDiv(a**p)==RatUDiv a**p")
@@ -3147,8 +3358,18 @@
 (simp "<-" "PosToNatToIntId")
 (use "RatUDivExp")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatUDivExpPos")
+
+;; RatUDivExpPosEq
+(set-goal "all a,p(0<abs a -> RatUDiv(a**p)=RatUDiv a**p)")
+(assume "a" "p" "0<|a|")
+(simp "<-" "PosToNatToIntId")
+(use "RatUDivExpEq")
+(use "0<|a|")
+;; Proof finished.
+;; (cp)
+(save "RatUDivExpPosEq")
 
 ;; RatExpCompat
 (set-goal "all a,b,k(a==b -> a**k==b**k)")
@@ -3166,8 +3387,7 @@
 (simprat "RatEqvExpIntNegUDivExp")
 (simprat "<-" "RatUDivExpPos")
 (simprat "<-" "RatUDivExpPos")
-(simprat "RatUDivCompat")
-(use "Truth")
+(use "RatUDivCompat")
 (use "RatExpCompatPos")
 (use "a=b")
 ;; Assertion proved.
@@ -3176,7 +3396,7 @@
 (use "Assertion")
 (use "a=b")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatExpCompat")
 
 ;; RatLeMonHalf
@@ -3205,6 +3425,7 @@
 (use "Truth")
 (use "LeHyp")
 ;; Proof finished.
+;; (cp)
 (save "RatLeMonHalf")
 
 ;; PosExpTwoMinus
@@ -3225,6 +3446,7 @@
 (use "IH")
 (use "m<=n")
 ;; Proof finished.
+;; (cp)
 (save "PosExpTwoMinus")
 
 ;; RatTimesTwoExp
@@ -3328,6 +3550,7 @@
 (simp "PosExpTwoPosPlus")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatTimesTwoExp")
 
 ;; RatLePosExpTwo
@@ -3347,6 +3570,7 @@
 ;; (use "Truth")
 (use "PosLeExpTwoLog")
 ;; Proof finished.
+;; (cp)
 (save "RatLePosExpTwo")
 
 ;; RatLePosExpTwoMinus
@@ -3363,6 +3587,7 @@
 (ng)
 (use "IH")
 ;; Proof finished.
+;; (cp)
 (save "RatLePosExpTwoMinus")
 
 ;; RatLeBound
@@ -3373,6 +3598,7 @@
 (use "RatLePosExpTwo")
 (use "RatLePosExpTwoMinus")
 ;; Proof finished.
+;; (cp)
 (save "RatLeBound")
 
 (animate "RatLeBound")
@@ -3386,20 +3612,8 @@
 (use "RatLePosExpTwoMinus")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatLeBoundExFree")
-
-;; Code discarded 2021-10-24.
-;; ;; RatLeBoundExFree
-;; (set-goal "all p,q (p#q)<=2**cRatLeBound p q")
-;; (assume "p" "q")
-;; (use "RatLeTrans" (pt "2**Succ(PosLog p)#2**PosLog q"))
-;; (use "RatLePosExpTwo")
-;; (simp "cRatLeBound0CompRule")
-;; (simp (pf "([p0,p1]Succ(PosLog p0)--PosLog p1)p q=Succ(PosLog p)--PosLog q"))
-;; (use "RatLePosExpTwoMinus")
-;; (use "Truth")
-;; ;; Proof finished.
-;; (save "RatLeBoundExFree")
 
 (deanimate "RatLeBound")
 
@@ -3413,6 +3627,7 @@
 (use "Truth")
 (use "RatLeBound")
 ;; Proof finished.
+;; (cp)
 (save "RatLeAbsBound")
 
 (animate "RatLeAbsBound")
@@ -3429,6 +3644,7 @@
 (use "RatLeBoundExFree")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatLeAbsBoundExFree")
 
 ;; RatLeAbsBoundUMinusEq
@@ -3442,6 +3658,7 @@
 (assume "p" "q")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatLeAbsBoundUMinusEq")
 
 (deanimate "RatLeAbsBound")
@@ -3513,6 +3730,7 @@
 (strip)
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatExpEqPosExpPosToNat")
 
 ;; (ppn (pf "(p#1)**q=p**(PosToNat q)"))
@@ -3537,6 +3755,7 @@
 (simp "<-" "Assertion")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatExpNatToPosEqPosExp")
 
 ;; (ppn (pt "(p#1)**(NatToPos n)=p**n"))
@@ -3565,6 +3784,7 @@
 (simp "<-" "0=n")
 (use "nPropSimp")
 ;; Proof finished.
+;; (cp)
 (save "RatLeBoundInt")
 
 ;; (pp (rename-variables (nt (proof-to-extracted-term (theorem-name-to-proof "RatLeBoundInt")))))
@@ -3590,13 +3810,15 @@
 (ng #t)
 (use "RatLeBoundInt")
 ;; Proof finished.
+;; (cp)
 (save "RatLeAbsBoundInt")
 
 (define eterm (proof-to-extracted-term))
 (define neterm (rename-variables (nt eterm)))
 ;; (ppc neterm)
 
-;; [a][case a
+;; [a]
+;;  [case a
 ;;    (k#p -> 
 ;;    [case k
 ;;      (p0 -> cRatLeBoundInt p0 p)
@@ -3619,6 +3841,7 @@
 (ng)
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (add-rewrite-rule "a<=abs a" "True")
 
 ;; RatLeZeroAbs
@@ -3637,6 +3860,7 @@
 (ng)
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (add-rewrite-rule "0<=abs a" "True")
 
 (set-goal "all a ~abs a<=0")
@@ -3644,6 +3868,7 @@
 (assume "k" "p")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (add-rewrite-rule "~abs a<=0" "True")
 
 ;; RatLeAbsPlus
@@ -3662,6 +3887,7 @@
 (ng)
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatLeAbsPlus")
 (add-rewrite-rule "abs(a+b)<=abs a+abs b" "True")
 
@@ -3675,6 +3901,7 @@
 (simprat "RatEqvPlusMinus")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatLeAbsMinus")
 (add-rewrite-rule "abs(a+ ~b)<=abs(a+ ~c)+abs(c+ ~b)" "True")
 
@@ -3699,6 +3926,7 @@
 (simp "<-" "IntAbs1RewRule")
 (use "IntLeMinusAbs")
 ;; Proof finished.
+;; (cp)
 (save "RatLeMinusAbs")
 
 ;; RatLeAbs
@@ -3716,6 +3944,7 @@
 (simp "<-" "IntAbs1RewRule")
 (use "IntLeAbs")
 ;; Proof finished.
+;; (cp)
 (save "RatLeAbs")
 
 ;; RatLeAbsMinusAbs
@@ -3733,6 +3962,7 @@
 (use "Truth")
 (use "Truth")
 ;; Proof finshed.
+;; (cp)
 (save "RatLeAbsMinusAbs")
 
 ;; RatEqvPlusMinusPlus
@@ -3744,7 +3974,7 @@
 (simp "RatPlusComm")
 (use "RatEqvPlusMinusRev")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatEqvPlusMinusPlus")
 
 ;; RatEqvTimesCancelL
@@ -3778,6 +4008,7 @@
 (use "Truth")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatEqvTimesCancelL")
 
 ;; RatEqvTimesCancelR
@@ -3790,6 +4021,7 @@
 (use "ac=bc")
 (use "RatTimesComm")
 ;; Proof finished.
+;; (cp)
 (save "RatEqvTimesCancelR")
 
 ;; RatTimesIntNR
@@ -3806,6 +4038,7 @@
 (assume "p1" "q1" "p2" "q2")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatTimesIntNR")
 (add-rewrite-rule "a*(IntN p#q)" "~(a*(p#q))")
 
@@ -3824,6 +4057,7 @@
 (use "Truth")
 ;; Proof finished.
 (save "RatTimesIntNL")
+;; (cp)
 (add-rewrite-rule "(IntN p#q)*a" "~((p#q)*a)")
 
 ;; RatTimesIntUMinusR
@@ -3833,6 +4067,7 @@
 (ng)
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatTimesIntUMinusR")
 (add-rewrite-rule "a* ~k" "~(a*k)")
 
@@ -3843,6 +4078,7 @@
 (ng)
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatTimesIntUMinusL")
 (add-rewrite-rule "~k*a" "~(k*a)")
 
@@ -3851,6 +4087,7 @@
 (assume "p" "q" "a" "b")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (add-rewrite-rule "(IntN p#q)*a<=(IntN p#q)*b" "b<=a")
 
 ;; RatLeTimesIntNCancelR
@@ -3858,6 +4095,15 @@
 (assume "p" "q" "a" "b")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
+(add-rewrite-rule "a*(IntN p#q)<=b*(IntN p#q)" "b<=a")
+
+;; RatLeTimesIntNCancelR
+(set-goal "all p,q,a,b (a*(IntN p#q)<=b*(IntN p#q))=(b<=a)")
+(assume "p" "q" "a" "b")
+(use "Truth")
+;; Proof finished.
+;; (cp)
 (add-rewrite-rule "a*(IntN p#q)<=b*(IntN p#q)" "b<=a")
 
 ;; RatLeTimesCancelL
@@ -3881,6 +4127,7 @@
 (assume "Assertion" "a" "b" "c")
 (use "Assertion")
 ;; Proof finished.
+;; (cp)
 (save "RatLeTimesCancelL")
 
 ;; RatLeTimesCancelR
@@ -3891,6 +4138,7 @@
 (use "RatLeTimesCancelL")
 (use "RatTimesComm")
 ;; Proof finished.
+;; (cp)
 (save "RatLeTimesCancelR")
 
 ;; RatEqvTimesIntPCancelL
@@ -3970,6 +4218,7 @@
 (simprat "EqvHyp")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (add-rewrite-rule "(p#q)*a==(p#q)*b" "a==b")
 
 ;; RatEqvTimesIntPCancelR
@@ -3980,6 +4229,7 @@
 (use "Truth")
 (use "RatTimesComm")
 ;; Proof finished.
+;; (cp)
 (add-rewrite-rule "a*(p#q)==b*(p#q)" "a==b")
 
 ;; RatEqvUMinusInj
@@ -3991,6 +4241,7 @@
 (ng)
 (use "IntUMinusInj")
 ;; Proof finished.
+;; (cp)
 (save "RatEqvUMinusInj")
 (add-rewrite-rule "~a== ~b" "a==b")
 
@@ -3999,6 +4250,7 @@
 (assume "p" "q" "a" "b")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (add-rewrite-rule "(IntN p#q)*a==(IntN p#q)*b" "a==b")
 
 ;; RatEqvTimesIntNCancelR
@@ -4006,6 +4258,7 @@
 (assume "p" "q" "a" "b")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (add-rewrite-rule "a*(IntN p#q)==b*(IntN p#q)" "a==b")
 
 ;; RatEqvTimesPlusMinus
@@ -4019,7 +4272,7 @@
 (use "RatEqvPlusMinus")
 (use "RatTimesComm")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatEqvTimesPlusMinus")
 
 ;; RatLePlusL
@@ -4034,7 +4287,7 @@
 (use "Truth")
 (use "Truth")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatLePlusL")
 
 ;; RatLePlusLInv
@@ -4049,7 +4302,7 @@
 (use "Truth")
 (use "Truth")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatLePlusLInv")
 
 ;; RatLePlusR
@@ -4064,7 +4317,7 @@
 (use "Truth")
 (use "Truth")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatLePlusR")
 
 ;; RatLePlusRInv
@@ -4079,7 +4332,7 @@
 (use "Truth")
 (use "Truth")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatLePlusRInv")
 
 ;; RatLeAbsMinus1
@@ -4091,7 +4344,7 @@
 (use "Truth")
 (use "LeHyp")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatLeAbsMinus1")
 
 ;; RatAbsPlusUMinus
@@ -4102,7 +4355,7 @@
 (simp "RatPlusComm")
 (use "Truth")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatAbsPlusUMinus")
 
 ;; RatLeAbsMinus2
@@ -4115,7 +4368,7 @@
 (simp "RatAbsPlusUMinus")
 (use "LeHyp")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatLeAbsMinus2")
 
 ;; RatUMinusLeToZeroLePlus
@@ -4137,7 +4390,7 @@
 (use "LePlusHyp")
 (use "Truth")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatZeroLePlusToUMinusLe")
 
 ;; RatZeroLePlusEqUMinusLe
@@ -4147,21 +4400,21 @@
 (use "RatZeroLePlusToUMinusLe")
 (use "RatUMinusLeToZeroLePlus")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatZeroLePlusEqUMinusLe")
 
 ;; RatPlusHalfExpPosS
 (set-goal "all p (1#2**PosS p)+(1#2**PosS p)==(1#2**p)")
 (assume "p")
 (assert "(1#2)**PosS p+(1#2)**PosS p==(1#2)**p")
- (simprat "RatExpPosS")
+ (simp "RatExpPosS")
  (simprat "<-" "RatTimesPlusDistr")
  (ng)
  (use "Truth")
 (assume "Assertion")
 (use "Assertion")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatPlusHalfExpPosS")
 
 ;; Using RatLePlusRInv and RatLePlusR we prove
@@ -4220,7 +4473,7 @@
 (use "RatLePlusRInv")
 (use "AllHyp")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatLeAllPlusToLe")
 
 ;; RatHalfPlus
@@ -4252,7 +4505,7 @@
 (ng)
 (use "Truth")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatHalfPlus")
 
 ;; Properties of RatMax
@@ -4263,7 +4516,7 @@
 (ng)
 (use "Truth")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (add-rewrite-rule "a max a" "a")
 
 ;; RatMaxEq1
@@ -4277,7 +4530,7 @@
 (simp "jp<=kq")
 (use "Truth")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatMaxEq1")
 
 ;; RatMaxUB1
@@ -4295,7 +4548,7 @@
 (use "IntNotLeToLt")
 (use "NotLeHyp")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatMaxUB1")
 
 ;; RatMaxUB2
@@ -4311,7 +4564,7 @@
 (assume "Useless")
 (use "Truth")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatMaxUB2")
 
 ;; RatMaxLUB
@@ -4332,7 +4585,7 @@
 (assume "Useless")
 (use "jr<=iq")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatMaxLUB")
 
 ;; RatMaxEq2
@@ -4344,7 +4597,7 @@
 (use "Truth")
 (use "RatMaxUB2")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatMaxEq2")
 
 ;; Reason for ==, i.e., the difference to RatMaxEq1 (with =): The
@@ -4376,7 +4629,7 @@
 (use "Assertion2")
 (use "c<=d")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatLeMonMax")
 
 ;; RatMaxComm
@@ -4390,7 +4643,7 @@
 (use "RatMaxUB2")
 (use "RatMaxUB1")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatMaxComm")
 
 ;; RatMaxAssoc
@@ -4414,7 +4667,7 @@
 (use "RatMaxUB2")
 (use "RatMaxUB2")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatMaxAssoc")
 
 ;; RatMaxCompat
@@ -4436,6 +4689,7 @@
 (use "RatEqvSym")
 (use "c=d")
 ;; Proof finished.
+;; (cp)
 (save "RatMaxCompat")
 
 ;; RatPlusMaxDistr
@@ -4490,7 +4744,7 @@
 (use "RatLtToLe")
 (use "c<b")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatPlusMaxDistr")
 
 ;; RatTimesMaxDistr
@@ -4533,7 +4787,7 @@
 ;; ?^4:a*(b max c)=b max c*a
 (use "RatTimesComm")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatTimesMaxDistr")
 
 ;; RatTimesMaxDistrLeft
@@ -4546,7 +4800,7 @@
 (use "RatTimesComm")
 (use "RatTimesComm")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatTimesMaxDistrLeft")
 
 ;; RatAbsMax
@@ -4560,410 +4814,21 @@
 (assume "p" "q")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatAbsMax")
 
-;; RatAbsId
-(set-goal "all a(0<=a -> abs a=a)")
+;; End of properties of RatMax
+
+;; Properties of RatMin
+
+(set-goal "all a a min a=a")
 (cases)
 (assume "k" "p")
 (ng)
-(use "IntAbsId")
-;; Proof finished.
-(save "RatAbsId")
-
-;; RatAbsCases
-(set-goal
- "all a((abs a=a -> (Pvar rat)a) -> (abs a= ~a -> (Pvar rat)a) -> (Pvar rat)a)")
-(cases)
-(cases)
-(assume "q" "r" "H1" "H2")
-(use "H1")
-(use "Truth")
-(assume "r" "H1" "H2")
-(use "H2")
-(use "Truth")
-(assume "q" "r" "H1" "H2")
-(use "H2")
 (use "Truth")
 ;; Proof finished.
-(save "RatAbsCases")
-
-;; RatLeExpPos
-(set-goal "all p,q,k 0<=(p#q)**k")
-(assume "p" "q")
-(cases)
-(assume "p1")
-(use "Truth")
-(use "Truth")
-(assume "p1")
-(use "Truth")
-;; Proof finished.
-(add-rewrite-rule "0<=(p#q)**k" "True")
-
-;; RatLeExpPosGen
-(set-goal "all a,k(0<=a -> 0<=a**k)")
-(cases)
-(cases)
-(assume "p" "q" "k" "Useless")
-(use "Truth")
-(assume "p")
-(cases)
-(strip)
-(use "Truth")
-(strip)
-(use "Truth")
-(strip)
-(use "Truth")
-;; 5
-(assume "p" "q" "k" "Absurd")
-(use "EfAtom")
-(use "Absurd")
-;; Proof finished.
-(save "RatLeExpPosGen")
-
-;; RatPosTimes
-(set-goal "all a,b(0<a*b -> 0<=a -> 0<b)")
-(cases)
-(assume "k" "p")
-(cases)
-(assume "j" "q")
-(ng)
-(use "IntPosTimes")
-;; Proof finished.
-;; (cdp)
-(save "RatPosTimes")
-
-(set-goal "all a 0<=a*a")
-(cases)
-(assume "k" "p")
-(use "Truth")
-;; Proof finished.
-(add-rewrite-rule "0<=a*a" "True")
-
-;; RatExpNatPlus
-(set-goal "all n,m,a a**(n+m)==a**m*a**n")
-(assume "n")
-(ind)
-(assume "a")
-(use "Truth")
-(assume "m" "IH" "a")
-(simprat "RatExpSucc")
-(simp "NatPlus1CompRule")
-(simprat "RatExpSucc")
-(simprat "IH")
-(use "Truth")
-;; Proof finished.
-(save "RatExpNatPlus")
-
-;; RatExpNat
-(set-goal "all n,k,q (k#q)**n==(k**n#q**n)")
-(ind)
-(strip)
-(use "Truth")
-(assume "n" "IH" "k" "q")
-(simprat "RatExpSucc")
-(simprat "IH")
-(ng)
-(simp (pf "k*k**n=k**n*k"))
-(simp (pf "q*q**n=q**n*q"))
-(use "Truth")
-(use "PosTimesComm")
-(use "IntTimesComm")
-;; Proof finished.
-(save "RatExpNat")
-
-;; RatLeMonExp
-(set-goal "all a,n,m(1<=a -> n<=m -> a**n<=a**m)")
-(cases)
-(cases)
-;; IntP
-(assume "p" "q")
-(ind)
-(ind)
-(strip)
-(use "Truth")
-(assume "n" "IHn" "1<=(p#q)" "Useless")
-(simprat "RatExpSucc")
-(ng)
-(use "RatLeTrans" (pt "(p#q)*1"))
-(use "1<=(p#q)")
-(use "RatLeMonTimesTwo")
-(use "Truth")
-(use "Truth")
-(use "Truth")
-(use "IHn")
-(use "1<=(p#q)")
-(use "Truth")
-;; 8
-(assume "n" "IHn")
-(ind)
-(assume "Useless" "Absurd")
-(use "EfAtom")
-(use "Absurd")
-(assume "m" "IHm" "1<=(p#q)" "n<=m")
-(simprat "RatExpSucc")
-(simprat "RatExpSucc")
-(use "RatLeMonTimesTwo")
-(use "Truth")
-(use "RatLeExpPosGen")
-(use "Truth")
-(use "Truth")
-(use "IHn")
-(use "1<=(p#q)")
-(use "n<=m")
-;; 4
-(assume "p" "n" "m" "Absurd" "Useless")
-(use "EfAtom")
-(use "Absurd")
-;; 5
-(assume "p" "q" "n" "m" "Absurd" "Useless")
-(use "EfAtom")
-(use "Absurd")
-;; Proof finished.
-(save "RatLeMonExp")
-
-;; RatLeMonExpDecr
-(set-goal "all a,n,m(0<=a -> a<=1 -> n<=m -> a**m<=a**n)")
-(cases)
-(cases)
-(assume "p" "q" "n" "m" "Useless" "p<=q" "n<=m")
-(assert "(q#p)**n<=(q#p)**m")
- (use "RatLeMonExp")
- (use "p<=q")
- (use "n<=m")
-;;   a51679  k51683  p  q  n  m  Useless:
-;;     0<=(p#q)
-;;   p<=q:(p#q)<=1
-;;   n<=m:n<=m
-;;-----------------------------------------------------------------------------
-;; ?^7:(q#p)**n<=(q#p)**m -> (p#q)**m<=(p#q)**n
-
-(assume "Hyp")
-(simprat "RatExpNat")
-(simprat "RatExpNat")
-(ng #t)
-(assert "(IntExp q n#p**n)<=(IntExp q m#p**m)")
- (simprat "<-" "RatExpNat")
- (simprat "<-" "RatExpNat")
- (use "Hyp")
-(assume "Assertion")
-(ng "Assertion")
-(simp (pf "p**m*q**n=q**n*p**m"))
-(simp (pf "p**n*q**m=q**m*p**n"))
-(use "Assertion")
-(use "PosTimesComm")
-(use "PosTimesComm")
-;; 4
-(assume "p")
-(cases)
-(cases)
-(strip)
-(use "Truth")
-(strip)
-(simprat "RatExpSucc")
-(simprat "RatTimesZeroL")
-(use "Truth")
-(assume "n")
-(cases)
-(assume "Useless1" "Useless2" "Absurd")
-(use "EfAtom")
-(use "Absurd")
-(assume "m" "Useless1" "Useless2" "n<=m")
-(simprat "RatExpSucc")
-(simprat "RatExpSucc")
-(simprat "RatTimesZeroL")
-(simprat "RatTimesZeroL")
-(use "Truth")
-;; 5
-(assume "p" "q" "n" "m" "Absurd" "Useless1" "Useless2")
-(use "EfAtom")
-(use "Absurd")
-;; Proof finished.
-(save "RatLeMonExpDecr")
-
-;; RatLeMonExpBase
-(set-goal "all a,b,n(0<=a -> a<=b -> a**n<=b**n)")
-(assume "a" "b" "n" "0<=a" "a<=b")
-(ind (pt "n"))
-(use "Truth")
-(assume "m" "IH")
-(simprat "RatExpSucc")
-(simprat "RatExpSucc")
-(use "RatLeMonTimesTwo")
-(use "0<=a")
-(use "RatLeExpPosGen")
-(use "0<=a")
-(use "a<=b")
-(use "IH")
-;; Proof finished.
-;; (cdp)
-(save "RatLeMonExpBase")
-
-;; RatLeExpBernoulli
-(set-goal "all a,n(~1<=a -> 1+n*a<=(1+a)**n)")
-(assume "a" "n" "-1<=a")
-(ind (pt "n"))
-;; Base
-(ng #t)
-(simprat "RatTimesZeroL")
-(use "Truth")
-;; Step
-(assume "m" "IH")
-(simprat "RatExpSucc")
-(simp (pf "(1+a)*(1+a)**m=(1+a)**m*(1+a)"))
-;; 9,10
-;; ?^9:1+Succ m*a<=(1+a)**m*(1+a)
-(use "RatLeTrans" (pt "(1+m*a)*(1+a)"))
-;; 11,12
-(simprat "RatTimesPlusDistr")
-(simprat "RatTimesPlusDistrLeft")
-(simprat "RatTimesPlusDistrLeft")
-(simprat (pf "RatTimes 1 1+m*a*1+(1*a+m*a*a)==1+m*a+a+m*a*a"))
-;; ?^16:1+Succ m*a<=1+m*a+a+m*a*a
-(simp "<-" "RatPlusAssoc")
-(simp "<-" "RatPlusAssoc")
-(use "RatLeMonPlus")
-(use "Truth")
-;; ?^21:Succ m*a<=m*a+(a+m*a*a)
-(ng #t)
-(simp (pf "(IntS m#1)=RatPlus m 1"))
-(simprat "RatTimesPlusDistrLeft")
-(ng #t)
-;; ?^26:m*a+a<=m*a+a+m*a*a
-(use "RatLeTrans" (pt "m*a+a+0"))
-(use "Truth")
-(use "RatLeMonPlus")
-(use "Truth")
-;; ?^30:0<=m*a*a
-(simp "<-" "RatTimesAssoc")
-(use "RatLeTrans" (pt "RatTimes 0 0"))
-(use "Truth")
-(use "RatLeMonTimesTwo")
-(use "Truth")
-(use "Truth")
-(use "Truth")
-;; ?^37:0<=a*a
-(use "Truth")
-;; ?^24:IntS m=RatPlus m 1
-(simp "<-" "IntPlusOneIntS")
-(use "Truth")
-;; ?^17:RatTimes 1 1+m*a*1+(1*a+m*a*a)==1+m*a+a+m*a*a
-(use "Truth")
-;; ?^12:(1+m*a)*(1+a)<=(1+a)**m*(1+a)
-(use "RatLeMonTimes")
-(use "RatLePlusR")
-(use "-1<=a")
-(use "IH")
-;; ?^10:(1+a)*(1+a)**m=(1+a)**m*(1+a)
-(use "RatTimesComm")
-;; Proof finished.
-;; (cdp)
-(save "RatLeExpBernoulli")
-
-;; RatLeExpBernoulliPos
-(set-goal "all a(0<=a -> allnc p 1+p*a<=(1+a)**p)")
-(cases)
-(cases)
-;; 3-5
-(assume "r" "p" "Useless" "q")
-;; ?^6:1+q*(r#p)<=(1+(r#p))**q
-(simp (pf "IntPos q=NatToInt(PosToNat q)"))
-(use "RatLeExpBernoulli")
-(use "Truth")
-;; ?^8:=q(PosToNat q)
-(simp "PosToNatToIntId")
-(use "Truth")
-;; 4
-(assume "p" "Useless" "q")
-(ng #t)
-(simp "PosTimesComm")
-(use "Truth")
-;; 5
-(assume "r" "p" "Absurd" "q")
-(use "EfAtom")
-(use "Absurd")
-;; Proof finished.
-;; (cdp)
-(save "RatExpRatPlusOnePos")
-
-;; RatExpNatTimes
-(set-goal "all a,n,m a**(n*m)==a**n**m")
-(assume "a" "n" "m")
-(ind (pt "m"))
-(use "Truth")
-(assume "m1" "IH")
-(simprat "RatExpSucc")
-(simprat "<-" "IH")
-(simprat "<-" "RatExpNatPlus")
-(use "Truth")
-;; Proof finished.
-;; (cdp)
-(save "RatExpNatTimes")
-
-;; RatEqAbsMinus
-(set-goal "all a,b(a<=b -> abs(b+ ~a)=b+ ~a)")
-(assume "a" "b" "a<=b")
-(use "RatAbsId")
-(simprat "<-" (pf "a+ ~a==0"))
-(use "RatLeMonPlus")
-(use "a<=b")
-(use "Truth")
-(use "Truth")
-;; Proof finished.
-(save "RatEqAbsMinus")
-
-;; RatEqAbsMinusCor
-(set-goal "all a,b(a<=b -> abs(a+ ~b)=b+ ~a)")
-(assume "a" "b" "a<=b")
-(simp "<-" "RatAbs0RewRule")
-(ng)
-(simp "RatPlusComm")
-(use "RatEqAbsMinus")
-(use "a<=b")
-;; Proof finished.
-(save "RatEqAbsMinusCor")
-
-;; RatNotZeroToZeroLtAbs
-(set-goal "all a((a==0 -> F) -> 0<abs a)")
-(cases)
-(cases)
-;; 3-5
-(assume "p" "q" "FHyp")
-(use "Truth")
-;; 4
-(assume "p")
-(ng #t)
-(assume "FHyp")
-(use "FHyp")
-(use "Truth")
-;; 5
-(assume "p" "q" "FHyp")
-(use "Truth")
-;; Proof finished.
-;; (cdp)
-(save "RatNotZeroToZeroLtAbs")
-
-;; RatZeroLtAbsToNotZero
-(set-goal "all a(0<abs a -> a==0 -> F)")
-(cases)
-(cases)
-;; 3-5
-(assume "p" "q")
-(ng #t)
-(assume "Useless" "Absurd")
-(use "Absurd")
-;; 4
-(assume "q")
-(assume "Absurd" "Useless")
-(use "Absurd")
-;; 5
-(assume "p" "q")
-(ng #t)
-(assume "Useless" "Absurd")
-(use "Absurd")
-;; Proof finished.
-;; (cdp)
-(save "RatZeroLtAbsToNotZero")
+;; (cp)
+(add-rewrite-rule "a min a" "a")
 
 ;; RatMinEq1
 (set-goal "all a,b(a<=b -> a min b=a)")
@@ -4976,6 +4841,7 @@
 (simp "kq<=jp")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatMinEq1")
 
 ;; RatMinLB1
@@ -4995,6 +4861,7 @@
 (use "IntNotLeToLt")
 (use "kq<=jp -> F")
 ;; Proof finished.
+;; (cp)
 (save "RatMinLB1")
 
 ;; RatMinLB2
@@ -5012,6 +4879,7 @@
 (ng)
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatMinLB2")
 
 ;; RatMinGLB
@@ -5033,6 +4901,7 @@
 (assume "Useless" "Hyp")
 (use "Hyp")
 ;; Proof finished.
+;; (cp)
 (save "RatMinGLB")
 
 ;; RatMinEq2
@@ -5044,6 +4913,7 @@
 (use "b<=a")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatMinEq2")
 
 ;; RatLeMonMin
@@ -5071,6 +4941,7 @@
 (use "Assertion2")
 (use "c<=d")
 ;; Proof finished.
+;; (cp)
 (save "RatLeMonMin")
 
 ;; RatMinComm
@@ -5084,6 +4955,7 @@
 (use "RatMinLB2")
 (use "RatMinLB1")
 ;; Proof finished.
+;; (cp)
 (save "RatMinComm")
 
 ;; RatMinAssoc
@@ -5109,6 +4981,7 @@
 (use "Truth")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (save "RatMinAssoc")
 
 ;; RatMinCompat
@@ -5130,9 +5003,434 @@
 (use "RatEqvSym")
 (use "c=d")
 ;; Proof finished.
+;; (cp)
 (save "RatMinCompat")
 
-;; Added 2020-08-28
+;; End of properties of RatMin
+
+;; Properties of RatAbs
+
+;; RatAbsId
+(set-goal "all a(0<=a -> abs a=a)")
+(cases)
+(assume "k" "p")
+(ng)
+(use "IntAbsId")
+;; Proof finished.
+;; (cp)
+(save "RatAbsId")
+
+;; RatAbsCases
+(set-goal
+ "all a((abs a=a -> (Pvar rat)a) -> (abs a= ~a -> (Pvar rat)a) -> (Pvar rat)a)")
+(cases)
+(cases)
+(assume "q" "r" "H1" "H2")
+(use "H1")
+(use "Truth")
+(assume "r" "H1" "H2")
+(use "H2")
+(use "Truth")
+(assume "q" "r" "H1" "H2")
+(use "H2")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatAbsCases")
+
+;; End of properties of RatAbs
+
+;; Properties of RatExp
+
+;; RatLeExpPos
+(set-goal "all p,q,k 0<=(p#q)**k")
+(assume "p" "q")
+(cases)
+(assume "p1")
+(use "Truth")
+(use "Truth")
+(assume "p1")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(add-rewrite-rule "0<=(p#q)**k" "True")
+
+;; RatLeExpPosGen
+(set-goal "all a,k(0<=a -> 0<=a**k)")
+(cases)
+(cases)
+(assume "p" "q" "k" "Useless")
+(use "Truth")
+(assume "p")
+(cases)
+(strip)
+(use "Truth")
+(strip)
+(use "Truth")
+(strip)
+(use "Truth")
+;; 5
+(assume "p" "q" "k" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; Proof finished.
+;; (cp)
+(save "RatLeExpPosGen")
+
+;; RatPosTimes
+(set-goal "all a,b(0<a*b -> 0<=a -> 0<b)")
+(cases)
+(assume "k" "p")
+(cases)
+(assume "j" "q")
+(ng)
+(use "IntPosTimes")
+;; Proof finished.
+;; (cp)
+(save "RatPosTimes")
+
+(set-goal "all a 0<=a*a")
+(cases)
+(assume "k" "p")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(add-rewrite-rule "0<=a*a" "True")
+
+;; RatExpNatPlus
+(set-goal "all n,m,a a**(n+m)==a**m*a**n")
+(assume "n")
+(ind)
+(assume "a")
+(use "Truth")
+(assume "m" "IH" "a")
+(simp "RatExpSucc")
+(simp "NatPlus1CompRule")
+(simp "RatExpSucc")
+(simprat "IH")
+(simp "<-" "RatTimesAssoc")
+(simp (pf "a**n*a=a*a**n"))
+(ng #t)
+(use "Truth")
+(use "RatTimesComm")
+;; Proof finished.
+;; (cp)
+(save "RatExpNatPlus")
+
+;; RatExpNat
+(set-goal "all n,k,q (k#q)**n=(k**n#q**n)")
+(ind)
+(strip)
+(use "Truth")
+(assume "n" "IH" "k" "q")
+(simp "RatExpSucc")
+(simp "IH")
+(ng)
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatExpNat")
+
+;; RatLeMonExp
+(set-goal "all a,n,m(1<=a -> n<=m -> a**n<=a**m)")
+(cases)
+(cases)
+;; IntP
+(assume "p" "q")
+(ind)
+(ind)
+(strip)
+(use "Truth")
+(assume "n" "IHn" "1<=(p#q)" "Useless")
+(simp "RatExpSucc")
+(ng)
+(use "RatLeTrans" (pt "(p#q)*1"))
+(use "1<=(p#q)")
+(simp "RatTimesComm")
+(use "RatLeMonTimes")
+(use "Truth")
+(use "IHn")
+(use "1<=(p#q)")
+(use "Truth")
+;; 8
+(assume "n" "IHn")
+(ind)
+(assume "Useless" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+(assume "m" "IHm" "1<=(p#q)" "n<=m")
+(simp "RatExpSucc")
+(simp "RatExpSucc")
+(use "RatLeMonTimes")
+(use "Truth")
+(use "IHn")
+(use "1<=(p#q)")
+(use "n<=m")
+;; 4
+(assume "p" "n" "m" "Absurd" "Useless")
+(use "EfAtom")
+(use "Absurd")
+;; 5
+(assume "p" "q" "n" "m" "Absurd" "Useless")
+(use "EfAtom")
+(use "Absurd")
+;; Proof finished.
+;; (cp)
+(save "RatLeMonExp")
+
+;; RatLeMonExpDecr
+(set-goal "all a,n,m(0<=a -> a<=1 -> n<=m -> a**m<=a**n)")
+(cases)
+(cases)
+(assume "p" "q" "n" "m" "Useless" "p<=q" "n<=m")
+(assert "(q#p)**n<=(q#p)**m")
+ (use "RatLeMonExp")
+ (use "p<=q")
+ (use "n<=m")
+;;   a51679  k51683  p  q  n  m  Useless:
+;;     0<=(p#q)
+;;   p<=q:(p#q)<=1
+;;   n<=m:n<=m
+;;-----------------------------------------------------------------------------
+;; ?^7:(q#p)**n<=(q#p)**m -> (p#q)**m<=(p#q)**n
+
+(assume "Hyp")
+(simp "RatExpNat")
+(simp "RatExpNat")
+(ng #t)
+(assert "(IntExp q n#p**n)<=(IntExp q m#p**m)")
+ (simp "<-" "RatExpNat")
+ (simp "<-" "RatExpNat")
+ (use "Hyp")
+(assume "Assertion")
+(ng "Assertion")
+(simp (pf "p**m*q**n=q**n*p**m"))
+(simp (pf "p**n*q**m=q**m*p**n"))
+(use "Assertion")
+(use "PosTimesComm")
+(use "PosTimesComm")
+;; 4
+(assume "p")
+(cases)
+(cases)
+(strip)
+(use "Truth")
+(strip)
+(simp "RatExpSucc")
+(ng #t)
+(simp "RatTimesComm")
+(simprat "RatTimesZeroL")
+(use "Truth")
+;; 27
+(assume "n")
+(cases)
+(assume "Useless1" "Useless2" "Absurd")
+(use "EfAtom")
+(use "Absurd")
+(assume "m" "Useless1" "Useless2" "n<=m")
+(simp "RatExpSucc")
+(simp "RatExpSucc")
+(simp "RatTimesComm")
+(simprat "RatTimesZeroL")
+(simp "RatTimesComm")
+(simprat "RatTimesZeroL")
+(use "Truth")
+;; 5
+(assume "p" "q" "n" "m" "Absurd" "Useless1" "Useless2")
+(use "EfAtom")
+(use "Absurd")
+;; Proof finished.
+;; (cp)
+(save "RatLeMonExpDecr")
+
+;; RatLeMonExpBase
+(set-goal "all a,b,n(0<=a -> a<=b -> a**n<=b**n)")
+(assume "a" "b" "n" "0<=a" "a<=b")
+(ind (pt "n"))
+(use "Truth")
+(assume "m" "IH")
+(simp "RatExpSucc")
+(simp "RatExpSucc")
+(use "RatLeMonTimesTwo")
+(use "RatLeExpPosGen")
+(use "0<=a")
+(use "0<=a")
+(use "IH")
+(use "a<=b")
+;; Proof finished.
+;; (cp)
+(save "RatLeMonExpBase")
+
+;; RatLeExpBernoulli
+(set-goal "all a,n(~1<=a -> 1+n*a<=(1+a)**n)")
+(assume "a" "n" "-1<=a")
+(ind (pt "n"))
+;; Base
+(ng #t)
+(simprat "RatTimesZeroL")
+(use "Truth")
+;; Step
+(assume "m" "IH")
+(simp "RatExpSucc")
+;; ?^8:1+Succ m*a<=(1+a)**m*(1+a)
+(use "RatLeTrans" (pt "(1+m*a)*(1+a)"))
+;; 9,10
+(simprat "RatTimesPlusDistr")
+(simprat "RatTimesPlusDistrLeft")
+(simprat "RatTimesPlusDistrLeft")
+(simprat (pf "RatTimes 1 1+m*a*1+(1*a+m*a*a)==1+m*a+a+m*a*a"))
+;; ?^14:1+Succ m*a<=1+m*a+a+m*a*a
+(simp "<-" "RatPlusAssoc")
+(simp "<-" "RatPlusAssoc")
+(use "RatLeMonPlus")
+(use "Truth")
+;; ?^19:Succ m*a<=m*a+(a+m*a*a)
+(ng #t)
+(simp (pf "(IntS m#1)=RatPlus m 1"))
+(simprat "RatTimesPlusDistrLeft")
+(ng #t)
+;; ?^24:m*a+a<=m*a+a+m*a*a
+(use "RatLeTrans" (pt "m*a+a+0"))
+(use "Truth")
+(use "RatLeMonPlus")
+(use "Truth")
+;; ?^28:0<=m*a*a
+(simp "<-" "RatTimesAssoc")
+(use "RatLeTrans" (pt "RatTimes 0 0"))
+(use "Truth")
+(use "RatLeMonTimesTwo")
+(use "Truth")
+(use "Truth")
+(use "Truth")
+;; ?^35:0<=a*a
+(use "Truth")
+;; ?^22:IntS m=RatPlus m 1
+(simp "<-" "IntPlusOneIntS")
+(use "Truth")
+;; ?^15:RatTimes 1 1+m*a*1+(1*a+m*a*a)==1+m*a+a+m*a*a
+(use "Truth")
+;; ?^10:(1+m*a)*(1+a)<=(1+a)**m*(1+a)
+(use "RatLeMonTimes")
+(use "RatLePlusR")
+(use "-1<=a")
+(use "IH")
+;; Proof finished.
+;; (cp)
+(save "RatLeExpBernoulli")
+
+;; RatLeExpBernoulliPos
+(set-goal "all a(0<=a -> allnc p 1+p*a<=(1+a)**p)")
+(cases)
+(cases)
+;; 3-5
+(assume "r" "p" "Useless" "q")
+;; ?^6:1+q*(r#p)<=(1+(r#p))**q
+(simp (pf "IntPos q=NatToInt(PosToNat q)"))
+(use "RatLeExpBernoulli")
+(use "Truth")
+;; ?^8:=q(PosToNat q)
+(simp "PosToNatToIntId")
+(use "Truth")
+;; 4
+(assume "p" "Useless" "q")
+(ng #t)
+(simp "PosTimesComm")
+(use "Truth")
+;; 5
+(assume "r" "p" "Absurd" "q")
+(use "EfAtom")
+(use "Absurd")
+;; Proof finished.
+;; (cp)
+(save "RatExpRatPlusOnePos")
+
+;; RatExpNatTimes
+(set-goal "all a,n,m a**(n*m)==a**n**m")
+(assume "a" "n" "m")
+(ind (pt "m"))
+(use "Truth")
+(assume "m1" "IH")
+(simp "RatExpSucc")
+(simprat "<-" "IH")
+(simprat "<-" "RatExpNatPlus")
+(simp "NatPlusComm")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatExpNatTimes")
+
+;; End of properties of RatExp
+
+;; Further properties of RatAbs
+
+;; RatEqAbsMinus
+(set-goal "all a,b(a<=b -> abs(b+ ~a)=b+ ~a)")
+(assume "a" "b" "a<=b")
+(use "RatAbsId")
+(simprat "<-" (pf "a+ ~a==0"))
+(use "RatLeMonPlus")
+(use "a<=b")
+(use "Truth")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatEqAbsMinus")
+
+;; RatEqAbsMinusCor
+(set-goal "all a,b(a<=b -> abs(a+ ~b)=b+ ~a)")
+(assume "a" "b" "a<=b")
+(simp "<-" "RatAbs0RewRule")
+(ng)
+(simp "RatPlusComm")
+(use "RatEqAbsMinus")
+(use "a<=b")
+;; Proof finished.
+;; (cp)
+(save "RatEqAbsMinusCor")
+
+;; RatNotZeroToZeroLtAbs
+(set-goal "all a((a==0 -> F) -> 0<abs a)")
+(cases)
+(cases)
+;; 3-5
+(assume "p" "q" "FHyp")
+(use "Truth")
+;; 4
+(assume "p")
+(ng #t)
+(assume "FHyp")
+(use "FHyp")
+(use "Truth")
+;; 5
+(assume "p" "q" "FHyp")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatNotZeroToZeroLtAbs")
+
+;; RatZeroLtAbsToNotZero
+(set-goal "all a(0<abs a -> a==0 -> F)")
+(cases)
+(cases)
+;; 3-5
+(assume "p" "q")
+(ng #t)
+(assume "Useless" "Absurd")
+(use "Absurd")
+;; 4
+(assume "q")
+(assume "Absurd" "Useless")
+(use "Absurd")
+;; 5
+(assume "p" "q")
+(ng #t)
+(assume "Useless" "Absurd")
+(use "Absurd")
+;; Proof finished.
+;; (cp)
+(save "RatZeroLtAbsToNotZero")
+
+;; End of further properties of RatAbs
 
 ;; RatLeBoundPos
 (set-goal "all p,q exl r (p#q)<=2**r")
@@ -5159,7 +5457,7 @@
 ;; 4
 (use "RatLeBound")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatLeBoundPos")
 
 ;; RatLtMonPlus1
@@ -5247,7 +5545,7 @@
 (ng #t)
 (use "c<=d")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatLtMonPlus1")
 
 ;; RatLtMonPlus2
@@ -5261,7 +5559,7 @@
 (use "RatPlusComm")
 (use "RatPlusComm")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatLtMonPlus2")
 
 (set-goal "all a,b,c (a+b<a+c)=(b<c)")
@@ -5275,6 +5573,7 @@
 (use "Truth")
 (use "LtHyp")
 ;; Proof finished.
+;; (cp)
 (add-rewrite-rule "a+b<a+c"  "b<c")
 
 (set-goal "all a,b,c (a+b<c+b)=(a<c)")
@@ -5288,6 +5587,7 @@
 (use "LtHyp")
 (use "Truth")
 ;; Proof finished.
+;; (cp)
 (add-rewrite-rule "a+b<c+b"  "a<c")
 
 ;; RatLeLowerBound
@@ -5313,7 +5613,7 @@
 (use "EfAtom")
 (use "Absurd")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatLeLowerBound")
 
 (define eterm (proof-to-extracted-term))
@@ -5321,7 +5621,12 @@
 ;; (ppc neterm)
 
 ;; [a]
-;;  [case a (k#p -> [case k (p0 -> cRatLeBoundPos p p0) (0 -> 1) (IntN p0 -> 1)])]
+;;  [case a
+;;    (k#p -> 
+;;    [case k
+;;      (p0 -> cRatLeBoundInt p0 p)
+;;      (0 -> 0)
+;;      (IntN p0 -> cRatLeBoundInt p0 p)])]
 
 ;; RatPosToQuotPos
 (set-goal "all a(0<a -> exd p exl q a=(p#q))")
@@ -5345,6 +5650,7 @@
 (use "EfAtom")
 (use "Absurd")
 ;; Proof finished.
+;; (cp)
 (save "RatPosToQuotPos")
 
 (define eterm (proof-to-extracted-term))
@@ -5378,7 +5684,7 @@
 (use "(b<a -> F)")
 (use "b<a")
 ;; Proof finished.
-;; (cdp)
+;; (cp)
 (save "RatNegbLeEqLt")
 
 ;; RatLtCompat
@@ -5405,6 +5711,479 @@
 ;; Proof finished.
 ;; (cp)
 (save "RatAbsMinusId")
+
+;; 2023-04-16.
+
+(add-program-constant "RatSum" (py "nat=>nat=>(nat=>rat)=>rat"))
+
+(add-var-name "as" "bs" "cs" (py "nat=>rat"))
+
+(add-computation-rules
+ "RatSum n Zero as" "IntZero#1"
+ "RatSum n(Succ m)as" "RatSum n m as+as(n+m)")
+
+(set-totality-goal "RatSum")
+(assert "all as,n,m TotalRat(RatSum n m as)")
+(assume "as" "n")
+(ind)
+;; 5,6
+(ng #t)
+(use "TotalVar")
+;; 6
+(assume "m" "IH")
+(ng #t)
+(use "RatPlusTotal")
+(use "IH")
+(use "TotalVar")
+;; Assertion proved.
+(assume "Assertion")
+(fold-alltotal)
+(assume "n")
+(fold-alltotal)
+(assume "m")
+(fold-alltotal)
+(assume "as")
+(use "Assertion")
+;; Proof finished.
+;; (cp)
+(save-totality)
+
+;; RatLeMonSum
+(set-goal "all as,bs,m,n(all l(n<=l -> l<n+m -> as l<=bs l) ->
+ RatSum n m as<=RatSum n m bs)")
+(assume "as" "bs")
+(ind)
+;; 3,4
+(assume "n" "Useless")
+(use "Truth")
+;; 4
+(assume "m" "IH" "n" "LeHyp")
+(ng #t)
+(use "RatLeMonPlus")
+(use "IH")
+(assume "l" "n<=l" "l<n+m")
+(use "LeHyp")
+(use "n<=l")
+(use "NatLtTrans" (pt "n+m"))
+(use "l<n+m")
+(use "Truth")
+;; ?^11:as(n+m)<=ys(n+m)
+(use "LeHyp")
+(use "Truth")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatLeMonSum")
+
+;; RatSumCompat
+(set-goal "all as,bs,n,m(all l(n<=l -> l<n+m -> as l==bs l) ->
+ RatSum n m as==RatSum n m bs)")
+(assume "as" "bs" "n")
+(ind)
+;; 3,4
+(assume "Useless")
+(use "Truth")
+;; 4
+(assume "m" "IH" "EqvHyp")
+(ng #t)
+(use "RatPlusCompat")
+(use "IH")
+(assume "l" "n<=l" "l<n+m")
+(use "EqvHyp")
+(use "n<=l")
+(use "NatLtTrans" (pt "n+m"))
+(use "l<n+m")
+(use "Truth")
+;; 9
+(use "EqvHyp")
+(use "Truth")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatSumCompat")
+
+;; RatSumShiftUp
+(set-goal "all as,l,n,m RatSum n m([n0]as(l+n0))==RatSum(l+n)m as")
+(assume "as" "l" "n")
+(ind)
+;; 3,4
+(use "Truth")
+;; 4
+(assume "m" "IH")
+(ng #t)
+(use "IH")
+;; Proof finished.
+;; (cp)
+(save "RatSumShiftUp")
+
+;; RatSumShiftDown
+(set-goal "all as,l,n(l<=n ->
+ all m RatSum n m as==RatSum(n--l)m([n0]as(l+n0)))")
+(assume "as" "l" "n" "l<=n")
+(ind)
+;; 3,4
+(use "Truth")
+;; 4
+(assume "m" "IH")
+(ng #t)
+(use "RatPlusCompat")
+;; 7,8
+(use "IH")
+;; ?^8:as(n+m)==as(l+(n--l)+m)
+(simp (pf "l+(n--l)=n"))
+(use "Truth")
+(simp "NatPlusComm")
+(use "NatMinusPlusEq")
+(use "l<=n")
+;; Proof finished.
+;; (cp)
+(save "RatSumShiftDown")
+
+;; For RatSumTimes we will need a variant of RatSumShiftUp
+
+;; RatSumShiftUpMinus
+(set-goal "all as,l,n,m RatSum n m as==RatSum(n+l)m([n0]as(n0--l))")
+(assume "as" "l" "n")
+(ind)
+;; 3,4
+(use "Truth")
+;; 4
+(assume "m" "IH")
+(ng #t)
+(use "RatPlusCompat")
+(use "IH")
+(simp (pf "n+l+m--l=n+m"))
+(use "Truth")
+(simp "<-" "NatPlusAssoc")
+(simp (pf "l+m=m+l"))
+(use "Truth")
+(use "NatPlusComm")
+;; Proof finished.
+;; (cp)
+(save "RatSumShiftUpMinus")
+
+;; RealTimesSumDistr
+(set-goal "all a,as,n,m a*RatSum n m as==RatSum n m([l]a*as l)")
+(assume "a" "as" "n")
+(ind)
+;; 3,4
+(ng #t)
+(use "RatTimesZeroR")
+;; 4
+(assume "m" "IH")
+(ng #t)
+(simprat "RatTimesPlusDistr")
+(use "RatPlusCompat")
+(use "IH")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatSumDistr")
+
+;; RatSumDistrLeft (was RatTimesSumDistrLeft)
+(set-goal "all a,as,n,m (RatSum n m as)*a==RatSum n m([l]as l*a)")
+(assume "a" "as" "n")
+(ind)
+;; 3,4
+(ng #t)
+(use "RatTimesZeroL")
+;; 4
+(assume "m" "IH")
+(ng #t)
+(simprat "RatTimesPlusDistrLeft")
+(use "RatPlusCompat")
+(use "IH")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatSumDistrLeft")
+
+;; RatSumSplit
+(set-goal "all as,n,m,l RatSum n m as+RatSum(n+m)l as==RatSum n(m+l)as")
+(assume "as" "n" "m")
+(ind)
+;; 3,4
+(use "Truth")
+;; 4
+(assume "l" "IH")
+(ng #t)
+(use "IH")
+;; Proof finished.
+;; (cp)
+(save "RatSumSplit")
+
+;; RatSumZeroSplit added as a special case of RatSumSplit
+;; RatSumZeroSplit with n:=Zero and m instead of Zero+m
+
+;; RatSumZeroSplit
+(set-goal "all as,m,l RatSum Zero m as+RatSum m l as==RatSum Zero(m+l)as")
+(assume "as" "m" "l")
+(simprat (pf "RatSum m l as==RatSum(Zero+m)l as"))
+(use "RatSumSplit")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatSumZeroSplit")
+
+;; RatSumZeroSplitMod
+(set-goal "all as,m,n(m<=n ->
+ RatSum Zero m as+RatSum m(n--m)as==RatSum Zero n as)")
+(assume "as" "m" "n" "m<=n")
+(simprat "RatSumZeroSplit")
+(simp "NatPlusComm")
+(simp "NatMinusPlusEq")
+(use "Truth")
+(use "m<=n")
+;; Proof finished.
+;; (cp)
+(save "RatSumZeroSplitMod")
+
+;; RatSumMinus (close to RatSumSplit)
+(set-goal "all as,n,m,l RatSum n(m+l)as+ ~(RatSum n m as)==RatSum(n+m)l as")
+(assume "as" "n" "m" "l")
+(use "RatEqvPlusCancelL" (pt "RatSum n m as"))
+(simprat "RatSumSplit")
+(simp "RatPlusComm")
+(simp "<-" "RatPlusAssoc")
+(use "RatEqvTrans" (pt "RatSum n(m+l)as+0"))
+(use "RatPlusCompat")
+(use "Truth")
+(simp "RatPlusComm")
+(use "Truth")
+;; ?^8:RatSum n(m+l)as+0==RatSum n(m+l)as
+(use "RatPlusZero")
+;; Proof finished.
+;; (cp)
+(save "RatSumMinus")
+
+;; RatSumZeroMinus
+(set-goal "all as,m,l RatSum Zero(m+l)as+ ~(RatSum Zero m as)==RatSum m l as")
+(assume "as" "m" "l")
+(simprat (pf "RatSum m l as==RatSum(Zero+m)l as"))
+(use "RatSumMinus")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatSumZeroMinus")
+
+;; RatSumZeroMinusMod
+(set-goal "all as,m,n(m<=n ->
+ RatSum Zero n as+ ~(RatSum Zero m as)==RatSum m(n--m)as)")
+(assume "as" "m" "n" "m<=n")
+(use "RatEqvPlusCancelR" (pt "(RatSum Zero m as)"))
+(simprat "RatEqvPlusMinus")
+(simp "RatPlusComm")
+(simprat "RatSumZeroSplitMod")
+(use "Truth")
+(use "m<=n")
+;; Proof finished.
+;; (cp)
+(save "RatSumZeroMinusMod")
+
+;; RatSumOne
+(set-goal "all as,n RatSum n(Succ Zero)as==as n")
+(assume "as" "n")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatSumOne")
+
+;; Special case of RealSumSplit where the left sum has one element only.
+
+;; RatSumSplitL
+(set-goal "all as,n,m
+ RatSum n(Succ Zero)as+RatSum(Succ n)m as==RatSum n(Succ m)as")
+(assume "as" "n" "m")
+(ng #t)
+(inst-with-to "RatSumSplit" (pt "as") (pt "n") (pt "Succ Zero") "Inst")
+(ng "Inst")
+(use "Inst")
+;; Proof finished.
+;; (cp)
+(save "RatSumSplitL")
+
+;; RatSumPlus (was RatSumPlusSeq)
+
+;; RatSumPlus
+(set-goal "all as,bs,m,n RatSum n m as+RatSum n m bs=RatSum n m([l]as l+bs l)")
+(assume "as" "bs")
+(ind)
+;; 3,4
+(assume "n")
+(use "Truth")
+;; 4
+(assume "m" "IH" "n")
+(simp "RatSum1CompRule")
+(simp "RatSum1CompRule")
+(simp "RatSum1CompRule")
+(simp "<-" "IH")
+(bpe-ng #t)
+(simp "<-" "RatPlusAssoc")
+(simp "<-" "RatPlusAssoc")
+(simp (pf "(as(n+m)+(RatSum n m bs+bs(n+m)))=
+           (RatSum n m bs+(as(n+m)+bs(n+m)))"))
+(use "Truth")
+(ng #t)
+(simp (pf "as(n+m)+RatSum n m bs=RatSum n m bs+as(n+m)"))
+(use "Truth")
+(use "RatPlusComm")
+;; Proof finished.
+;; (cp)
+(save "RatSumPlus")
+
+;; RatSumUMinus
+(set-goal "all as,n,m  ~(RatSum n m as)=RatSum n m([l]~(as l))")
+(assume "as" "n")
+(ind)
+;; 3,4
+(use "Truth")
+;; 4
+(assume "m" "IH")
+(ng #t)
+(simp "<-" "IH")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatSumUMinus")
+
+;; RatLeAbsSum
+(set-goal "all as,n,m abs(RatSum n m as)<=RatSum n m([l]abs(as l))")
+(assume "as" "n")
+(ind)
+;; 3,4
+(use "Truth")
+;; 4
+(assume "m" "IH")
+(ng #t)
+(use "RatLeTrans" (pt "abs(RatSum n m as)+abs(as(n+m))"))
+(use "RatLeAbsPlus")
+(use "RatLeMonPlus")
+(use "IH")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatLeAbsSum")
+
+;; RatSumZeros
+(set-goal "all as(all n as n==0 -> all n,m RatSum n m as==0)")
+(assume "as" "asProp" "n")
+(ind)
+;; 3,4
+(use "Truth")
+;; 4
+(assume "m" "IH")
+(ng #t)
+(simprat "asProp")
+(simprat "IH")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatSumZeros")
+
+;; RatSumZerosSharp
+(set-goal "all as,n,m((all l(n<=l -> l<n+m -> as l==0)-> RatSum n m as==0))")
+(assume "as" "n")
+(ind)
+;; 3,4
+(assume "Useless")
+(use "Truth")
+;; 4
+(assume "m" "IH" "asProp")
+(ng #t)
+(simprat "IH")
+(use "asProp")
+(use "Truth")
+(use "Truth")
+;; ?^11:all l(n<=l -> l<n+m -> as l==0)
+(assume "l" "n<=l" "l<n+m")
+(use "asProp")
+(use "n<=l")
+(use "NatLtTrans" (pt "n+m"))
+(use "l<n+m")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatSumZerosSharp")
+
+(add-var-name "booles" (py "nat=>boole"))
+
+;; RatSumSplitTwo
+(set-goal "all as,booles,n,m 
+      RatSum n m as=
+      RatSum n m([l][if (booles l) (as l) 0])+
+      RatSum n m([l][if (booles l) 0 (as l)])")
+(assume "as" "booles" "n")
+(ind)
+;; 3,4
+(use "Truth")
+;; 4
+(assume "m" "IH")
+(ng #t)
+(simp "IH")
+(cases (pt "booles(n+m)"))
+;; 8,9
+(ng #t)
+(assume "booles(n+m)")
+(simp "<-" "RatPlusAssoc")
+(simp "<-" "RatPlusAssoc")
+(simp (pf "(RatSum n m([n0][if (booles n0) 0 (as n0)])+as(n+m))=
+           as(n+m)+(RatSum n m([n0][if (booles n0) 0 (as n0)]))"))
+(use "Truth")
+(simp "RatPlusComm")
+(use "Truth")
+;; 9
+(ng #t)
+(assume "booles(n+m) -> F")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "RatSumSplitTwo")
+
+;; RatGeomSumEqvNoDiv
+(set-goal "all a,n,m (1+ ~a)*RatSum n m(RatExp a)==a**n*(1+ ~(a**m))")
+(assume "a" "n")
+(ind)
+;; 3,4
+(ng #t)
+(simprat "RatTimesZeroR")
+(simprat "RatTimesZeroR")
+(use "Truth")
+;; 4
+(assume "m" "IH")
+(ng #t)
+(simprat "RatTimesPlusDistr")
+(simprat "IH")
+;; ?^11:a**n*(1+ ~(a**m))+(1+ ~a)*a**(n+m)==a**n*(1+ ~(a**m*a))
+(simprat "RatExpNatPlus")
+(simprat (pf "(1+ ~a)*(a**m*a**n)==a**n*((1+ ~a)*a**m)"))
+(simprat "<-" "RatTimesPlusDistr")
+(simprat "RatTimesCompat")
+(use "Truth")
+;; ?^18:1+ ~(a**m)+(1+ ~a)*a**m==1+ ~(a**m*a)
+(simprat "RatTimesPlusDistrLeft")
+(ng #t)
+(simprat "RatEqvPlusMinus")
+(simp "RatTimesComm")
+(use "Truth")
+(use "Truth")
+;; ?^14:(1+ ~a)*(a**m*a**n)==a**n*((1+ ~a)*a**m)
+(simp "RatTimesAssoc")
+(simp (pf "a**n*((1+ ~a)*a**m)=(1+ ~a)*a**m*a**n"))
+(use "Truth")
+(use "RatTimesComm")
+;; Proof finished.
+;; (cp)
+(save "RatGeomSumEqvNoDiv")
+
+;; RatGeomSumEqvNoDivOneHalf
+(set-goal "all n,m (1#2)*RatSum n m(RatExp(1#2))==(1#2)**n*(1+ ~((1#2)**m))")
+(assume "n")
+(inst-with-to "RatGeomSumEqvNoDiv" (pt "(1#2)") (pt "n") "Inst")
+(use "Inst")
+;; Proof finished.
+;; (cp)
+(save "RatGeomSumEqvNoDivOneHalf")
+
 
 ;; 4.  Adding external code
 ;; ========================
