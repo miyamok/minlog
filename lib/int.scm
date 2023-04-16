@@ -1207,6 +1207,18 @@
 ;; Proof finished.
 (save "IntPNatToPosEqNatToInt")
 
+;; Added 2023-04-16
+
+;; NatToIntSuccEq
+(set-goal "all n NatToInt(Succ n)=IntPos(NatToPos(Succ n))")
+(assume "n")
+(simp "<-" "IntPNatToPosEqNatToInt")
+(use "Truth")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "NatToIntSuccEq")
+
 ;; PosToNatToIntId
 (set-goal "all p NatToInt(PosToNat p)=IntP p")
 (assume "p")
