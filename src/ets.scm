@@ -1,4 +1,4 @@
-;; 2021-10-24.  ets.scm
+;; 2023-04-16.  ets.scm
 ;; 16. Extracted terms
 ;; ===================
 
@@ -2186,14 +2186,48 @@
 	    (make-proof-in-imp-intro-form
 	     u3 (make-proof-in-avar-form u3)))))))))))
 
-(add-theorem "If" (formula-to-if-proof (pf "Pvar")))
+(add-theorem "CasesNot" (formula-to-if-proof (pf "Pvar")))
 
-;; If: all boole((boole -> Pvar) -> ((boole -> F) -> Pvar) -> Pvar) can
-;; be used for case distinctions.  After animation of cIf we have added
-;; the computation rule (cIf alpha4) ->
+;; CasesNot: all boole((boole -> Pvar) -> ((boole -> F) -> Pvar) -> Pvar) can
+;; be used for case distinctions.  After animation of cCasesNot we have added
+;; the computation rule (cCasesNot alpha4) ->
 ;; [boole0,alpha4_1,alpha4_2][if boole0 alpha4_1 alpha4_2]
 
-;; (animate "If")
+;; (animate "CasesNot")
+
+;; Added 2023-04-16.
+
+;; CasesNeg
+(set-goal "all boole((boole -> Pvar) -> (negb boole -> Pvar) -> Pvar)")
+(cases)
+;; 2,3
+(assume "TCase" "Useless")
+(use "TCase")
+(use "Truth")
+;; 3
+(assume "Useless" "FCase")
+(use "FCase")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "CasesNeg")
+
+;; CasesEqFalse
+(set-goal "all boole((boole=True -> Pvar) -> (boole=False -> Pvar) -> Pvar)")
+(cases)
+;; 2,3
+(assume "TCase" "Useless")
+(use "TCase")
+(use "Truth")
+;; 3
+(assume "Useless" "FCase")
+(use "FCase")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "CasesEqFalse")
+
+;; End of addition 2023-04-16
 
 ;; We need to define eqd-compat-proof in order to put "EqDCompat" into
 ;; THEOREMS when loading init.  This can be done only here, because for
@@ -2230,7 +2264,7 @@
 ;; ok, program constant cEqDCompat: alpha5=>alpha5
 ;; of t-degree 0 and arity 0 added
 
-;; These messages are to be suppressed (as for "Id" "If")
+;; These messages are to be suppressed (as for "Id" "CasesNot")
 
 (define eqd-compat-rev-proof
   (let* ((tvar (make-tvar -1 DEFAULT-TVAR-NAME))
@@ -7200,10 +7234,10 @@
 (set! COMMENT-FLAG #f)
 
 ;; Added 2020-04-01
-(add-sound "Lft")
-(add-sound "Rht")
-(deanimate "Lft")
-(deanimate "Rht")
+;; (add-sound "Lft")
+;; (add-sound "Rht")
+;; (deanimate "Lft")
+;; (deanimate "Rht")
 
 (define (proof-to-soundness-formula proof)
   (rename-variables
@@ -7597,6 +7631,156 @@
 (add-rewrite-rule "negb negb boole" "boole")
 
 ;; (display-pconst "NegConst")
+
+;; Added 2023-04-16
+
+;; NotToNeg
+(set-goal "all boole((boole -> F) -> negb boole)")
+(cases)
+;; 2
+(assume "Absurd")
+(use "Absurd")
+(use "Truth")
+;; 3
+(assume "Useless")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "NotToNeg")
+
+;; NegToNot
+(set-goal "all boole(negb boole -> boole -> F)")
+(cases)
+;; 2
+(assume "Absurd" "Useless")
+(use "Absurd")
+;; 3
+(assume "Useless" "Absurd")
+(use "Absurd")
+;; Proof finished.
+;; (cp)
+(save "NegToNot")
+
+;; NegToEqFalse
+(set-goal "all boole(negb boole -> boole=False)")
+(cases)
+;; 2,3
+(assume "Absurd")
+(use "Absurd")
+;; 3
+(assume "Useless")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "NegToEqFalse")
+
+;; EqFalseToNeg
+(set-goal "all boole(boole=False -> negb boole)")
+(cases)
+;; 2,3
+(assume "Absurd")
+(use "Absurd")
+;; 3
+(assume "Useless")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "EqFalseToNeg")
+
+;; NotToEqFalse
+(set-goal "all boole((boole -> F) -> boole=False)")
+(cases)
+;; 2,3
+(assume "Absurd")
+(use "Absurd")
+(use "Truth")
+;; 3
+(assume "Useless")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "NotToEqFalse")
+
+;; EqFalseToNot
+(set-goal "all boole(boole=False -> boole -> F)")
+(cases)
+;; 2,3
+(assume "Absurd" "Useless")
+(use "Absurd")
+;; 3
+(assume "Useless" "Absurd")
+(use "Absurd")
+;; Proof finished.
+;; (cp)
+(save "EqFalseToNot")
+
+;; OrIntroLeft
+(set-goal "all boole1,boole2(boole1 -> boole1 orb boole2)")
+(cases)
+(strip)
+(use "Truth")
+(cases)
+(strip)
+(use "Truth")
+(assume "Absurd")
+(use "Absurd")
+;; Proof finished.
+;; (cdp)
+(save "OrIntroLeft")
+
+;; OrIntroRight
+(set-goal "all boole1,boole2(boole2 -> boole1 orb boole2)")
+(cases)
+(strip)
+(use "Truth")
+(cases)
+(strip)
+(use "Truth")
+(assume "Absurd")
+(use "Absurd")
+;; Proof finished.
+;; (cdp)
+(save "OrIntroRight")
+
+;; OrElim
+(set-goal "all boole1,boole2(
+ boole1 orb boole2 -> (boole1 -> Pvar) -> (boole2 -> Pvar) -> Pvar)")
+(cases)
+(assume "boole1" "Useless1" "Hyp" "Useless2")
+(use-with "Hyp" "Truth")
+(cases)
+(assume "Useless1" "Useless2" "Hyp")
+(use-with "Hyp" "Truth")
+(ng #t)
+(assume "Absurd" "Hyp1" "Hyp2")
+(use-with "Hyp1" "Absurd")
+;; Proof finished.
+;; (cdp)
+(save "OrElim")
+
+;; IfAndb
+(set-goal "all boole1,boole2 [if boole1 boole2 False]=(boole1 andb boole2)")
+(cases)
+(assume "boole1")
+(use "Truth")
+(assume "boole1")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "IfAndb")
+
+;; IfOrb
+(set-goal "all boole1,boole2 [if boole1 True boole2]=(boole1 orb boole2)")
+(cases)
+(assume "boole1")
+(use "Truth")
+(assume "boole1")
+(use "Truth")
+;; Proof finished.
+;; (cdp)
+(save "IfOrb")
+
+;; End of addition 2023-04-16
 
 ;; IfBooleMonImp
 (set-goal "all boole1,boole2, boole3,boole4,boole(
