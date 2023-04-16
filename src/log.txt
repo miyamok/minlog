@@ -1,4 +1,67 @@
-Done in dev branch 2022-09-17
+Done locally in dev branch 2023-04-16
+
+In pproof.scm
+
+realeq-formula-compat context-and-term-to-realproof and
+realeq-term-compat extended to RealIf terms
+
+In ets.scm
+
+add-sound commented out: it should only be called when desired.
+Including it in the source file leads to ugly empty lines in the output.
+Theorems NotToNeg NegToNot EqFalseToNeg NegToEqFalse NotToEqFalse
+EqFalseToNot added.  The latter two were in nat.scm with names
+EqFalseToNeg NegToEqFalse.  Theorems OrIntroLeft OrIntroRight OrElim
+IfAndb IfOrb moved here from nat.scm.  Theorems CasesNot (was If)
+CasesNeg CasesEqFalse added.
+
+In lib/nat.scm
+
+NatLtMax NatMinusPlusLe NatLeMonMinusLeft added.  Theorems ExBNatIntro
+ExBNatElim ExBNatToExNc ExNcToExBNat added.  Choose (binomial
+coefficients) added.  Theorems NatLtToChooseZero NatLeToLtZeroChoose
+NatLeToLeOneChoose NatPosToChooseSuccPred added.  Faculty NatF added.
+Relation between Choose and NatF proved.  Theorems NatTimesChooseNatF
+NatLtZeroNatF added.  OrIntroLeft OrIntroRight OrElim IfAndb
+IfOrb moved to ets.scm.  Theorems EqFalseToNeg NegToEqFalse renamed
+into EqFalseToNot NotToEqFalse and moved to ets.scm.  NatPlusMinus
+removed: it is the same as NatPlusMinusAssoc.
+
+;; In lib/pos.scm
+
+Theorems NatLtZeroPosToNat PosToNatNotZero added.  Faculty PosF added.
+Theorems PosFToNatF NatFToPosF NatLeOneNatF PosTimesChoosePosF added.
+
+In lib/int.scm
+
+Theorem NatToIntSuccEq added.
+
+In lib/rat.scm
+
+RatSum RatGeomSumEqvNoDiv RatGeomSumEqvNoDivOneHalf added.
+RatExpCompatNat added, for natural rather than integral exponents.
+RatExpPosS proved with = rather than ==.  Since we now have = rather
+than == we can add rewrite rules for RatExp .  Theorems RatUDivTimesEq
+RatUDivUDivEq RatEqvExpIntNegUDivExpEq RatUDivExpEq RatUDivExpPosEq
+added with = for ==.  RatExpNat formulated with = rather than ==
+
+In lib/rea.scm
+
+add-sound commented out: it should only be called when desired.
+Including it in the source file leads to ugly empty lines in the output.
+Computation rules for RealExp added only after totality of RealTimes
+has been proved.  RealEqvPlus... added as an alternative name for
+RealEqPlus....  Reason: search-about hides names containing EqP.
+Variable L replaced by K.  Reason: L is used in
+examples/arith/rootpair.scm as name of a lemma asserting the existence
+of the left component of a coded pair.  cL then is a convenient
+notation for the left component.  RealAbsUDiv strengthened: premise
+RealPos x p weakened by RealPos(abs x)p.  Theorems RealLtToLe
+RealLtAbs RealLeUDivTwoExp RealLeUDivTwoExpPosS RealLtAbsRealPosUMinus
+RealLePlusUMinusR RealExpCompatTwo RealUDivPosS added
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Done in dev branch 2022-10-01
 
 In examples/analysis/
 
@@ -22,6 +85,10 @@ In examples/arith/quotrem.scm
 
 Adapted to sharp substitutions.  ex k,l replaced by exd k exl l.
 Defined pairs used.
+
+In lib/rseq.scm
+
+Binom renamed into RealBinom.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Done in dev branch 2022-05-20
