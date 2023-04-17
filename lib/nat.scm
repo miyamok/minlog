@@ -1,4 +1,4 @@
-;; 2023-01-25.  nat.scm
+;; 2023-04-16.  nat.scm
 
 ;; (load "~/git/minlog/init.scm")
  
@@ -1933,34 +1933,6 @@
 ;; (cp)
 (save-totality)
 
-;; For ExBNat
-(add-computation-rules
- "ExBNat 0 nat=>boole" "False"
- "ExBNat(Succ n)pf" "[if (pf n) True (ExBNat n pf)]")
-
-(set-totality-goal "ExBNat")
-(fold-alltotal)
-(ind)
-;; 3,4
-(strip)
-(use "TotalVar")
-;; 4
-(assume "n" "IH" "pf^" "Tpf")
-(ng #t)
-(use "BooleIfTotal")
-(use "Tpf")
-(use "TotalVar")
-(use "TotalVar")
-(use "IH")
-(use "Tpf")
-;; Proof finished.
-;; (cp)
-(save-totality)
-
-;; For efficiency reasons if is preferred over orb (i.e., over the
-;; term (ExBNat n nat=>boole orb pf n), since it computes
-;; its arguments only when necessary.
-
 ;; For NatLeast
 (add-computation-rules
  "NatLeast 0 pf" "0"
@@ -3669,6 +3641,136 @@
 ;; (cdp)
 (save "AllBNatElim")
 
+;; For ExBNat
+(add-computation-rules
+ "ExBNat 0 nat=>boole" "False"
+ "ExBNat(Succ n)pf" "[if (pf n) True (ExBNat n pf)]")
+
+(set-totality-goal "ExBNat")
+(fold-alltotal)
+(ind)
+;; 3,4
+(strip)
+(use "TotalVar")
+;; 4
+(assume "n" "IH" "pf^" "Tpf")
+(ng #t)
+(use "BooleIfTotal")
+(use "Tpf")
+(use "TotalVar")
+(use "TotalVar")
+(use "IH")
+(use "Tpf")
+;; Proof finished.
+;; (cp)
+(save-totality)
+
+;; For efficiency reasons if is preferred over orb (i.e., over the
+;; term (ExBNat n nat=>boole orb pf n), since it computes
+;; its arguments only when necessary.
+
+;; ExBNatIntro
+(set-goal "all pf,m,n(m<n -> pf m -> ExBNat n pf)")
+(assume "pf" "m")
+(ind)
+;; 3,4
+(assume "Absurd" "Useless")
+(ng #t)
+(use "Absurd")
+;; 4
+(assume "n" "IH" "m<n+1" "pf m")
+(ng #t)
+(cases (pt "pf n"))
+(assume "Useless")
+(use "Truth")
+(assume "pf n -> F")
+(ng #t)
+(use "IH" (pt "m"))
+(use "NatLtSuccCases" (pt "m") (pt "n"))
+(use "m<n+1")
+(assume "m<n")
+(use "m<n")
+(assume "m=n")
+(use "EfAtom")
+(use "pf n -> F")
+(simp "<-" "m=n")
+(use "pf m")
+(use "pf m")
+;; Proof finished.
+;; (cp)
+(save "ExBNatIntro")
+
+;; IfOrbEq
+(set-goal "all boole1,boole2 [if boole1 True boole2]=(boole2 orb boole1)")
+(cases)
+(assume "boole")
+(use "Truth")
+(assume "boole")
+(use "Truth")
+;; Proof finished.
+;; (cp)
+(save "IfOrbEq")
+
+;; ExBNatElim
+(set-goal "all pf,n(ExBNat n pf -> allnc m(m<n -> pf m -> Pvar) -> Pvar)")
+(assume "pf")
+(ind)
+;; 3,4
+(ng #t)
+(assume "Absurd" "AllHyp")
+(use "AllHyp" (pt "Zero"))
+(use "Absurd")
+(use "EfAtom")
+(use "Absurd")
+;; 4
+(assume "n" "IH")
+(ng #t)
+(simp "IfOrbEq")
+(assume "OrHyp" "AllHyp")
+(use "OrElim" (pt "ExBNat n pf") (pt "pf n"))
+(use "OrHyp")
+(assume "ExbHyp")
+(use "IH")
+(use "ExbHyp")
+(assume "m" "m<n")
+(use "AllHyp")
+(use "NatLtTrans" (pt "n"))
+(use "m<n")
+(use "Truth")
+;; 16
+(assume "pf n")
+(use "AllHyp" (pt "n"))
+(use "Truth")
+(use "pf n")
+;; Proof finished.
+;; (cp)
+(save "ExBNatElim")
+
+;; ExBNatToExNc
+(set-goal "all pf,n(ExBNat n pf -> exnc m(m<n andnc pf m))")
+(assume "pf" "n" "ExBNatHyp")
+(use "ExBNatElim" (pt "pf") (pt "n"))
+(use "ExBNatHyp")
+(assume "m" "m<n" "pf m")
+(intro 0 (pt "m"))
+(split)
+(use "m<n")
+(use "pf m")
+;; Proof finished.
+;; (cp)
+(save "ExBNatToExNc")
+
+;; ExNcToExBNat
+(set-goal "all pf,n(exnc m(m<n andnc pf m) -> ExBNat n pf)")
+(assume "pf" "n" "ExNcHyp")
+(by-assume "ExNcHyp" "m" "mProp")
+(use "ExBNatIntro" (pt "m"))
+(use "mProp")
+(use "mProp")
+;; Proof finished.
+;; (cp)
+(save "ExNcToExBNat")
+
 ;; We have extensionality of NatLeast:
 
 ;; NatLeastExt
@@ -4677,6 +4779,8 @@
 ;; (cp)
 (save "NatLtMax")
 
+;; ;; NatPlusMinus removed: it is the same as NatPlusMinusAssoc
+;; No, it operates differently
 ;; NatPlusMinus
 (set-goal "all n,m,l(l<=m -> n+(m--l)=n+m--l)")
 (assume "n" "m")
