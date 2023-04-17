@@ -1,4 +1,15 @@
-Done locally in dev branch 2023-04-16
+Done in dev branch 2023-04-17
+
+In pproof scm
+
+realeq-term-compat added (was missing)
+
+In lib/nat.scm
+
+NatPlusMinus added again.  Variable ps replaced by pf
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Done in dev branch 2023-04-16
 
 In pproof.scm
 
