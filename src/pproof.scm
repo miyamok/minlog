@@ -5862,6 +5862,146 @@
 ;; RealAbsCompat RealExpCompat InCompat OutCompat AvCompat VaCompat
 ;; RealPlusCompat RealTimesCompat RealMaxCompat RealMinCompat.
 
+(define (realeq-term-compat term var term1 term2 eq-proof context)
+  (cond
+   ((not (member var (term-to-free term))) ;we prove r===r
+    (let ((realproof (context-and-term-to-realproof context term)))
+      (mk-proof-in-elim-form
+       (make-proof-in-aconst-form (theorem-name-to-aconst "RealEqRefl"))
+       term realproof)))
+   ((term-in-var-form? term) eq-proof) ;of term1===term2, i.e., lhs===rhs
+   ((term-in-app-form? term)
+    (let ((op (term-in-app-form-to-op term)))
+      (cond
+       ((term=? op var) ;then arg is without var
+	(make-proof-in-all-elim-form eq-proof (term-in-app-form-to-arg term)))
+       ((term-in-abst-form? op) ;rec call with subst-kernel
+       	(realeq-term-compat (term-to-one-step-beta-reduct term)
+       	 var term1 term2 eq-proof context))
+       (else
+	(let* ((op (term-in-app-form-to-final-op term))
+	       (args (term-in-app-form-to-args term))
+	       (name (if (not (term-in-const-form? op))
+			 (myerror "realeq-term-compat"
+				  "term in constant form expected" op)
+			 (string-append
+			  (const-to-name (term-in-const-form-to-const op))
+			  "Compat")))
+	       (unary-compat-names
+		(list "RealNNegCompat" "RealUMinusCompat" "RealUDivCompat"
+		      "RealAbsCompat" "RealExpCompat"
+		      "InCompat" "OutCompat" "AvCompat" "VaCompat" ))
+	       (binary-compat-names
+		(list "RealPlusCompat" "RealTimesCompat"
+		      "RealMaxCompat" "RealMinCompat")))
+	  (cond
+	   ((member name unary-compat-names)
+	    (cond
+	     ((string=? name "RealUDivCompat")
+	      (mk-proof-in-elim-form ;of RealUDiv lhs p===RealUDiv rhs p
+	       (make-proof-in-aconst-form ;of all x,y,p(x==y -> Pxp -> Pyp ->
+					;RealUDix x p===RealUDiv y p)
+		(theorem-name-to-aconst name))
+	       (term-subst (car args) var term1) ;t(lhs)
+	       (term-subst (car args) var term2) ;t(rhs)
+	       (cadr args)
+	       (realeq-term-compat (car args) var term1 term2 eq-proof context)
+	       (context-and-term-and-bd-to-abspos-proof
+		context term1 (cadr args))
+	       (context-and-term-and-bd-to-abspos-proof
+		context term2 (cadr args))))
+	     ((string=? name "RealExpCompat")
+	      (mk-proof-in-elim-form ;of t(lhs)===t(rhs), here lhs**n===rhs**n
+	       (make-proof-in-aconst-form ;of all x,y,n(x==y -> x**n===y**n)
+		(theorem-name-to-aconst name))
+	       (term-subst (car args) var term1) ;t(lhs)
+	       (term-subst (car args) var term2) ;t(rhs)
+	       (cadr args)
+	       (realeq-term-compat
+		(car args) var term1 term2 eq-proof context)))
+	     ((string=? name "InCompat")
+	      (mk-proof-in-elim-form ;of t(lhs)===t(rhs), here In s x===In s y
+	       (make-proof-in-aconst-form ;of all x,y,s(x==y -> In s x===In s y)
+		(theorem-name-to-aconst name))
+	       (term-subst (cadr args) var term1) ;t(lhs)
+	       (term-subst (cadr args) var term2) ;t(rhs)
+	       (car args)
+	       (realeq-term-compat
+		(cadr args) var term1 term2 eq-proof context)))
+	     ((string=? name "OutCompat")
+	      (mk-proof-in-elim-form ;of t(lhs)===t(rhs), here Out s x===Out s y
+	       (make-proof-in-aconst-form ;of x==y -> Out s x===Out s y
+		(theorem-name-to-aconst name))
+	       (term-subst (cadr args) var term1) ;t(lhs)
+	       (term-subst (cadr args) var term2) ;t(rhs)
+	       (car args)
+	       (realeq-term-compat
+		(cadr args) var term1 term2 eq-proof context)))
+	     ((string=? name "AvCompat")
+	      (mk-proof-in-elim-form ;of t(lhs)===t(rhs), here Av d x===Av d y
+	       (make-proof-in-aconst-form ;of all x,y,d(x==y -> Av d x===Av d y)
+		(theorem-name-to-aconst name))
+	       (term-subst (cadr args) var term1) ;t(lhs)
+	       (term-subst (cadr args) var term2) ;t(rhs)
+	       (car args)
+	       (realeq-term-compat
+		(cadr args) var term1 term2 eq-proof context)))
+	     ((string=? name "VaCompat")
+	      (mk-proof-in-elim-form ;of t(lhs)===t(rhs), here Va d x===Va d y
+	       (make-proof-in-aconst-form ;of x==y -> Va d x===Va d y
+		(theorem-name-to-aconst name))
+	       (term-subst (cadr args) var term1) ;t(lhs)
+	       (term-subst (cadr args) var term2) ;t(rhs)
+	       (car args)
+	       (realeq-term-compat
+		(cadr args) var term1 term2 eq-proof context)))
+	     (else
+	      (mk-proof-in-elim-form ;of ~t(lhs)=== ~t(rhs)
+	       (make-proof-in-aconst-form ;of all x,y(x===y -> ~x=== ~y))
+		(theorem-name-to-aconst name))
+	       (term-subst (car args) var term1) ;t(lhs)
+	       (term-subst (car args) var term2) ;t(rhs)
+	       (realeq-term-compat
+		(car args) var term1 term2 eq-proof context)))))
+	   ((member name binary-compat-names)
+	    (mk-proof-in-elim-form ;of t(lhs)+s(lhs)===t(rhs)+s(rhs)
+	     (make-proof-in-aconst-form ;of all x,y,z,z1(x===y -> z===z1 ->
+					; x+z===y+z1))
+	      (theorem-name-to-aconst name))
+	     (term-subst (car args) var term1) ;t(lhs)
+	     (term-subst (car args) var term2) ;t(rhs)
+	     (term-subst (cadr args) var term1) ;s(lhs)
+	     (term-subst (cadr args) var term2) ;s(rhs)
+	     (realeq-term-compat ;proves t(lhs)===t(rhs) from lhs===rhs by IH
+	      (car args) var term1 term2 eq-proof context)
+	     (realeq-term-compat ;proves s(lhs)===s(rhs) from lhs===rhs by IH
+	      (cadr args) var term1 term2 eq-proof context)))
+	   (else (apply myerror "realeq-term-compat" name
+			"expected to be among"
+			(append unary-compat-names
+				binary-compat-names)))))))))
+   ;; added 2022-12-15
+   ((and (term-in-if-form? term)
+   	 (equal? (term-to-type (term-in-if-form-to-test term))
+   		 (make-alg "boole"))
+   	 (equal? (term-to-type term) (make-alg "rea")))
+    (let* ((test (term-in-if-form-to-test term))
+   	   (alt1 (car (term-in-if-form-to-alts term)))
+   	   (alt2 (cadr (term-in-if-form-to-alts term))))
+      (mk-proof-in-elim-form ;of [if p t(lhs) s(lhs)]===[if p t(rhs) s(rhs)]
+       (make-proof-in-aconst-form
+   	(theorem-name-to-aconst "RealIfCompat"))
+       test
+       (term-subst alt1 var term1) ;t(lhs)
+       (term-subst alt1 var term2) ;t(rhs)
+       (term-subst alt2 var term1) ;s(lhs)
+       (term-subst alt2 var term2) ;s(rhs)
+       (realeq-term-compat ;proves t(lhs)===t(rhs) from lhs===rhs by IH
+   	alt1 var term1 term2 eq-proof context)
+       (realeq-term-compat ;proves s(lhs)===s(rhs) from lhs===rhs by IH
+   	alt2 var term1 term2 eq-proof context))))
+   (else (myerror "realeq-term-compat" "unexpected term" term))))
+
 (define (realeq-formula-compat fla var term1 term2 eq-proof context new-goal)
   (cond
    ((not (member var (formula-to-free fla))) new-goal)
